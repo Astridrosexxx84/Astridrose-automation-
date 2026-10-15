@@ -22,5 +22,5 @@ jobs:
         env:
           BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
           BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
-          BLUESKY_POST_TEXT: "Hello Bluesky! My automated bot is running."
+          BLUESKY_POST_TEXT: "Hello"
         run: python Bot.py
