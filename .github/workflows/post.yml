@@ -2,6 +2,10 @@ name: Run Bluesky bot
 
 on:
   workflow_dispatch:
+  schedule:
+    # Every Tuesday at 10:00 AM New Zealand time during NZ daylight saving.
+    # GitHub cron uses UTC; local time shifts by an hour when NZ changes clocks.
+    - cron: "0 21 * * 1"
 
 permissions:
   contents: read
@@ -22,5 +26,4 @@ jobs:
         env:
           BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
           BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
-          BLUESKY_POST_TEXT: "Hello"
         run: python Bot.py
