@@ -22,7 +22,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Check Python syntax
-        run: python -m compileall -q Bot.py RedditBot.py RedditDraft.py metrics_report.py
+        run: python -m compileall -q Bot.py RedditBot.py RedditDraft.py metrics_report.py cross_platform_drafts.py
       - name: Test draft generation without publishing
         run: |
           python RedditDraft.py
@@ -30,5 +30,9 @@ jobs:
           grep -q "Nothing has been posted to Reddit" reddit-draft.md
           python metrics_report.py
           test -s metrics-report.md
+          python cross_platform_drafts.py
+          test -s cross-platform-draft-pack.md
+          grep -q 'LinkedIn' cross-platform-draft-pack.md
+          grep -q 'YouTube Shorts' cross-platform-draft-pack.md
       - name: Confirm safe-by-default Reddit publishing
         run: grep -q 'os.environ.get("REDDIT_PUBLISH", "false")' RedditBot.py
