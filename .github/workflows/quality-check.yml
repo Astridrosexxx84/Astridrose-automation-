@@ -22,11 +22,13 @@ jobs:
         with:
           python-version: "3.12"
       - name: Check Python syntax
-        run: python -m compileall -q Bot.py RedditBot.py RedditDraft.py
+        run: python -m compileall -q Bot.py RedditBot.py RedditDraft.py metrics_report.py
       - name: Test draft generation without publishing
         run: |
           python RedditDraft.py
           test -s reddit-draft.md
           grep -q "Nothing has been posted to Reddit" reddit-draft.md
+          python metrics_report.py
+          test -s metrics-report.md
       - name: Confirm safe-by-default Reddit publishing
         run: grep -q 'os.environ.get("REDDIT_PUBLISH", "false")' RedditBot.py
