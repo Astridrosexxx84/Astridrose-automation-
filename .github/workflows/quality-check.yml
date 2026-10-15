@@ -1,0 +1,32 @@
+name: Validate automation code
+
+on:
+  push:
+    paths:
+      - "*.py"
+      - ".github/workflows/**"
+      - "requirements.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check Python syntax
+        run: python -m compileall -q Bot.py RedditBot.py RedditDraft.py
+      - name: Test draft generation without publishing
+        run: |
+          python RedditDraft.py
+          test -s reddit-draft.md
+          grep -q "Nothing has been posted to Reddit" reddit-draft.md
+      - name: Confirm safe-by-default Reddit publishing
+        run: grep -q 'os.environ.get("REDDIT_PUBLISH", "false")' RedditBot.py
