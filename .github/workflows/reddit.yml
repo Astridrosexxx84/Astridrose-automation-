@@ -1,0 +1,50 @@
+name: Test Reddit bot
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Actually publish a post? Leave false for the first test."
+        required: true
+        default: false
+        type: boolean
+      subreddit:
+        description: "Subreddit name (only used when publish is true)"
+        required: false
+        type: string
+      title:
+        description: "Post title (only used when publish is true)"
+        required: false
+        type: string
+      body:
+        description: "Post text (only used when publish is true)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  reddit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Check Reddit connection (or publish if explicitly enabled)
+        env:
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+          REDDIT_USERNAME: ${{ secrets.REDDIT_USERNAME }}
+          REDDIT_PASSWORD: ${{ secrets.REDDIT_PASSWORD }}
+          REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
+          REDDIT_PUBLISH: ${{ inputs.publish }}
+          REDDIT_SUBREDDIT: ${{ inputs.subreddit }}
+          REDDIT_POST_TITLE: ${{ inputs.title }}
+          REDDIT_POST_BODY: ${{ inputs.body }}
+        run: python RedditBot.py
