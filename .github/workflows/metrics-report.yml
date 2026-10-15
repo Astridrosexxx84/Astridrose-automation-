@@ -1,0 +1,19 @@
+name: Build metrics report
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python metrics_report.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: automation-metrics-report
+          path: metrics-report.md
+          retention-days: 30
