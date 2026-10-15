@@ -2,6 +2,7 @@
 
 Safe by default: authenticates and reports the account, but never publishes unless
 REDDIT_PUBLISH is explicitly set to "true" in the workflow.
+Requires Reddit-approved API access. Do not use before Reddit authorizes the app.
 """
 import os
 import sys
@@ -14,7 +15,7 @@ def required(name):
     if not value:
         raise RuntimeError(
             f"Missing GitHub Actions secret/environment value: {name}. "
-            "Add the required Reddit API credentials in repository Settings > Secrets and variables > Actions."
+            "Add the required Reddit OAuth credentials in repository Settings > Secrets and variables > Actions."
         )
     return value
 
@@ -22,26 +23,30 @@ def required(name):
 def main():
     client_id = required("REDDIT_CLIENT_ID")
     client_secret = required("REDDIT_CLIENT_SECRET")
-    username = required("REDDIT_USERNAME")
-    password = required("REDDIT_PASSWORD")
-    user_agent = os.environ.get(
-        "REDDIT_USER_AGENT",
-        f"script:bluesky-ai-bot:v1.0 (by u/{username})",
-    ).strip()
+    refresh_token = required("REDDIT_REFRESH_TOKEN")
+    expected_username = required("REDDIT_USERNAME")
+    user_agent = (
+        os.environ.get("REDDIT_USER_AGENT", "").strip()
+        or f"script:bluesky-ai-bot:v1.0 (by u/{expected_username})"
+    )
 
     reddit = praw.Reddit(
         client_id=client_id,
         client_secret=client_secret,
-        username=username,
-        password=password,
+        refresh_token=refresh_token,
         user_agent=user_agent,
     )
 
-    # Verify that Reddit accepted the credentials before doing anything else.
+    # Verify the authorized account before doing anything else.
     account = reddit.user.me()
     if account is None:
-        raise RuntimeError("Reddit authentication did not return an account.")
-    print(f"Reddit authentication successful for u/{account.name}.")
+        raise RuntimeError("Reddit OAuth did not return an authenticated account.")
+    if account.name.lower() != expected_username.lower():
+        raise RuntimeError(
+            f"OAuth token belongs to u/{account.name}, but REDDIT_USERNAME is "
+            f"u/{expected_username}. Check the configured account."
+        )
+    print(f"Reddit OAuth check successful for u/{account.name}.")
 
     publish = os.environ.get("REDDIT_PUBLISH", "false").strip().lower() == "true"
     if not publish:
@@ -51,9 +56,6 @@ def main():
     subreddit_name = required("REDDIT_SUBREDDIT").removeprefix("r/").strip()
     title = required("REDDIT_POST_TITLE")
     body = required("REDDIT_POST_BODY")
-
-    if title.lower().startswith("test") and subreddit_name.lower() != "test":
-        print("Reminder: test posts should go to a subreddit where you have permission to test.")
 
     submission = reddit.subreddit(subreddit_name).submit(title=title, selftext=body)
     print(f"Reddit post published: https://www.reddit.com{submission.permalink}")
