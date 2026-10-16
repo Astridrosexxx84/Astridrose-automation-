@@ -3,8 +3,7 @@ name: Run Bluesky bot
 on:
   workflow_dispatch:
   schedule:
-    # Every Tuesday at 10:00 AM New Zealand time during NZ daylight saving.
-    # GitHub cron uses UTC; local time shifts by an hour when NZ changes clocks.
+    # Weekly safety check; publishing stays disabled while the toolkit is being tested.
     - cron: "0 21 * * 1"
 
 permissions:
@@ -22,8 +21,9 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Run bot
+      - name: Run bot in safe dry-run mode
         env:
           BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
           BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
+          BLUESKY_DRY_RUN: "true"
         run: python Bot.py
