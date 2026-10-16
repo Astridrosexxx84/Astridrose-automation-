@@ -31,6 +31,11 @@ def main():
     week_number = date.today().isocalendar().week
     post_text = custom_text if custom_text else POSTS[(week_number - 1) % len(POSTS)]
 
+    # Safe test mode: exercise post selection without logging in or publishing.
+    if os.environ.get("BLUESKY_DRY_RUN", "false").strip().lower() == "true":
+        print(f"DRY RUN: would publish: {post_text}")
+        return
+
     client = Client()
     client.login(handle, app_password)
     client.send_post(text=post_text)
