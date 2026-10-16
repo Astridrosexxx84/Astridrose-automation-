@@ -2,9 +2,6 @@ name: Run Bluesky bot
 
 on:
   workflow_dispatch:
-  schedule:
-    # Weekly safety check; publishing stays disabled while the toolkit is being tested.
-    - cron: "0 21 * * 1"
 
 permissions:
   contents: read
