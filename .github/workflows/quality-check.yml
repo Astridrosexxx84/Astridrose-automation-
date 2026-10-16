@@ -49,6 +49,10 @@ jobs:
       - name: Confirm Reddit publishing is opt-in
         run: python -c "from pathlib import Path; s=Path('RedditBot.py').read_text(); assert 'os.environ.get(\"REDDIT_PUBLISH\", \"false\")' in s"
 
+      - name: Confirm Reddit workflow cannot publish during setup
+        run: |
+          grep -q 'REDDIT_PUBLISH: "false"' .github/workflows/reddit.yml
+          ! grep -q 'inputs.publish' .github/workflows/reddit.yml
       - name: Upload generated toolkit outputs
         uses: actions/upload-artifact@v4
         with:
