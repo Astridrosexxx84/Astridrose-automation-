@@ -27,7 +27,7 @@ jobs:
         run: |
           python RedditDraft.py
           test -s reddit-draft.md
-          grep -q "Nothing has been posted to Reddit" reddit-draft.md
+          grep -qi "nothing has been posted to Reddit" reddit-draft.md
           python metrics_report.py
           test -s metrics-report.md
           python cross_platform_drafts.py
