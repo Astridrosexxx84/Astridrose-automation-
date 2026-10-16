@@ -2,9 +2,6 @@ name: Weekly safe toolkit pack
 
 on:
   workflow_dispatch:
-  schedule:
-    # Generate review-only files weekly; this workflow never publishes.
-    - cron: "0 22 * * 0"
 
 permissions:
   contents: read
