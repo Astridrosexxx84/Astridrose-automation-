@@ -1,22 +1,37 @@
-name: Build cross-platform draft pack
+name: Weekly safe toolkit pack
+
 on:
   workflow_dispatch:
   schedule:
+    # Generate review-only files weekly; this workflow never publishes.
     - cron: "0 22 * * 0"
+
 permissions:
   contents: read
+
 jobs:
-  drafts:
+  prepare:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Generate drafts for major platforms
+      - name: Generate cross-platform draft pack
         run: python cross_platform_drafts.py
-      - uses: actions/upload-artifact@v4
+      - name: Generate neutral Reddit hello draft
+        run: python RedditDraft.py
+      - name: Generate metrics report
+        run: python metrics_report.py
+      - name: Upload all review-only outputs
+        uses: actions/upload-artifact@v4
         with:
-          name: cross-platform-draft-pack
-          path: cross-platform-draft-pack.md
+          name: weekly-toolkit-pack
+          path: |
+            cross-platform-draft-pack.md
+            reddit-draft.md
+            metrics-report.md
+          if-no-files-found: error
           retention-days: 30
