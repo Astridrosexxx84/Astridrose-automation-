@@ -48,3 +48,14 @@ jobs:
           grep -q "YouTube Shorts" cross-platform-draft-pack.md
       - name: Confirm Reddit publishing is opt-in
         run: python -c "from pathlib import Path; s=Path('RedditBot.py').read_text(); assert 'os.environ.get(\"REDDIT_PUBLISH\", \"false\")' in s"
+
+      - name: Upload generated toolkit outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: toolkit-validation-outputs
+          path: |
+            reddit-draft.md
+            metrics-report.md
+            cross-platform-draft-pack.md
+          if-no-files-found: error
+          retention-days: 7
