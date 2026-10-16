@@ -21,6 +21,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
       - name: Check Python syntax
         run: python -m compileall -q Bot.py RedditBot.py RedditDraft.py metrics_report.py cross_platform_drafts.py
       - name: Test Bluesky dry run
