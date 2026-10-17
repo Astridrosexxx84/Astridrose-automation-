@@ -30,7 +30,7 @@ def gemini(prompt, api_key):
         headers={"Content-Type": "application/json", "x-goog-api-key": api_key},
         payload={
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-            "generationConfig": {"temperature": 0.5, "maxOutputTokens": 1200},
+            "generationConfig": {"maxOutputTokens": 1200},
         },
     )
     candidates = result.get("candidates", [])
