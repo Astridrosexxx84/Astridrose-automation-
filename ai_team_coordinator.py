@@ -181,14 +181,27 @@ def main():
         openrouter_answer = "OpenRouter contribution unavailable. Diagnostic: " + str(exc)
         print("OpenRouter unavailable; continuing with other providers: " + str(exc))
 
-    final = gemini(
-        "You are the lead coordinator. Combine three independent analyses. Preserve useful disagreements, flag unsupported certainty, and produce a recommendation, rationale, next three actions, risks, cost safeguards, and success measures. Nothing may be published or changed in an external account. Use only the task and analyses below; flag facts needing verification.\n\nTASK:\n"
-        + task + "\n\nGEMINI ANALYSIS:\n" + first
-        + "\n\nGROQ ANALYSIS (" + groq_model + "):\n" + groq_answer
-        + "\n\nOPENROUTER ANALYSIS (" + openrouter_model + "):\n" + openrouter_answer,
-        gemini_key,
-    )
-    print("Gemini synthesis complete.")
+    try:
+        final = gemini(
+            "You are the lead coordinator. Combine three independent analyses. Preserve useful disagreements, flag unsupported certainty, and produce a recommendation, rationale, next three actions, risks, cost safeguards, and success measures. Nothing may be published or changed in an external account. Use only the task and analyses below; flag facts needing verification.\n\nTASK:\n"
+            + task + "\n\nGEMINI ANALYSIS:\n" + first
+            + "\n\nGROQ ANALYSIS (" + groq_model + "):\n" + groq_answer
+            + "\n\nOPENROUTER ANALYSIS (" + openrouter_model + "):\n" + openrouter_answer,
+            gemini_key,
+        )
+        print("Gemini synthesis complete.")
+        synthesis_status = "completed"
+    except RuntimeError as exc:
+        # Keep the completed independent work even if the final Gemini call is unavailable.
+        final = (
+            "Gemini final synthesis unavailable: " + str(exc) +
+            "\n\nFallback summary: use the Gemini initial analysis below as the baseline, "
+            "then compare it with the Groq and OpenRouter challenges. Prioritize only actions "
+            "that remain consistent with the $0 budget and review-only safety constraints."
+        )
+        synthesis_status = "unavailable; fallback report generated"
+        print("Gemini synthesis unavailable; generating fallback report: " + str(exc))
+
 
     report = f"""# Astrid Rose AI Team Report
 
@@ -196,7 +209,7 @@ Generated: {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")}
 Coordinator/researcher: Google {GEMINI_MODEL}
 Independent challenger: Groq {groq_model}
 Independent challenger: OpenRouter {openrouter_model}
-Final synthesizer: Google {GEMINI_MODEL}
+Final synthesizer: Google {GEMINI_MODEL} ({synthesis_status})
 Scope: analysis only; no posts, comments, account changes, or publishing.
 
 ## Task
