@@ -12,7 +12,9 @@ GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/" + G
 
 def request_json(url, method="GET", payload=None, headers=None, timeout=60):
     data = None if payload is None else json.dumps(payload).encode("utf-8")
-    request = urllib.request.Request(url, data=data, method=method, headers=headers or {})
+    request_headers = {"User-Agent": "AstridRoseAI-Team/1.0 (+https://github.com/Astridrosexxx84/Astridrose-automation-)"}
+    request_headers.update(headers or {})
+    request = urllib.request.Request(url, data=data, method=method, headers=request_headers)
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
             return json.loads(response.read().decode("utf-8"))
