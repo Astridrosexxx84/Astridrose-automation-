@@ -1,4 +1,4 @@
-"""Coordinate a small, free-tier AI team. Analysis only; never publishes."""
+"""Coordinate several free-tier AI providers. Analysis only; never publishes."""
 import json
 import os
 import sys
@@ -43,6 +43,39 @@ def gemini(prompt, api_key):
     return answer.strip()
 
 
+def openai_compatible_chat(url, api_key, model_id, prompt, title):
+    result = request_json(
+        url,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "X-Title": title,
+        },
+        payload={
+            "model": model_id,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are an independent analyst. Be candid and practical, respect the $0 budget, do not claim web research, and never publish content or change external accounts.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            "temperature": 0.6,
+            "max_tokens": 1200,
+        },
+    )
+    choices = result.get("choices", [])
+    if not choices:
+        raise RuntimeError(f"Model {model_id} returned no answer.")
+    answer = choices[0].get("message", {}).get("content", "")
+    if isinstance(answer, list):
+        answer = "\n".join(item.get("text", "") for item in answer if isinstance(item, dict))
+    if not isinstance(answer, str) or not answer.strip():
+        raise RuntimeError(f"Model {model_id} returned an empty answer.")
+    return answer.strip()
+
+
 def choose_free_openrouter_model():
     result = request_json("https://openrouter.ai/api/v1/models")
     free_models = []
@@ -60,7 +93,7 @@ def choose_free_openrouter_model():
         if is_free:
             free_models.append(model_id)
     if not free_models:
-        raise RuntimeError("No listed zero-price :free model is available. Stopped rather than trying a paid model.")
+        raise RuntimeError("No listed zero-price :free OpenRouter model is available. Stopped rather than trying a paid model.")
     preferred = [
         "qwen/qwen3-4b:free",
         "google/gemma-3-27b-it:free",
@@ -72,68 +105,71 @@ def choose_free_openrouter_model():
     return sorted(free_models)[0]
 
 
-def openrouter(prompt, api_key):
-    model_id = choose_free_openrouter_model()
+def choose_groq_model(api_key):
     result = request_json(
-        "https://openrouter.ai/api/v1/chat/completions",
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://github.com/Astridrosexxx84/Astridrose-automation-",
-            "X-Title": "Astrid Rose AI Team",
-        },
-        payload={
-            "model": model_id,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are an independent analyst. Be candid and practical, respect the $0 budget, do not claim web research, and never publish content or change external accounts.",
-                },
-                {"role": "user", "content": prompt},
-            ],
-            "temperature": 0.6,
-            "max_tokens": 1200,
-        },
+        "https://api.groq.com/openai/v1/models",
+        headers={"Authorization": f"Bearer {api_key}"},
     )
-    choices = result.get("choices", [])
-    if not choices:
-        raise RuntimeError(f"OpenRouter model {model_id} returned no answer.")
-    answer = choices[0].get("message", {}).get("content", "")
-    if isinstance(answer, list):
-        answer = "\n".join(item.get("text", "") for item in answer if isinstance(item, dict))
-    if not isinstance(answer, str) or not answer.strip():
-        raise RuntimeError(f"OpenRouter model {model_id} returned an empty answer.")
-    return model_id, answer.strip()
+    available = [item.get("id", "") for item in result.get("data", []) if item.get("id")]
+    if not available:
+        raise RuntimeError("Groq returned no available models.")
+    preferred = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+    for model_id in preferred:
+        if model_id in available:
+            return model_id
+    return sorted(available)[0]
 
 
 def main():
     gemini_key = os.environ.get("GEMINI_API_KEY", "").strip()
     openrouter_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
+    groq_key = os.environ.get("GROQ_API_KEY", "").strip()
     task = os.environ.get("AI_TEAM_TASK", "").strip()
-    if not gemini_key or not openrouter_key:
-        raise SystemExit("Missing GEMINI_API_KEY or OPENROUTER_API_KEY. Add both as GitHub Actions secrets; never paste keys into source code or chat.")
+    missing = [
+        name for name, value in [
+            ("GEMINI_API_KEY", gemini_key),
+            ("OPENROUTER_API_KEY", openrouter_key),
+            ("GROQ_API_KEY", groq_key),
+        ] if not value
+    ]
+    if missing:
+        raise SystemExit("Missing GitHub Actions secrets: " + ", ".join(missing) + ". Never paste keys into source code or chat.")
     if not task:
         task = "Design one practical $0-upfront experiment for the Astrid Rose creator business. Focus on a repeatable workflow, measurable demand, and free tools. Do not create or publish actual content."
     task = task[:4000]
 
-    print("AI team starting: Gemini analysis, independent OpenRouter challenge, Gemini synthesis.")
+    print("AI team starting: Gemini analysis, Groq challenge, OpenRouter challenge, Gemini synthesis.")
     first = gemini(
         "Analyze this $0-upfront creator automation task. Give the objective, assumptions, three options, best first experiment, risks, and measurable success criteria. Label facts needing current research. Do not publish anything.\n\nTASK:\n" + task,
         gemini_key,
     )
     print("Gemini first pass complete.")
 
-    model_id, second = openrouter(
-        "Independently analyze the task. Do not merely agree with another model. Offer a different approach, challenge weak assumptions, identify failure modes, and propose a small high-value $0 experiment. Do not invent current facts or claim web research.\n\nTASK:\n" + task,
-        openrouter_key,
+    groq_model = choose_groq_model(groq_key)
+    groq_answer = openai_compatible_chat(
+        "https://api.groq.com/openai/v1/chat/completions",
+        groq_key,
+        groq_model,
+        "Independently analyze the task. Challenge assumptions, find failure modes, and suggest a different high-value $0 experiment. Do not invent current facts or claim web research.\n\nTASK:\n" + task,
+        "Astrid Rose AI Team - Groq",
     )
-    print(f"OpenRouter independent challenge complete: {model_id}")
+    print(f"Groq independent challenge complete: {groq_model}")
+
+    openrouter_model = choose_free_openrouter_model()
+    openrouter_answer = openai_compatible_chat(
+        "https://openrouter.ai/api/v1/chat/completions",
+        openrouter_key,
+        openrouter_model,
+        "Independently analyze the task. Do not merely agree with other models. Offer another approach, challenge weak assumptions, and identify failure modes. Do not invent current facts or claim web research.\n\nTASK:\n" + task,
+        "Astrid Rose AI Team - OpenRouter",
+    )
+    print(f"OpenRouter independent challenge complete: {openrouter_model}")
 
     final = gemini(
-        "You are the lead coordinator. Combine the two independent analyses. Preserve useful disagreements, flag unsupported certainty, and produce a recommendation, rationale, next three actions, risks, cost safeguards, and success measures. Nothing may be published or changed in an external account. Use only the task and analyses below; flag facts needing verification.\n\nTASK:\n"
+        "You are the lead coordinator. Combine three independent analyses. Preserve useful disagreements, flag unsupported certainty, and produce a recommendation, rationale, next three actions, risks, cost safeguards, and success measures. Nothing may be published or changed in an external account. Use only the task and analyses below; flag facts needing verification.\n\nTASK:\n"
         + task + "\n\nGEMINI ANALYSIS:\n" + first
-        + "\n\nOPENROUTER ANALYSIS (" + model_id + "):\n" + second,
+        + "\n\nGROQ ANALYSIS (" + groq_model + "):\n" + groq_answer
+        + "\n\nOPENROUTER ANALYSIS (" + openrouter_model + "):\n" + openrouter_answer,
         gemini_key,
     )
     print("Gemini synthesis complete.")
@@ -142,7 +178,8 @@ def main():
 
 Generated: {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")}
 Coordinator/researcher: Google {GEMINI_MODEL}
-Independent challenger: OpenRouter {model_id}
+Independent challenger: Groq {groq_model}
+Independent challenger: OpenRouter {openrouter_model}
 Final synthesizer: Google {GEMINI_MODEL}
 Scope: analysis only; no posts, comments, account changes, or publishing.
 
@@ -158,14 +195,18 @@ Scope: analysis only; no posts, comments, account changes, or publishing.
 
 {first}
 
+## Groq independent challenge
+
+{groq_answer}
+
 ## OpenRouter independent challenge
 
-{second}
+{openrouter_answer}
 
 ## Cost and safety notes
 
-- OpenRouter is restricted to listed models whose IDs end in :free and whose prompt/completion prices are zero.
-- If no qualifying free OpenRouter model is available, the run stops rather than trying a paid model.
+- OpenRouter is restricted to listed models whose IDs end in :free and whose prompt/completion prices are zero. If none is available, the run stops rather than trying a paid model.
+- Groq uses a model listed as available to this API account. Groq limits are account/model-specific; keep billing disabled and stop if the console indicates paid usage is required.
 - Gemini uses {GEMINI_MODEL}, listed in official pricing documentation as available on the free tier when this was prepared. Keep the project on the free tier and do not enable billing for this workflow.
 - Free limits and model availability can change; failed requests stop the run.
 - The task and intermediate analyses are sent to the providers. Do not include passwords, API keys, sensitive personal information, or confidential third-party data.
