@@ -14,7 +14,7 @@ import urllib.request
 
 API = "https://www.googleapis.com/youtube/v3"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
-PLAYLIST_TITLE = "Busty bikini try ons"
+PLAYLIST_TITLE = "90s Cartoon Nostalgia"
 
 
 def request_json(url, *, method="GET", headers=None, body=None):
@@ -111,7 +111,7 @@ def get_or_create_playlist(token):
     created = api(token, "playlists", {"part": "snippet,status"}, method="POST", body={
         "snippet": {
             "title": PLAYLIST_TITLE,
-            "description": "A curated collection of public bikini try-on videos.",
+            "description": "A fan-curated collection of publicly available YouTube videos about 1990s cartoons, including official uploads, retrospectives, theme-song discussions, and nostalgia features. This playlist links to original YouTube uploads; it does not claim ownership of the videos.",
         },
         "status": {"privacyStatus": "public"},
     })
