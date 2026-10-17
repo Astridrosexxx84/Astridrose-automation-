@@ -2,6 +2,7 @@
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
@@ -28,16 +29,30 @@ def request_json(url, method="GET", payload=None, headers=None, timeout=180):
 
 
 def gemini(prompt, api_key):
-    result = request_json(
-        GEMINI_ENDPOINT,
-        method="POST",
-        headers={"Content-Type": "application/json", "x-goog-api-key": api_key},
-        payload={
-            "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-            "generationConfig": {"maxOutputTokens": 1200},
-        },
-    )
-    candidates = result.get("candidates", [])
+    payload = {
+        "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+        "generationConfig": {"maxOutputTokens": 1200},
+    }
+    result = None
+    for attempt in range(3):
+        try:
+            result = request_json(
+                GEMINI_ENDPOINT,
+                method="POST",
+                headers={"Content-Type": "application/json", "x-goog-api-key": api_key},
+                payload=payload,
+                timeout=180,
+            )
+            break
+        except RuntimeError as exc:
+            message = str(exc)
+            transient = "HTTP 503" in message or "HTTP 429" in message or "timed out" in message.lower()
+            if not transient or attempt == 2:
+                raise
+            delay = 2 ** (attempt + 1)
+            print(f"Gemini transient error; retrying in {delay}s (attempt {attempt + 2}/3): {message[:180]}")
+            time.sleep(delay)
+    candidates = result.get("candidates", []) if result else []
     if not candidates:
         raise RuntimeError("Gemini returned no answer.")
     parts = candidates[0].get("content", {}).get("parts", [])
@@ -143,11 +158,15 @@ def main():
     task = task[:4000]
 
     print("AI team starting: Gemini analysis, Groq challenge, OpenRouter challenge, Gemini synthesis.")
-    first = gemini(
-        "Analyze this $0-upfront creator automation task. Give the objective, assumptions, three options, best first experiment, risks, and measurable success criteria. Label facts needing current research. Do not publish anything.\n\nTASK:\n" + task,
-        gemini_key,
-    )
-    print("Gemini first pass complete.")
+    try:
+        first = gemini(
+            "Analyze this $0-upfront creator automation task. Give the objective, assumptions, three options, best first experiment, risks, and measurable success criteria. Label facts needing current research. Do not publish anything.\n\nTASK:\n" + task,
+            gemini_key,
+        )
+        print("Gemini first pass complete.")
+    except RuntimeError as exc:
+        first = "Gemini initial analysis unavailable after retries: " + str(exc)
+        print("Gemini initial analysis unavailable; continuing with other providers: " + str(exc))
 
     # A provider access error should not prevent the other free providers from contributing.
     # Keep the exact failure in the report so it can be diagnosed without exposing credentials.
