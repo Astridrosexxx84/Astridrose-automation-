@@ -145,25 +145,37 @@ def main():
     )
     print("Gemini first pass complete.")
 
-    groq_model = choose_groq_model(groq_key)
-    groq_answer = openai_compatible_chat(
-        "https://api.groq.com/openai/v1/chat/completions",
-        groq_key,
-        groq_model,
-        "Independently analyze the task. Challenge assumptions, find failure modes, and suggest a different high-value $0 experiment. Do not invent current facts or claim web research.\n\nTASK:\n" + task,
-        "Astrid Rose AI Team - Groq",
-    )
-    print(f"Groq independent challenge complete: {groq_model}")
+    # A provider access error should not prevent the other free providers from contributing.
+    # Keep the exact failure in the report so it can be diagnosed without exposing credentials.
+    try:
+        groq_model = choose_groq_model(groq_key)
+        groq_answer = openai_compatible_chat(
+            "https://api.groq.com/openai/v1/chat/completions",
+            groq_key,
+            groq_model,
+            "Independently analyze the task. Challenge assumptions, find failure modes, and suggest a different high-value $0 experiment. Do not invent current facts or claim web research.\n\nTASK:\n" + task,
+            "Astrid Rose AI Team - Groq",
+        )
+        print(f"Groq independent challenge complete: {groq_model}")
+    except RuntimeError as exc:
+        groq_model = "unavailable"
+        groq_answer = "Groq contribution unavailable. Diagnostic: " + str(exc)
+        print("Groq unavailable; continuing with other providers: " + str(exc))
 
-    openrouter_model = choose_free_openrouter_model()
-    openrouter_answer = openai_compatible_chat(
-        "https://openrouter.ai/api/v1/chat/completions",
-        openrouter_key,
-        openrouter_model,
-        "Independently analyze the task. Do not merely agree with other models. Offer another approach, challenge weak assumptions, and identify failure modes. Do not invent current facts or claim web research.\n\nTASK:\n" + task,
-        "Astrid Rose AI Team - OpenRouter",
-    )
-    print(f"OpenRouter independent challenge complete: {openrouter_model}")
+    try:
+        openrouter_model = choose_free_openrouter_model()
+        openrouter_answer = openai_compatible_chat(
+            "https://openrouter.ai/api/v1/chat/completions",
+            openrouter_key,
+            openrouter_model,
+            "Independently analyze the task. Do not merely agree with other models. Offer another approach, challenge weak assumptions, and identify failure modes. Do not invent current facts or claim web research.\n\nTASK:\n" + task,
+            "Astrid Rose AI Team - OpenRouter",
+        )
+        print(f"OpenRouter independent challenge complete: {openrouter_model}")
+    except RuntimeError as exc:
+        openrouter_model = "unavailable"
+        openrouter_answer = "OpenRouter contribution unavailable. Diagnostic: " + str(exc)
+        print("OpenRouter unavailable; continuing with other providers: " + str(exc))
 
     final = gemini(
         "You are the lead coordinator. Combine three independent analyses. Preserve useful disagreements, flag unsupported certainty, and produce a recommendation, rationale, next three actions, risks, cost safeguards, and success measures. Nothing may be published or changed in an external account. Use only the task and analyses below; flag facts needing verification.\n\nTASK:\n"
