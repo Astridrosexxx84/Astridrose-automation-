@@ -1,0 +1,46 @@
+name: Astrid Rose — YouTube keyword search
+
+on:
+  workflow_dispatch:
+    inputs:
+      search_query:
+        description: "Keywords to search on YouTube"
+        required: true
+        type: string
+      max_results:
+        description: "Number of results (1–25)"
+        required: true
+        default: "10"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Search YouTube (no playlist changes)
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          SEARCH_QUERY: ${{ inputs.search_query }}
+          MAX_RESULTS: ${{ inputs.max_results }}
+        run: python youtube_keyword_search.py
+
+      - name: Save search results
+        uses: actions/upload-artifact@v4
+        with:
+          name: youtube-search-results
+          path: youtube-search-results.txt
+          if-no-files-found: error
+          retention-days: 7
