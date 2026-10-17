@@ -1,0 +1,40 @@
+name: Astrid Rose — AI team (manual, review-only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "Question or task for the AI team (no secrets or sensitive data)"
+        required: true
+        type: string
+        default: "Design one practical $0-upfront experiment for the Astrid Rose creator business. Focus on a repeatable workflow, measurable demand, and free tools. Do not create or publish actual content."
+
+permissions:
+  contents: read
+
+jobs:
+  ai-team:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run the AI team (analysis only)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          AI_TEAM_TASK: ${{ inputs.task }}
+        run: python ai_team_coordinator.py
+      - name: Save report for review
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: astrid-rose-ai-team-report
+          path: ai-team-report.md
+          if-no-files-found: error
+          retention-days: 14
