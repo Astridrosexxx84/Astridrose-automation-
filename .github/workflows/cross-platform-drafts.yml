@@ -1,4 +1,4 @@
-name: Weekly safe toolkit pack
+name: Astrid Rose — content toolkit (manual)
 
 on:
   workflow_dispatch:
@@ -18,17 +18,14 @@ jobs:
           python-version: "3.12"
       - name: Generate cross-platform draft pack
         run: python cross_platform_drafts.py
-      - name: Generate neutral Reddit hello draft
-        run: python RedditDraft.py
       - name: Generate metrics report
         run: python metrics_report.py
-      - name: Upload all review-only outputs
+      - name: Upload review-only outputs
         uses: actions/upload-artifact@v4
         with:
-          name: weekly-toolkit-pack
+          name: astrid-rose-toolkit
           path: |
             cross-platform-draft-pack.md
-            reddit-draft.md
             metrics-report.md
           if-no-files-found: error
           retention-days: 30
