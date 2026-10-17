@@ -1,11 +1,14 @@
-name: Astrid Rose — YouTube keyword search
+name: 90s Cartoon Nostalgia — weekly YouTube discovery
 
 on:
+  schedule:
+    - cron: "0 20 * * 0"
   workflow_dispatch:
     inputs:
       search_query:
         description: "Keywords to search on YouTube"
         required: true
+        default: "1990s cartoons official clips nostalgia retrospectives"
         type: string
       max_results:
         description: "Number of results (1–25)"
@@ -28,19 +31,19 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Search YouTube (no playlist changes)
+      - name: Search YouTube (discovery only; no posts or playlist changes)
         env:
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
-          SEARCH_QUERY: ${{ inputs.search_query }}
-          MAX_RESULTS: ${{ inputs.max_results }}
+          SEARCH_QUERY: ${{ inputs.search_query || '1990s cartoons official clips nostalgia retrospectives' }}
+          MAX_RESULTS: ${{ inputs.max_results || '10' }}
         run: python youtube_keyword_search.py
 
-      - name: Save search results
+      - name: Save search results for review
         uses: actions/upload-artifact@v4
         with:
-          name: youtube-search-results
+          name: 90s-cartoon-candidates
           path: youtube-search-results.txt
           if-no-files-found: error
           retention-days: 7
