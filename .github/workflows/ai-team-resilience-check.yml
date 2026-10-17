@@ -1,0 +1,38 @@
+name: Temporary AI team resilience check
+
+on:
+  push:
+    paths:
+      - ".github/workflows/ai-team-resilience-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile coordinator
+        run: python -m py_compile ai_team_coordinator.py
+      - name: Run AI team coordinator (analysis only)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          AI_TEAM_TASK: "Validation only: independently assess one practical $0-upfront experiment. Do not publish content or modify accounts."
+        run: python -u ai_team_coordinator.py
+      - name: Save test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: astrid-rose-ai-team-resilience-check
+          path: ai-team-report.md
+          if-no-files-found: warn
+          retention-days: 7
