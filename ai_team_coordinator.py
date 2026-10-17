@@ -10,7 +10,7 @@ GEMINI_MODEL = "gemini-3.8-flash"
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent"
 
 
-def request_json(url, method="GET", payload=None, headers=None, timeout=60):
+def request_json(url, method="GET", payload=None, headers=None, timeout=180):
     data = None if payload is None else json.dumps(payload).encode("utf-8")
     request_headers = {"User-Agent": "AstridRoseAI-Team/1.0 (+https://github.com/Astridrosexxx84/Astridrose-automation-)"}
     request_headers.update(headers or {})
@@ -21,6 +21,8 @@ def request_json(url, method="GET", payload=None, headers=None, timeout=60):
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")[:1200]
         raise RuntimeError(f"API returned HTTP {exc.code}: {detail}") from exc
+    except TimeoutError as exc:
+        raise RuntimeError(f"API request timed out after {timeout} seconds.") from exc
     except urllib.error.URLError as exc:
         raise RuntimeError(f"Network request failed: {exc.reason}") from exc
 
