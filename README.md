@@ -28,6 +28,7 @@ Existing content planning and metrics files are retained for now, but this repos
 - [x] OAuth desktop client created
 - [ ] Securely configure credentials in GitHub Actions
 - [ ] Authorize the YouTube account and obtain a refresh token
-- [ ] Add and test the manual playlist workflow
+- [x] Add the manual playlist workflow and playlist manager script
+- [ ] Add and test GitHub Actions secrets and OAuth authorization
 
 Never commit downloaded OAuth JSON files or secrets.
