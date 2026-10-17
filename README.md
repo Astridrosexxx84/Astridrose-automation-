@@ -4,7 +4,7 @@ Free-first automation tools for the Astrid Rose creator project.
 
 ## Current focus: YouTube playlist management
 
-The first tool will add selected public YouTube videos to a playlist owned by the channel. It will use the official YouTube Data API and GitHub Actions, with manual runs only.
+The tools use the official YouTube Data API and GitHub Actions, with manual runs only. Keyword search returns public video results for review; a separate playlist manager adds chosen video URLs to the channel-owned playlist.
 
 - No videos are downloaded or re-uploaded.
 - No public posts or comments are published by this tool.
@@ -29,6 +29,7 @@ Existing content planning and metrics files are retained for now, but this repos
 - [ ] Securely configure credentials in GitHub Actions
 - [ ] Authorize the YouTube account and obtain a refresh token
 - [x] Add the manual playlist workflow and playlist manager script
+- [x] Add a manual keyword-search workflow that does not change playlists
 - [ ] Add and test GitHub Actions secrets and OAuth authorization
 
 Never commit downloaded OAuth JSON files or secrets.
