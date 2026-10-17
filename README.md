@@ -1,30 +1,33 @@
-# bluesky-ai-bot
+# Astrid Rose Automation
 
-AI-assisted Bluesky posting bot with an optional, separate Reddit integration.
+Free-first automation tools for the Astrid Rose creator project.
 
-## Reddit integration status
+## Current focus: YouTube playlist management
 
-The Reddit integration is **manual-only** and **safe by default**. It checks OAuth access but does not publish unless the workflow's `publish` input is explicitly set to true. It is not scheduled and will not affect the existing Bluesky workflow.
+The first tool will add selected public YouTube videos to a playlist owned by the channel. It will use the official YouTube Data API and GitHub Actions, with manual runs only.
 
-**Important:** Reddit currently requires explicit approval before accessing Reddit data through its API. Because this project is intended to support a paid-content funnel, obtain Reddit's written permission for the commercial use case before connecting or publishing. Follow Reddit's [Responsible Builder Policy](https://support.reddithelp.com/hc/en-us/articles/42728983564564-Responsible-Builder-Policy) and [API access guidance](https://support.reddithelp.com/hc/en-us/articles/14945211791892-Developer-Platform-Accessing-Reddit-Data). Do not attempt to bypass approval.
+- No videos are downloaded or re-uploaded.
+- No public posts or comments are published by this tool.
+- The workflow will only change playlists after Google OAuth has been authorized.
+- Google OAuth credentials and refresh tokens must be stored as GitHub Actions secrets, never committed to this repository or pasted into chat.
+- Keep the Google OAuth app in **Testing** while setting it up. Only authorized test users can grant access in that state.
 
-### When Reddit approves the app
+## Cost and safety
 
-Add these under GitHub repository **Settings → Secrets and variables → Actions**:
+This project is designed for a $0 upfront budget. YouTube Data API requests use quota; do not enable paid billing or enter payment details for this project. Review current Google API quota and OAuth policies before expanding use.
 
-- `REDDIT_CLIENT_ID`
-- `REDDIT_CLIENT_SECRET`
-- `REDDIT_REFRESH_TOKEN` (OAuth token authorized for the required scope)
-- `REDDIT_USERNAME` (username only, without `u/`)
-- Optional: `REDDIT_USER_AGENT` (a truthful, unique identifier for this app)
+## Other tools
 
-Never put credentials in source code or send them in chat.
+Existing content planning and metrics files are retained for now, but this repository is no longer a Bluesky bot. Old files will only be removed or renamed when their purpose has been checked so useful work is not lost.
 
-### Test the connection
+## Setup status
 
-1. Open **Actions → Test Reddit bot → Run workflow**.
-2. Leave **publish** set to false.
-3. Run it and inspect the log. A successful test reports the authorized Reddit account and confirms no post was published.
-4. Only after access approval and subreddit-rule checks, enable publishing manually and provide a title, body, and subreddit.
+- [x] Google Cloud project created
+- [x] YouTube Data API v3 enabled
+- [x] OAuth consent configuration started
+- [x] OAuth desktop client created
+- [ ] Securely configure credentials in GitHub Actions
+- [ ] Authorize the YouTube account and obtain a refresh token
+- [ ] Add and test the manual playlist workflow
 
-The Reddit workflow has no scheduled trigger. Do not automate repetitive promotional posts or post to communities that prohibit promotion.
+Never commit downloaded OAuth JSON files or secrets.
