@@ -14,7 +14,7 @@ import urllib.request
 
 API = "https://www.googleapis.com/youtube/v3"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
-PLAYLIST_TITLE = "90s Cartoon Nostalgia"
+PLAYLIST_TITLE = "Dragon Ball Z Nostalgia"
 
 
 def request_json(url, *, method="GET", headers=None, body=None):
@@ -111,7 +111,7 @@ def get_or_create_playlist(token):
     created = api(token, "playlists", {"part": "snippet,status"}, method="POST", body={
         "snippet": {
             "title": PLAYLIST_TITLE,
-            "description": "A fan-curated collection of publicly available YouTube videos about 1990s cartoons, including official uploads, retrospectives, theme-song discussions, and nostalgia features. This playlist links to original YouTube uploads; it does not claim ownership of the videos.",
+            "description": "A fan-curated collection of publicly available YouTube videos about Dragon Ball Z, prioritising official uploads, licensed music, trailers, and thoughtful retrospectives. This playlist links to original YouTube uploads and does not claim ownership of the videos.",
         },
         "status": {"privacyStatus": "public"},
     })
