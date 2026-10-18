@@ -2,13 +2,13 @@
 
 Free-first tools for curating YouTube videos into themed playlists using the official YouTube Data API and GitHub Actions.
 
-## Current focus: 90s Cartoon Nostalgia
+## Current focus: Dragon Ball Z Nostalgia
 
-The first channel theme is nostalgia for cartoons from the 1990s. Search ideas include:
-- 90s cartoon opening themes
-- Saturday morning cartoons from the 1990s
-- forgotten 90s animated series
-- official cartoon channel uploads and retrospectives
+The first channel theme is Dragon Ball Z nostalgia. Search ideas include:
+- official Dragon Ball Z clips and trailers
+- official music and opening themes where available
+- Dragon Ball Z retrospectives and character discussions
+- reputable fan analysis that adds commentary
 
 ## What this project does
 
@@ -34,8 +34,8 @@ This curation approach does not guarantee eligibility for YouTube monetization. 
 
 ## Workflows
 
-1. **YouTube keyword search** — enter a query such as `90s cartoon opening themes`; results are saved as an artifact for review. It does not change YouTube.
-2. **YouTube playlist manager** — enter the URLs of selected videos. The script creates or reuses the channel's `90s Cartoon Nostalgia` playlist and adds the chosen videos.
+1. **YouTube keyword search** — enter a query such as `Dragon Ball Z opening themes`; results are saved as an artifact for review. It does not change YouTube.
+2. **YouTube playlist manager** — enter the URLs of selected videos. The script creates or reuses the channel's `Dragon Ball Z Nostalgia` playlist and adds the chosen videos.
 
 ## Setup status
 
