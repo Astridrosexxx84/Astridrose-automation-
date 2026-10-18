@@ -1,4 +1,4 @@
-name: 90s Cartoon Nostalgia — weekly YouTube discovery
+name: Dragon Ball Z Nostalgia — weekly YouTube discovery
 
 on:
   schedule:
@@ -8,7 +8,7 @@ on:
       search_query:
         description: "Keywords to search on YouTube"
         required: true
-        default: "1990s cartoons official clips nostalgia retrospectives"
+        default: "Dragon Ball Z official clips music trailers retrospectives"
         type: string
       max_results:
         description: "Number of results (1–25)"
@@ -43,7 +43,7 @@ jobs:
       - name: Save search results for review
         uses: actions/upload-artifact@v4
         with:
-          name: 90s-cartoon-candidates
+          name: dbz-video-candidates
           path: youtube-search-results.txt
           if-no-files-found: error
           retention-days: 7
