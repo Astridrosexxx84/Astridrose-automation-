@@ -36,7 +36,7 @@ jobs:
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
-          SEARCH_QUERY: ${{ inputs.search_query || '1990s cartoons official clips nostalgia retrospectives' }}
+          SEARCH_QUERY: ${{ inputs.search_query || 'Dragon Ball Z official clips music trailers retrospectives' }}
           MAX_RESULTS: ${{ inputs.max_results || '10' }}
         run: python youtube_keyword_search.py
 
