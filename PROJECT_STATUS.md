@@ -33,3 +33,22 @@ Continue the YouTube OAuth setup, using text-only phone instructions if the user
 - Delegate independent research or review to Gemini/Groq/OpenRouter only if their free quotas are available; do not treat provider switching as a way to bypass usage limits.
 - Prefer deterministic scripts and scheduled GitHub Actions over using AI calls for repeatable tasks.
 - Keep the user in control of public playlist changes and any publishing.
+
+
+## Shared AI coordination model (user's explicit instruction, 2026-10-18)
+The user wants **all available AIs to share project coordination**, not merely separate specialist roles. This includes ChatGPT, Gemini, Groq, OpenRouter, and any other AI services later added to the workflow.
+
+### How coordination should work
+- Every participating AI should be invited to consider the overall project objective, current status, blockers, risks, and next best action when its available tools/context allow.
+- AIs may suggest tasks, critique decisions, identify mistakes, and review each other's recommendations; do not assume any one AI is automatically correct.
+- Specialist strengths can guide delegation, but roles are flexible: this is shared coordination, not rigid silos.
+- Use this file and committed project artifacts as the shared durable record. Each AI must read the latest status before making recommendations or changes, then record material decisions, evidence, changes, and unresolved questions.
+- Since AIs do not automatically share live conversations or all account access, pass context through this repository or an explicit handover. Never claim another AI has reviewed something unless that review actually happened.
+- Keep one current action at a time for the user; instructions must be mobile-friendly and simple.
+- Respect each provider's legitimate free-tier limits. Do not attempt to bypass limits by account rotation or other evasion. Prefer deterministic automation for routine tasks.
+- Avoid conflicting edits: coordinate proposed changes through the shared log; inspect current files before editing; verify changes and workflow runs after committing.
+- User remains in control of credentials, account authorization, and any public-facing playlist changes. Never put secrets in this file, commits, logs, or chat.
+- The project's current scope remains Dragon Ball Z YouTube curation and playlist building only. No social-media posting or promotional content unless the user changes the scope.
+
+### AI team currently configured
+The GitHub Actions AI coordinator currently requests analysis from Gemini, Groq, and OpenRouter and produces a report artifact. ChatGPT also participates through the connected GitHub tools and conversation. These are separate service calls, not a live shared group chat. Any additional AI must be explicitly connected/configured before it can participate automatically.
