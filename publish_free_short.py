@@ -111,7 +111,7 @@ def main():
     topic = os.getenv("DISCOVERY_TOPIC", "").strip()
     if not topic:
         raise RuntimeError("DISCOVERY_TOPIC is empty")
-    topic = re.sub(r"\\s+", " ", topic).strip()[:100]
+    topic = re.sub(r"\s+", " ", topic).strip()[:100]
     safe = re.sub(r"[^A-Za-z0-9 ]+", "", topic).strip()
     title = ("The Internet Rabbit Hole: " + safe)[:95]
     slides = [
