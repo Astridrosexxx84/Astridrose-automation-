@@ -7,15 +7,18 @@ Operating constraint: $0 upfront. Prefer renewable free allowances. Never buy cr
 This registry is the coordination record for Astrid's production pipeline. Keep it updated when a tool is connected, its allowance is checked, or a workflow changes. Do not treat a directory listing as a connected account, or an advertised free tier as verified account access.
 
 ## Pipeline
-1. Discover topics: Google Trends RSS / other free trend sources; use YouTube/vidIQ research only when available without consuming scarce quota.
-2. Validate opportunity: compare recency, audience demand, competition, and whether we can make an original contribution.
-3. Write: create a concise original script, hook, scene list, title, description, and captions.
-4. Produce media: use the cheapest eligible generator for each asset; preserve Astrid's character references and voice notes.
-5. Assemble: use free editing/rendering, captions, and audio tools; retain source assets and final MP4.
-6. Quality gate: check factual claims, copyright, sound, captions, format, watermark, licensing, and platform policy.
-7. Publish: use the existing GitHub Actions / YouTube upload workflow after its trend-selector path is verified; no unapproved paid API calls.
-8. Measure: read views, retention, engagement, and audience signals; feed results into the next topic selection.
-9. Track resources: record free credits, reset timing, watermark/export limits, commercial-use terms, and whether access is direct or manual.
+1. Discover multiple candidate topics using Google Trends RSS / other free trend sources; use YouTube/vidIQ research only when it is available without consuming scarce quota.
+2. Research the actual subject using credible primary and secondary sources; record verifiable claims and story angles.
+3. Audit media availability before story writing: find topic-specific images/video plus relevant free stock; record exact source links, creator, duration/format when available, licence metadata, attribution and intended scene.
+4. Assess rights and risk per asset. Public availability is not permission; fair use/fair dealing are context-specific, not blanket permissions. Never default to downloading and repackaging other creators' videos.
+5. Score and compare candidates on audience signal, research depth, media coverage, rights readiness and production feasibility. Record GO / CONDITIONAL / HOLD with reasons; change the topic/angle when usable media is insufficient.
+6. Only after the decision gate passes, write the original story, script, hook, storyboard, titles, description and captions against the verified inventory.
+7. Produce media: use the cheapest eligible generator only for genuine visual gaps; check licence and allowance first.
+8. Assemble with free editing/rendering, captions and audio tools; retain source assets and final MP4.
+9. Quality gate: check facts, asset rights, sound, captions, format, watermark and platform policy.
+10. Obtain human approval before public publishing; never publish automatically from a topic audit.
+11. Measure views, retention, engagement and audience signals; feed results into the next topic selection.
+12. Track free credits, reset timing, watermark/export limits, commercial-use terms, and whether access is direct or manual.
 
 ## Connected tools and current status
 
@@ -61,3 +64,10 @@ This registry is the coordination record for Astrid's production pipeline. Keep 
 - NEEDS TEST: plausible but not yet verified.
 
 Update this file as the source of truth when account checks and pipeline tests change.
+
+
+## Topic audit implementation
+- Workflow: `.github/workflows/topic-viability-audit.yml` (manual dispatch; blank topic uses the free Trends RSS selector).
+- Script: `topic_viability_audit.py`; outputs `topic-audit.md`, `topic-audit.json`, and `media-inventory.csv` as an artifact.
+- Research sources: Wikipedia REST summary, Wikimedia Commons API, NASA Image and Video Library API; Pexels/Pixabay search links are provided for additional manual sourcing.
+- This is a first-pass inventory and scoring gate, not automatic legal clearance. No media is counted as cleared automatically; every asset must be checked individually. First workflow run remains unverified.
