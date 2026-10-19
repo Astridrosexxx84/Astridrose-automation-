@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       search_query:
-        description: "Any topic or keyword phrase to research on YouTube"
+        description: "Comma-separated topics to compare in one run"
         required: true
-        default: "popular trending videos 2026"
+        default: "popular music 2026, gaming highlights 2026, viral food videos 2026, entertainment trending 2026, sports highlights 2026, technology videos 2026"
         type: string
       max_results:
         description: "Number of results (1–25)"
@@ -39,7 +39,7 @@ jobs:
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
-          SEARCH_QUERY: ${{ inputs.search_query || 'popular trending videos 2026' }}
+          SEARCH_QUERIES: ${{ inputs.search_query || 'popular music 2026, gaming highlights 2026, viral food videos 2026, entertainment trending 2026, sports highlights 2026, technology videos 2026' }}
           MAX_RESULTS: ${{ inputs.max_results || '10' }}
           LOOKBACK_DAYS: ${{ inputs.lookback_days || '30' }}
         run: python youtube_keyword_search.py
