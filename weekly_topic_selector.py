@@ -16,6 +16,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import xml.etree.ElementTree as ET
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 
@@ -203,13 +204,50 @@ def score_topic(token, query, recent_after, prior_after, recent_before):
     }
 
 
+def live_trends_fallback():
+    """Use a free live trends feed when YouTube search quota is exhausted."""
+    url = "https://trends.google.com/trending/rss?geo=US"
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as response:
+            root = ET.fromstring(response.read())
+    except Exception as exc:
+        raise RuntimeError(
+            "YouTube search quota is exhausted and the free Google Trends fallback "
+            f"could not be read: {exc}"
+        ) from None
+    for item in root.findall(".//item"):
+        title = (item.findtext("title") or "").strip()
+        title = re.sub(r"\s+", " ", title)
+        if title and len(title) >= 3:
+            with open("topic-discovery-scorecard.txt", "w", encoding="utf-8") as report:
+                report.write(
+                    "YouTube topic discovery fallback\n"
+                    "Primary discovery was blocked by the YouTube Search Queries daily quota.\n"
+                    "Fallback source: live Google Trends RSS (United States).\n"
+                    f"Selected live trend: {title}\n"
+                    "This is a live trend fallback, not a measured YouTube views-per-day score.\n"
+                )
+            print("YouTube Search quota is exhausted; using the free live Google Trends RSS fallback.", file=sys.stderr)
+            return title[:100]
+    raise RuntimeError("The free Google Trends RSS fallback contained no usable topics.")
+
+
 def main():
     token = get_token()
     now = datetime.now(timezone.utc)
     recent_start = now - timedelta(days=RECENT_DAYS)
     lookback_start = now - timedelta(days=LOOKBACK_DAYS)
     fmt = lambda value: value.strftime("%Y-%m-%dT%H:%M:%SZ")
-    candidates = discover_candidates(token, fmt(recent_start))
+    try:
+        candidates = discover_candidates(token, fmt(recent_start))
+    except RuntimeError as exc:
+        message = str(exc).lower()
+        if "quota exceeded" in message or "search queries per day" in message or "youtube api error 429" in message:
+            topic = live_trends_fallback()
+            print(topic)
+            return
+        raise
     results = []
     for topic in candidates:
         result = score_topic(token, topic, fmt(recent_start), fmt(lookback_start), fmt(recent_start))
