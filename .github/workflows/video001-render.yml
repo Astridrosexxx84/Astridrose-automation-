@@ -1,4 +1,4 @@
-name: Render VIDEO_001 draft
+name: Render and quality-check VIDEO_001 candidate
 
 on:
   push:
@@ -28,7 +28,7 @@ jobs:
       - name: Upload review package
         uses: actions/upload-artifact@v4
         with:
-          name: VIDEO_001_review_draft
+          name: VIDEO_001_final_review_candidate
           path: |
             output/VIDEO_001_Earth_From_Space.mp4
             output/VIDEO_001_captions.srt
