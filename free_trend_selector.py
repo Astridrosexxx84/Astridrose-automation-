@@ -69,7 +69,7 @@ def main():
             + (("\nFeed errors:\n" + "\n".join(failures) + "\n") if failures else "")
         )
     print(
-        f"English-market Google Trends: {len(GEOS) - len(failures)}/{len(GEOS)} feeds; 
+        f"English-market Google Trends: {len(GEOS) - len(failures)}/{len(GEOS)} feeds; "
         "YouTube Search calls: 0.",
         file=sys.stderr
     )
