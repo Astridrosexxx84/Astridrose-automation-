@@ -77,3 +77,8 @@ When a new AI takes over:
 
 ## Security and safety
 Use least-privilege repository access. Keep secrets in GitHub Actions Secrets or the relevant provider's secure secret store. Avoid sending confidential material to multiple providers. Review diffs before merging broad or destructive changes. Never delete project assets or rewrite the default branch history as a shortcut.
+
+
+## Battery meter and collaborative switchboard
+
+See AI_BATTERY_SYSTEM.md for the target design. Treat providers as interchangeable workers with observable, honest status—not fixed job titles. Share task briefs and evidence through GitHub; let suitable providers propose, challenge, and review one another's work. Track only quota information actually exposed by the provider; otherwise report it as unknown. Switch to another legitimately available free route on a limit or service failure, and use deterministic work when possible. Never rotate accounts or use paid routes to bypass a limit. The current Gemini/Groq/OpenRouter workflow is a first collaboration prototype, not yet a universal router.
