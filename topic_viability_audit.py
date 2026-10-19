@@ -205,6 +205,9 @@ def search_links(topic):
             "News coverage": f"https://news.google.com/search?q={q}",
             "Pexels videos": f"https://www.pexels.com/search/videos/{urllib.parse.quote(topic, safe='')}/",
             "Pixabay videos": f"https://pixabay.com/videos/search/{urllib.parse.quote(topic, safe='')}/",
+            "Openverse openly licensed images": f"https://openverse.org/search/image?q={q}",
+            "Library of Congress": f"https://www.loc.gov/search/?q={q}",
+            "Internet Archive movies and images": f"https://archive.org/search?query={q}%20AND%20(mediatype%3Amovies%20OR%20mediatype%3Aimage)",
             "YouTube reference research only": f"https://www.youtube.com/results?search_query={q}",
             "Google Trends explore": f"https://trends.google.com/trends/explore?q={q}"}
 
