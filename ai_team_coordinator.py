@@ -7,6 +7,8 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 
+from ai_battery import empty_ledger, record_event, save_ledger
+
 GEMINI_MODEL = "gemini-3.8-flash"
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent"
 
@@ -158,13 +160,29 @@ def main():
     task = task[:4000]
 
     print("AI team starting: Gemini analysis, Groq challenge, OpenRouter challenge, Gemini synthesis.")
+    battery = empty_ledger()
+    for provider, key in (("gemini", gemini_key), ("groq", groq_key), ("openrouter", openrouter_key)):
+        if not key:
+            record_event(battery, provider, "missing_config", configured=False, free_route="unknown")
+        else:
+            # A configured key is not evidence of remaining quota or a healthy connection.
+            battery["providers"][provider] = {
+                "status": "UNKNOWN", "checked_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "last_outcome": "not_tested", "last_success_at": None, "model": None,
+                "http_or_error_category": None, "reset_at": None, "free_route": "unknown",
+                "configured": True, "quota_remaining": "not exposed",
+                "note": "Credentials are configured; provider health and remaining quota have not yet been verified.",
+            }
+    battery["updated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     try:
         first = gemini(
             "Analyze this $0-upfront creator automation task. Give the objective, assumptions, three options, best first experiment, risks, and measurable success criteria. Label facts needing current research. Do not publish anything.\n\nTASK:\n" + task,
             gemini_key,
         )
+        record_event(battery, "gemini", "success", model=GEMINI_MODEL, free_route="unknown", configured=True)
         print("Gemini first pass complete.")
     except RuntimeError as exc:
+        record_event(battery, "gemini", "unknown_error", error=str(exc), model=GEMINI_MODEL, free_route="unknown", configured=True)
         first = "Gemini initial analysis unavailable after retries: " + str(exc)
         print("Gemini initial analysis unavailable; continuing with other providers: " + str(exc))
 
@@ -179,8 +197,10 @@ def main():
             "Independently analyze the task. Challenge assumptions, find failure modes, and suggest a different high-value $0 experiment. Do not invent current facts or claim web research.\n\nTASK:\n" + task,
             "Astrid Rose AI Team - Groq",
         )
+        record_event(battery, "groq", "success", model=groq_model, free_route="unknown", configured=True)
         print(f"Groq independent challenge complete: {groq_model}")
     except RuntimeError as exc:
+        record_event(battery, "groq", "unknown_error", error=str(exc), free_route="unknown", configured=True)
         groq_model = "unavailable"
         groq_answer = "Groq contribution unavailable. Diagnostic: " + str(exc)
         print("Groq unavailable; continuing with other providers: " + str(exc))
@@ -194,8 +214,10 @@ def main():
             "Independently analyze the task. Do not merely agree with other models. Offer another approach, challenge weak assumptions, and identify failure modes. Do not invent current facts or claim web research.\n\nTASK:\n" + task,
             "Astrid Rose AI Team - OpenRouter",
         )
+        record_event(battery, "openrouter", "success", model=openrouter_model, free_route="verified_zero_price", configured=True)
         print(f"OpenRouter independent challenge complete: {openrouter_model}")
     except RuntimeError as exc:
+        record_event(battery, "openrouter", "unknown_error", error=str(exc), free_route="unknown", configured=True)
         openrouter_model = "unavailable"
         openrouter_answer = "OpenRouter contribution unavailable. Diagnostic: " + str(exc)
         print("OpenRouter unavailable; continuing with other providers: " + str(exc))
@@ -208,10 +230,12 @@ def main():
             + "\n\nOPENROUTER ANALYSIS (" + openrouter_model + "):\n" + openrouter_answer,
             gemini_key,
         )
+        record_event(battery, "gemini", "success", model=GEMINI_MODEL, free_route="unknown", configured=True)
         print("Gemini synthesis complete.")
         synthesis_status = "completed"
     except RuntimeError as exc:
         # Keep the completed independent work even if the final Gemini call is unavailable.
+        record_event(battery, "gemini", "unknown_error", error=str(exc), model=GEMINI_MODEL, free_route="unknown", configured=True)
         final = (
             "Gemini final synthesis unavailable: " + str(exc) +
             "\n\nFallback summary: use the Gemini initial analysis below as the baseline, "
@@ -260,9 +284,14 @@ Scope: analysis only; no posts, comments, account changes, or publishing.
 - The task and intermediate analyses are sent to the providers. Do not include passwords, API keys, sensitive personal information, or confidential third-party data.
 - This script only writes a report. It does not publish, comment, schedule, or modify external accounts.
 """
+    save_ledger(battery)
+    with open("ai-battery-status.md", "w", encoding="utf-8") as file:
+        from ai_battery import render_markdown
+        file.write(render_markdown(battery))
     with open("ai-team-report.md", "w", encoding="utf-8") as file:
         file.write(report)
     print("Report created: ai-team-report.md")
+    print("Battery dashboard created: ai-battery-status.md")
 
 
 if __name__ == "__main__":
