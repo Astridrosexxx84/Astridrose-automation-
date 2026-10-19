@@ -32,7 +32,7 @@ def main():
     for query in queries:
         api="https://commons.wikimedia.org/w/api.php?"+urllib.parse.urlencode({
           "action":"query","format":"json","generator":"search","gsrsearch":query,
-          "gsrnamespace":"6","gsrlimit":"50","prop":"imageinfo","iiprop":"url|extmetadata"})
+          "gsrnamespace":"6","gsrlimit":"50","prop":"imageinfo","iiprop":"url|mime|extmetadata"})
         data=json.loads(get(api))
         for p in data.get("query",{}).get("pages",{}).values():
             info=(p.get("imageinfo") or [{}])[0]; meta=info.get("extmetadata",{})
