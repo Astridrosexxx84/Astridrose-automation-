@@ -82,7 +82,7 @@ def wikipedia_research(topic):
 def commons_media(topic, limit=10):
     params = {"action": "query", "format": "json", "generator": "search",
               "gsrsearch": topic, "gsrnamespace": "6", "gsrlimit": str(limit),
-              "prop": "imageinfo", "iiprop": "url|extmetadata"}
+              "prop": "imageinfo", "iiprop": "url|mime|extmetadata"}
     url = "https://commons.wikimedia.org/w/api.php?" + urllib.parse.urlencode(params)
     try:
         data = get_json(url)
