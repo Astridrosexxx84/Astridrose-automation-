@@ -29,7 +29,7 @@ jobs:
           python -m pip install --upgrade pip pillow
       - name: Build a topic-specific draft from relevant, explicitly licensed stills
         env:
-          VIDEO_TOPIC: ${{ inputs.topic }}
+          VIDEO_TOPIC: ${{ inputs.topic || 'Alexandra Eala' }}
         run: python create_topic_video_draft.py
       - name: Save video and review notes
         uses: actions/upload-artifact@v4
