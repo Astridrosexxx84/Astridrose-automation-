@@ -146,15 +146,19 @@ def main():
     openrouter_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
     groq_key = os.environ.get("GROQ_API_KEY", "").strip()
     task = os.environ.get("AI_TEAM_TASK", "").strip()
+    # Providers are optional workers. Missing one must not block the others.
+    configured_count = sum(bool(value) for value in (gemini_key, groq_key, openrouter_key))
+    if not configured_count:
+        raise SystemExit("No AI provider secrets are configured. Add at least one provider key in GitHub Actions Secrets; never paste keys into source code or chat.")
     missing = [
         name for name, value in [
             ("GEMINI_API_KEY", gemini_key),
-            ("OPENROUTER_API_KEY", openrouter_key),
             ("GROQ_API_KEY", groq_key),
+            ("OPENROUTER_API_KEY", openrouter_key),
         ] if not value
     ]
     if missing:
-        raise SystemExit("Missing GitHub Actions secrets: " + ", ".join(missing) + ". Never paste keys into source code or chat.")
+        print("Optional providers not configured; continuing without them: " + ", ".join(missing))
     if not task:
         task = "Design one practical $0-upfront experiment for the Astrid Rose creator business. Focus on a repeatable workflow, measurable demand, and free tools. Do not create or publish actual content."
     task = task[:4000]
@@ -174,53 +178,64 @@ def main():
                 "note": "Credentials are configured; provider health and remaining quota have not yet been verified.",
             }
     battery["updated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    try:
-        first = gemini(
-            "Analyze this $0-upfront creator automation task. Give the objective, assumptions, three options, best first experiment, risks, and measurable success criteria. Label facts needing current research. Do not publish anything.\n\nTASK:\n" + task,
-            gemini_key,
-        )
-        record_event(battery, "gemini", "success", model=GEMINI_MODEL, free_route="unknown", configured=True)
-        print("Gemini first pass complete.")
-    except RuntimeError as exc:
-        record_event(battery, "gemini", "unknown_error", error=str(exc), model=GEMINI_MODEL, free_route="unknown", configured=True)
-        first = "Gemini initial analysis unavailable after retries: " + str(exc)
-        print("Gemini initial analysis unavailable; continuing with other providers: " + str(exc))
+    if gemini_key:
+        try:
+            first = gemini(
+                "Analyze this $0-upfront creator automation task. Give the objective, assumptions, three options, best first experiment, risks, and measurable success criteria. Label facts needing current research. Do not publish anything.\n\nTASK:\n" + task,
+                gemini_key,
+            )
+            record_event(battery, "gemini", "success", model=GEMINI_MODEL, free_route="unknown", configured=True)
+            print("Gemini first pass complete.")
+        except RuntimeError as exc:
+            record_event(battery, "gemini", "unknown_error", error=str(exc), model=GEMINI_MODEL, free_route="unknown", configured=True)
+            first = "Gemini initial analysis unavailable: " + str(exc)
+            print("Gemini unavailable; continuing with other providers: " + str(exc))
+    else:
+        first = "Gemini skipped: no API key configured."
 
     # A provider access error should not prevent the other free providers from contributing.
     # Keep the exact failure in the report so it can be diagnosed without exposing credentials.
-    try:
-        groq_model = choose_groq_model(groq_key)
-        groq_answer = openai_compatible_chat(
-            "https://api.groq.com/openai/v1/chat/completions",
-            groq_key,
-            groq_model,
-            "Independently analyze the task. Challenge assumptions, find failure modes, and suggest a different high-value $0 experiment. Do not invent current facts or claim web research.\n\nTASK:\n" + task,
-            "Astrid Rose AI Team - Groq",
-        )
-        record_event(battery, "groq", "success", model=groq_model, free_route="unknown", configured=True)
-        print(f"Groq independent challenge complete: {groq_model}")
-    except RuntimeError as exc:
-        record_event(battery, "groq", "unknown_error", error=str(exc), free_route="unknown", configured=True)
-        groq_model = "unavailable"
-        groq_answer = "Groq contribution unavailable. Diagnostic: " + str(exc)
-        print("Groq unavailable; continuing with other providers: " + str(exc))
+    groq_model = "unavailable"
+    if groq_key:
+        try:
+            groq_model = choose_groq_model(groq_key)
+            groq_answer = openai_compatible_chat(
+                "https://api.groq.com/openai/v1/chat/completions",
+                groq_key,
+                groq_model,
+                "Independently analyze the task. Challenge assumptions, find failure modes, and suggest a different high-value $0 experiment. Do not invent current facts or claim web research.\n\nTASK:\n" + task,
+                "Astrid Rose AI Team - Groq",
+            )
+            record_event(battery, "groq", "success", model=groq_model, free_route="unknown", configured=True)
+            print(f"Groq independent challenge complete: {groq_model}")
+        except RuntimeError as exc:
+            record_event(battery, "groq", "unknown_error", error=str(exc), free_route="unknown", configured=True)
+            groq_model = "unavailable"
+            groq_answer = "Groq contribution unavailable. Diagnostic: " + str(exc)
+            print("Groq unavailable; continuing with other providers: " + str(exc))
+    else:
+        groq_answer = "Groq skipped: no API key configured."
 
-    try:
-        openrouter_model = choose_free_openrouter_model()
-        openrouter_answer = openai_compatible_chat(
-            "https://openrouter.ai/api/v1/chat/completions",
-            openrouter_key,
-            openrouter_model,
-            "Independently analyze the task. Do not merely agree with other models. Offer another approach, challenge weak assumptions, and identify failure modes. Do not invent current facts or claim web research.\n\nTASK:\n" + task,
-            "Astrid Rose AI Team - OpenRouter",
-        )
-        record_event(battery, "openrouter", "success", model=openrouter_model, free_route="verified_zero_price", configured=True)
-        print(f"OpenRouter independent challenge complete: {openrouter_model}")
-    except RuntimeError as exc:
-        record_event(battery, "openrouter", "unknown_error", error=str(exc), free_route="unknown", configured=True)
-        openrouter_model = "unavailable"
-        openrouter_answer = "OpenRouter contribution unavailable. Diagnostic: " + str(exc)
-        print("OpenRouter unavailable; continuing with other providers: " + str(exc))
+    openrouter_model = "unavailable"
+    if openrouter_key:
+        try:
+            openrouter_model = choose_free_openrouter_model()
+            openrouter_answer = openai_compatible_chat(
+                "https://openrouter.ai/api/v1/chat/completions",
+                openrouter_key,
+                openrouter_model,
+                "Independently analyze the task. Do not merely agree with other models. Offer another approach, challenge weak assumptions, and identify failure modes. Do not invent current facts or claim web research.\n\nTASK:\n" + task,
+                "Astrid Rose AI Team - OpenRouter",
+            )
+            record_event(battery, "openrouter", "success", model=openrouter_model, free_route="verified_zero_price", configured=True)
+            print(f"OpenRouter independent challenge complete: {openrouter_model}")
+        except RuntimeError as exc:
+            record_event(battery, "openrouter", "unknown_error", error=str(exc), free_route="unknown", configured=True)
+            openrouter_model = "unavailable"
+            openrouter_answer = "OpenRouter contribution unavailable. Diagnostic: " + str(exc)
+            print("OpenRouter unavailable; continuing with other providers: " + str(exc))
+    else:
+        openrouter_answer = "OpenRouter skipped: no API key configured."
 
     # Route synthesis only through an explicitly verified zero-price model.
     # Gemini's price/quota state is not verified by this run, so it is not an eligible route.
