@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '.github/workflows/ai-team-coordinator.yml'
+      - 'ai_team_coordinator.py'
   workflow_dispatch:
     inputs:
       task:
