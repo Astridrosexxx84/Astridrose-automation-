@@ -23,7 +23,7 @@ Phone-first support: give one small next step at a time. Prefer free searches an
 ## Trend discovery
 - `free_trend_selector.py` reads Google Trends RSS across US, UK, Canada, Australia, New Zealand and Ireland, ranks recurring/high-position topics, and writes `topic-discovery-scorecard.txt`.
 - It makes zero YouTube Search API calls during discovery, helping avoid quota use.
-- Discovery workflow was added and the script syntax was fixed on main on 2026-10-19. It was awaiting a user-triggered run at last status check; verify actual latest run before relying on its selected topic.
+- Discovery workflow ran successfully on 2026-10-19, but selected Helen Haines, whose Wikipedia summary lookup failed. Audit scoring was too generous for unverified media leads. `topic_viability_audit.py` now uses a MediaWiki API fallback, conservative preliminary scores, and no automatic storyboard approval; this updated code still needs a fresh run.
 
 ## Existing YouTube automation
 - YouTube keyword-search workflow: `.github/workflows/youtube-keyword-search.yml`; uses `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET`, and `YOUTUBE_REFRESH_TOKEN` secrets.
@@ -47,7 +47,7 @@ Phone-first support: give one small next step at a time. Prefer free searches an
 - Keep user in control of public-facing changes and publishing.
 
 ## Next action
-Run `.github/workflows/topic-viability-audit.yml` once from GitHub Actions with the topic field blank to test free trend selection plus research/media inventory. Inspect the artifact for API errors, relevant assets and correct rights flags. Only after that gate is credible should we choose the next topic, confirm its media supply and write/continue a story. Keep all generation spending at zero and do not publish without approval.
+Re-run `.github/workflows/topic-viability-audit.yml` once from GitHub Actions with the topic field blank to validate the latest MediaWiki fallback and conservative scoring changes. The prior run is confirmed successful but its output is not production-ready: Helen Haines was selected, research returned unavailable, and the media list was only search-result leads. Do not let this audit choose production topics or start storyboarding until stock-video coverage, asset relevance, and rights are verified. Keep generation spending at zero and do not publish without approval.
 
 ## Latest production progress (2026-10-19)
 - Verified Pexels stock video pages and imported two actual MP4 assets into the connected Canva media library:
