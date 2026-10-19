@@ -38,7 +38,7 @@ Each component is scored 0–5 and weighted to 100:
 
 The first-pass score is only a triage tool. If a topic is entered manually, audience signal is unmeasured; do not treat media volume as evidence of popularity. API result counts do not establish that results are relevant, downloadable or reusable.
 
-The script may recommend moving to a storyboard only when its preliminary threshold is met, but individual assets always require human review. A report that is conditional or on hold means: do not spend scarce AI credits or begin full story production yet; investigate more, change the angle, or compare another candidate.
+The current script never automatically approves a topic for storyboarding. A CONDITIONAL result means research and media leads exist but the team must verify relevance, video coverage, stock-media supply and item-level rights. HOLD/RESELECT means the available evidence is too thin to proceed. Do not spend scarce AI credits or begin full story production until a human has checked those gaps.
 
 ## Rights and editorial guardrails
 
@@ -52,4 +52,4 @@ The script may recommend moving to a storyboard only when its preliminary thresh
 
 ## Current implementation status
 
-The automated first-pass audit and manual workflow are added to the repository. They are not yet proven in a GitHub Actions run. The first run must be inspected for API availability, inventory quality and score calibration before the system is treated as reliable. The workflow is discovery-only and does not automatically write a story or publish a video.
+The first GitHub Actions run succeeded, but the selected topic (Helen Haines) had no usable Wikipedia summary, and the report exposed overly generous preliminary scoring. The audit script has now been updated to use a MediaWiki API fallback, lower scores when research is unavailable, treat licence metadata as unverified, and prevent automatic storyboard approval. These changes still need a fresh workflow run. The workflow remains discovery-only and does not write a story or publish a video.
