@@ -174,7 +174,7 @@ def loc_media(topic, limit=8):
 
 
 def internet_archive_media(topic, limit=8):
-    """Search archive catalogue for movies/images; catalogue presence is not a reuse grant."""
+    """Search Archive items and resolve candidate video files without downloading them."""
     params = {"q": f"({topic}) AND (mediatype:movies OR mediatype:image)",
               "fl[]": ["identifier", "title", "mediatype", "creator", "date", "description", "licenseurl", "rights"],
               "rows": str(limit), "page": "1", "output": "json"}
@@ -185,13 +185,39 @@ def internet_archive_media(topic, limit=8):
         for item in data.get("response", {}).get("docs", []):
             identifier = item.get("identifier", "")
             lic_url, rights = item.get("licenseurl", ""), item.get("rights", "")
+            page_url = "https://archive.org/details/" + urllib.parse.quote(identifier, safe="") if identifier else ""
+            file_url, file_name, duration, mime, retrieval_status = "", "", "", "", "NOT_RESOLVED"
+            if identifier and item.get("mediatype") == "movies":
+                try:
+                    metadata = get_json("https://archive.org/metadata/" + urllib.parse.quote(identifier, safe=""))
+                    meta = metadata.get("metadata", {})
+                    duration = str(meta.get("runtime", meta.get("length", "")))
+                    files = metadata.get("files", [])
+                    candidates = []
+                    for file_item in files:
+                        name = str(file_item.get("name", ""))
+                        fmt = str(file_item.get("format", "")).casefold()
+                        if file_item.get("private") == "true" or not name:
+                            continue
+                        if fmt in {"mpeg4", "h.264", "h264", "webm video", "ogv video"} or name.casefold().endswith((".mp4", ".m4v", ".webm", ".ogv", ".mov")):
+                            candidates.append(file_item)
+                    candidates.sort(key=lambda x: (str(x.get("source", "")).casefold() == "original", int(x.get("size", 0) or 0)), reverse=True)
+                    if candidates:
+                        chosen = candidates[0]
+                        file_name = str(chosen.get("name", ""))
+                        mime = str(chosen.get("format", ""))
+                        file_url = "https://archive.org/download/" + urllib.parse.quote(identifier, safe="") + "/" + urllib.parse.quote(file_name, safe="/")
+                        retrieval_status = "CANDIDATE_FILE_URL_RESOLVED"
+                except Exception as meta_exc:
+                    retrieval_status = "METADATA_LOOKUP_FAILED: " + type(meta_exc).__name__
             assets.append({"source": "Internet Archive", "title": item.get("title", ""),
-                "page_url": "https://archive.org/details/" + urllib.parse.quote(identifier, safe="") if identifier else "",
-                "file_url": "", "media_type": item.get("mediatype", ""), "creator": item.get("creator", ""),
+                "page_url": page_url, "file_url": file_url, "file_name": file_name,
+                "mime": mime, "duration_seconds": duration, "retrieval_status": retrieval_status,
+                "media_type": item.get("mediatype", ""), "creator": item.get("creator", ""),
                 "date_created": item.get("date", ""), "license": rights or ("See item metadata" if lic_url else ""),
                 "license_url": lic_url, "description": str(item.get("description", ""))[:500],
                 "rights_status": "REVIEW_REQUIRED",
-                "rights_note": "Inspect item metadata and individual file rights. Downloadable file URL is not yet resolved."})
+                "rights_note": "File URL is a retrieval lead, not permission. Check item and file-level rights, playback, download terms and third-party material before use."})
         return assets, None
     except Exception as exc:
         return [], f"{type(exc).__name__}: {exc}"
