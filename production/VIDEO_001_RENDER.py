@@ -34,7 +34,8 @@ def main():
      f.write(chunk)
   audio=MEDIA/f"voice{i}.mp3"; asyncio.run(voice(narr,audio)); d=probe(audio)
   title=title.replace("'","\\'")
-  base_filter="crop=iw:ih*0.62:0:ih*0.38,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black" if i==5 else "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black"\n  vf=f"{base_filter},fps=30,drawbox=x=0:y=0:w=iw:h=100:color=black@0.6:t=fill,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:text='{title}':fontcolor=white:fontsize=36:x=48:y=28"
+  base_filter="crop=iw:ih*0.62:0:ih*0.38,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black" if i==5 else "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black"
+  vf=f"{base_filter},fps=30,drawbox=x=0:y=0:w=iw:h=100:color=black@0.6:t=fill,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:text='{title}':fontcolor=white:fontsize=36:x=48:y=28"
   seg=MEDIA/f"scene{i}.mp4"
   run(["ffmpeg","-y","-stream_loop","-1","-i",str(src),"-i",str(audio),"-t",str(d),"-vf",vf,"-map","0:v:0","-map","1:a:0","-c:v","libx264","-preset","veryfast","-crf","21","-pix_fmt","yuv420p","-c:a","aac","-b:a","160k","-af","loudnorm=I=-16:TP=-1.5:LRA=11","-shortest",str(seg)])
   segs.append(seg); caps.append(f"{i}\n{stamp(clock)} --> {stamp(clock+d)}\n{narr}\n"); clock+=d; credits.append("- "+credit)
