@@ -1,45 +1,83 @@
 #!/usr/bin/env python3
-"""Choose a topic from Google's free live-trends RSS without using YouTube Search quota."""
+"""Discover broadly relevant topics by comparing free Google Trends RSS feeds across regions."""
 import os
 import re
 import sys
+import time
 import urllib.request
 import xml.etree.ElementTree as ET
+from collections import defaultdict
 
-GEO = os.getenv("TRENDS_GEO", "NZ").strip().upper() or "NZ"
-URL = f"https://trends.google.com/trending/rss?geo={GEO}"
+GEOS = [g.strip().upper() for g in os.getenv(
+    "TRENDS_GEOS", "US,GB,IN,BR,CA,AU,DE,JP,MX,KR,FR,ID,NG,ZA"
+).split(",") if g.strip()]
+MAX_PER_GEO = int(os.getenv("TRENDS_MAX_PER_GEO", "20"))
+URL = "https://trends.google.com/trending/rss?geo={}"
+
+def fetch_geo(geo):
+    request = urllib.request.Request(URL.format(geo), headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(request, timeout=20) as response:
+        root = ET.fromstring(response.read())
+    result = []
+    for rank, item in enumerate(root.findall(".//item")[:MAX_PER_GEO], start=1):
+        title = re.sub(r"\s+", " ", (item.findtext("title") or "").strip())
+        if title:
+            result.append((title, rank))
+    return result
 
 def main():
-    request = urllib.request.Request(URL, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(request, timeout=25) as response:
-        root = ET.fromstring(response.read())
-    topics = []
-    for item in root.findall(".//item"):
-        title = re.sub(r"\s+", " ", (item.findtext("title") or "").strip())
-        if title and title.lower() not in {x.lower() for x in topics}:
-            topics.append(title)
-        if len(topics) >= 20:
-            break
-    if not topics:
-        raise RuntimeError(f"Google Trends RSS returned no topics for geo={GEO}.")
-    # RSS order is the provider's current ordering; avoid any YouTube Search API call.
-    topic = topics[0][:100]
+    by_key = defaultdict(lambda: {"topic": "", "regions": [], "rank_score": 0, "best_rank": 999})
+    failures = []
+    for geo in GEOS:
+        try:
+            for topic, rank in fetch_geo(geo):
+                key = topic.casefold()
+                entry = by_key[key]
+                if not entry["topic"]:
+                    entry["topic"] = topic
+                entry["regions"].append(geo)
+                entry["rank_score"] += max(1, MAX_PER_GEO + 1 - rank)
+                entry["best_rank"] = min(entry["best_rank"], rank)
+        except Exception as exc:
+            failures.append(f"{geo}: {type(exc).__name__}: {exc}")
+    if not by_key:
+        raise RuntimeError("No regional Google Trends RSS feeds could be read. " + "; ".join(failures))
+    # Prioritize topics surfacing in multiple markets, then topics ranking highly in a market.
+    ranked = sorted(
+        by_key.values(),
+        key=lambda x: (len(set(x["regions"])), x["rank_score"], -x["best_rank"]),
+        reverse=True
+    )
+    chosen = ranked[0]
+    topic = chosen["topic"][:100]
     with open("topic-discovery-scorecard.txt", "w", encoding="utf-8") as report:
         report.write(
-            "Free trend discovery report\n"
-            f"Source: Google Trends live RSS ({GEO})\n"
-            f"Topics returned: {len(topics)}\n"
-            "Selection: first topic in the feed's current order.\n"
-            "YouTube Search API calls for topic discovery: 0\n\n"
-            + "\n".join(f"{i+1}. {t}" for i, t in enumerate(topics))
-            + f"\\n\\nSelected topic: {topic}\n"
+            "Multi-region global trend discovery report\n"
+            f"Sources: Google Trends RSS across {len(GEOS)} target markets\n"
+            f"Markets queried: {', '.join(GEOS)}\n"
+            f"Feeds read successfully: {len(GEOS) - len(failures)}\n"
+            f"Unique topics collected: {len(by_key)}\n"
+            "Ranking: cross-market recurrence first, then combined feed position.\n"
+            "Note: this is a multi-region proxy for global interest, not a single official worldwide ranking.\n"
+            "YouTube Search API calls for discovery: 0\n\n"
+            + "\n".join(
+                f"{i+1}. {x['topic']} | markets={','.join(sorted(set(x['regions'])))} | score={x['rank_score']}"
+                for i, x in enumerate(ranked[:50])
+            )
+            + f"\n\nSelected topic: {topic}\n"
+            + f"Appeared in markets: {', '.join(sorted(set(chosen['regions'])))}\n"
+            + (("\nFeed errors:\n" + "\n".join(failures) + "\n") if failures else "")
         )
-    print(f"Selected from Google Trends RSS ({GEO}); YouTube Search calls: 0.", file=sys.stderr)
+    print(
+        f"Multi-region Google Trends: {len(GEOS) - len(failures)}/{len(GEOS)} feeds; "
+        "YouTube Search calls: 0.",
+        file=sys.stderr
+    )
     print(topic)
 
 if __name__ == "__main__":
     try:
         main()
     except Exception as exc:
-        print(f"ERROR: free trend discovery failed: {exc}", file=sys.stderr)
+        print(f"ERROR: global trend discovery failed: {exc}", file=sys.stderr)
         raise SystemExit(1)
