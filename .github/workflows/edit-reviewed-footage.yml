@@ -1,11 +1,5 @@
 name: Edit reviewed footage into video draft (free, no publishing)
 on:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/edit-reviewed-footage.yml"
-      - "edit_reviewed_footage.py"
-      - "footage-edit-plan.json"
   workflow_dispatch:
     inputs:
       confirm_review:
