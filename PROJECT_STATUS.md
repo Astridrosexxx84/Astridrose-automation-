@@ -100,3 +100,13 @@ Run `.github/workflows/topic-viability-audit.yml` once with the topic field blan
 - A fresh Actions run list shows topic-viability runs #27 and #28 completed successfully, but those were push-triggered runs from 2026-10-19, not proof that the newest free-media expansion has been run manually end-to-end. No new AI-provider request was made during this review.
 - Important design rule: provider quotas are often not exposed as a reliable live percentage. Record observed success/errors and provider-reported limits/reset times; show quota as unknown when it cannot be measured. Do not invent battery percentages.
 - Next: build the smallest useful status ledger and bounded provider failover into the existing coordinator, then test its routing logic without sending paid requests. Keep the coordinator manual and report-only until this is validated. Separately, run the topic-viability workflow with blank topic when a manual workflow dispatch is available, then inspect its artifact.
+
+
+## AI battery implementation milestone (2026-10-20)
+
+- Added `ai_battery.py`: dependency-free status ledger, conservative error classification, safe JSON persistence, Markdown dashboard output, and free-route eligibility filtering.
+- Added `tests/test_ai_battery.py`: checks quota/auth classification, no invented quota percentages, blocked-provider filtering, persistence without raw provider error bodies, and invalid-provider rejection.
+- Added `.github/workflows/ai-battery-tests.yml` to run these checks on relevant changes and manual dispatch.
+- GitHub Actions run #1 for AI battery logic tests: the test step completed successfully. Run link: https://github.com/Astridrosexxx84/Astridrose-automation-/actions/runs/39341674095
+- Current limitation: these are tested building blocks, not yet integrated into `ai_team_coordinator.py`; the dashboard only reflects recorded observations and configured-secret presence. It does not probe provider APIs or expose actual remaining quota. The current coordinator still does not dynamically switch providers for each task.
+- Next implementation: wire provider call outcomes into the persistent ledger, add bounded failover between eligible free providers, and keep the report useful when any/all providers fail. Test routing with mocked failures before any live provider call. Keep billing and publishing disabled.
