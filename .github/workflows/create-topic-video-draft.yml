@@ -1,5 +1,11 @@
 name: Create topic video draft (free, no publishing)
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/create-topic-video-draft.yml"
+      - "create_topic_video_draft.py"
   workflow_dispatch:
     inputs:
       topic:
