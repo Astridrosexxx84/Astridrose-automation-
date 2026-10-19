@@ -31,7 +31,7 @@ def fetch_topic():
         return topic
     scorecard = Path("topic-discovery-scorecard.txt")
     if scorecard.exists():
-        match = re.search(r"^Selected topic:\\s*(.+)$", scorecard.read_text(encoding="utf-8"), re.MULTILINE)
+        match = re.search(r"^Selected topic:\s*(.+)$", scorecard.read_text(encoding="utf-8"), re.MULTILINE)
         if match:
             return match.group(1).strip()
     raise RuntimeError("No topic supplied and no Selected topic found in topic-discovery-scorecard.txt")
@@ -92,7 +92,7 @@ def nasa_media(topic, limit=10):
                            "page_url": f"https://images.nasa.gov/details/{urllib.parse.quote(nasa_id, safe='')}" if nasa_id else url,
                            "preview_url": preview, "media_type": d.get("media_type", ""),
                            "date_created": d.get("date_created", ""),
-                           "description": re.sub(r"\\s+", " ", d.get("description", ""))[:500],
+                           "description": re.sub(r"\s+", " ", d.get("description", ""))[:500],
                            "rights_note": "Verify the individual asset, credit line, logos/people/third-party material, and NASA usage guidelines.",
                            "rights_status": "ITEM_LEVEL_REVIEW_REQUIRED"})
         return assets, None
@@ -178,7 +178,7 @@ def main():
         "- If relevant media is thin or rights unclear, change the angle or reject the topic before scripting.",
         "- This report is a research aid, not legal advice or automatic rights clearance.", "",
         "## Errors", "", f"- Wikimedia Commons: {commons_error or 'none'}", f"- NASA API: {nasa_error or 'none'}", ""]
-    (OUT / "topic-audit.md").write_text("\\n".join(lines), encoding="utf-8")
+    (OUT / "topic-audit.md").write_text("\n".join(lines), encoding="utf-8")
     print(f"Topic: {topic}")
     print(f"Decision: {decision} ({weighted}/100)")
     print(f"Research summary: {research['status']}; Commons leads: {len(commons)}; NASA leads: {len(nasa)}")
