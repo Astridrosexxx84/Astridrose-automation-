@@ -7,8 +7,8 @@ Build a highly automated, $0-upfront YouTube content pipeline. Revenue is a hypo
 1. Discover a shortlist from free trend sources.
 2. Compare candidates before choosing one; do not equate the highest trend rank with the best video opportunity.
 3. Research the subject using credible primary and secondary sources.
-4. Inventory relevant topic-specific images and video plus free stock media. Record source URLs, creator, media type/duration, licence and intended use where available.
-5. Review relevance, real download/playback availability, commercial/adaptation terms, attribution and third-party rights. Public availability is not permission.
+4. Inventory relevant topic-specific images/video, free stock, audio, and existing published content that may be clipped. Record source URL, creator, timestamp range, media type/duration, licence/permission basis and intended use.
+5. Evaluate three acquisition routes: (a) public-domain/permissively licensed material, (b) clips from existing published content where permission or a valid jurisdiction-specific exception supports the exact use, and (c) original/AI-assisted assets for gaps. For clips, check the source, the precise excerpt, purpose, amount/substantiality, transformation/commentary, market impact, platform terms and any third-party music/material. Public availability, short duration, or attribution alone is not permission.
 6. Make a documented GO / CONDITIONAL / HOLD decision. Do not storyboard from search-result counts alone.
 7. Write an original storyline, script and storyboard based on verified available assets; identify gaps that actually require generated visuals.
 8. Assemble, caption, narrate, render and quality-check using free tools first.
@@ -26,7 +26,7 @@ Build a highly automated, $0-upfront YouTube content pipeline. Revenue is a hypo
 ## Operating rules
 - $0 upfront. Prefer free search, public APIs, local tools and free stock licences.
 - Do not buy credits, start paid trials or trigger paid usage without explicit approval.
-- Do not download/re-upload other creators' YouTube videos as a shortcut.
+- Clipping is an approved sourcing route, not a blanket permission to copy. Prefer platform-native clip/remix features where suitable, licensed downloads, public-domain/permissively licensed sources, or excerpts that have been reviewed for a valid legal exception. Do not bypass access controls or use automated downloading/re-uploading as the default. Keep source timestamps and a documented rights rationale for each excerpt.
 - Keep credentials in GitHub Actions secrets; never put secrets in source code or chat.
 - Work in small, clear steps when phone interaction is required.
 
