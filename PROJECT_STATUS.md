@@ -58,3 +58,11 @@ Continue the Zelda content package by checking and collecting the selected stock
 - Generated a free local eSpeak narration timing draft (80.04 seconds); the WAV is a placeholder voice, not final production narration. Script file: `zelda_ocarina_voiceover.txt`.
 - Not yet completed: a video timeline/design, selected official Nintendo visuals, final narration performance, rendering/export, final rights review, or public upload. Do not imply the video is already made.
 - Free-source policy remains: avoid paid generation; only consider AI after the first assembly shows a specific gap. Pexels says its videos are free for commercial use under its licence, but final usage still needs current licence and third-party-rights review.
+
+
+## Local rough-cut prototype (2026-10-19)
+- Rendered a real H.264/AAC MP4 animatic locally: 1080×1920 (9:16), 25 fps, 80.04 seconds, ~1.8 MB.
+- Includes the current eSpeak placeholder narration and burned-in captions, with original abstract forest/fantasy-themed title cards.
+- The MP4 is a **visual animatic/proof of assembly only**, not the final video: it does not yet include the two imported Pexels clips or official Nintendo reference footage, and the placeholder voice is not final. It is not uploaded to YouTube.
+- Local artifact: `/mnt/data/zelda_ocarina_animatic_draft.mp4` in the current ChatGPT work session.
+- Next: replace appropriate cards with rights-checked topic-specific official reference visuals and licensed stock footage, check caption/audio sync, then render and review a production cut before asking for publishing approval.
