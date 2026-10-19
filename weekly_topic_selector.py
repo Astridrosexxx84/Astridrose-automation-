@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Choose a weekly topic from a broad sample of the newest recent uploads.
+"""Rank topics using recent-upload performance and a prior-period comparison.
 
-This script makes one search.list call per seed topic, then one videos.list call
-for the returned batch. It avoids extra searches: maxResults can be increased
-without adding another search.list request. It prints only the winning query to
-stdout so GitHub Actions can capture it.
+For each topic, sample up to 25 uploads from the last 7 days and up to 25
+uploads from the preceding period. Compare median lifetime views/day between
+the cohorts. This is a fresh-upload momentum proxy, not true view acceleration:
+the public YouTube API does not provide historical view-count snapshots for
+other creators' videos. Prints only the winning query to stdout for Actions.
 """
 import json
 import os
@@ -29,7 +30,8 @@ TOPICS = [
     "cute animals",
     "fitness and workout videos",
 ]
-LOOKBACK_DAYS = max(7, min(90, int(os.getenv("TOPIC_LOOKBACK_DAYS", "30"))))
+LOOKBACK_DAYS = max(14, min(90, int(os.getenv("TOPIC_LOOKBACK_DAYS", "30"))))
+RECENT_DAYS = 7
 SAMPLE_SIZE = 25
 
 
@@ -79,7 +81,7 @@ def request_json(url, token):
     raise RuntimeError("YouTube API request failed after retries.")
 
 
-def score_topic(token, query, published_after):
+def search_video_ids(token, query, published_after, published_before=None):
     params = {
         "part": "snippet",
         "type": "video",
@@ -89,81 +91,123 @@ def score_topic(token, query, published_after):
         "maxResults": SAMPLE_SIZE,
         "safeSearch": "moderate",
     }
+    if published_before:
+        params["publishedBefore"] = published_before
     items = request_json(API + "/search?" + urllib.parse.urlencode(params), token).get("items", [])
-    ids = [item.get("id", {}).get("videoId") for item in items]
-    ids = [video_id for video_id in ids if video_id]
-    if not ids:
-        return {"topic": query, "score": 0, "videos": 0, "median_views_per_day": 0, "top_views_per_day": 0}
+    return [item.get("id", {}).get("videoId") for item in items if item.get("id", {}).get("videoId")]
 
+
+def get_views_per_day(video, now):
+    snippet = video.get("snippet", {})
+    stats = video.get("statistics", {})
+    try:
+        published = datetime.fromisoformat(snippet["publishedAt"].replace("Z", "+00:00"))
+        age_days = max(1.0, (now - published).total_seconds() / 86400)
+        return int(stats.get("viewCount", 0)) / age_days
+    except (KeyError, ValueError, TypeError):
+        return None
+
+
+def score_topic(token, query, recent_after, prior_after, recent_before):
+    # Two upload cohorts let us compare fresh uploads with the previous period.
+    recent_ids = search_video_ids(token, query, recent_after)
+    prior_ids = search_video_ids(token, query, prior_after, recent_before)
+    all_ids = list(dict.fromkeys(recent_ids + prior_ids))
+    if not all_ids:
+        return {
+            "topic": query, "score": 0, "recent_median": 0, "prior_median": 0,
+            "momentum_ratio": 1.0, "recent_videos": 0, "prior_videos": 0,
+            "top_recent": 0,
+        }
+
+    # At most 50 IDs per topic, so both cohorts fit in one videos.list request.
     details = request_json(API + "/videos?" + urllib.parse.urlencode({
         "part": "snippet,statistics",
-        "id": ",".join(ids),
-        "maxResults": len(ids),
+        "id": ",".join(all_ids[:50]),
+        "maxResults": min(50, len(all_ids)),
     }), token).get("items", [])
     now = datetime.now(timezone.utc)
-    velocities = []
+    recent_set, prior_set = set(recent_ids), set(prior_ids)
+    recent_rates, prior_rates = [], []
     for video in details:
-        snippet = video.get("snippet", {})
-        stats = video.get("statistics", {})
-        try:
-            published = datetime.fromisoformat(snippet["publishedAt"].replace("Z", "+00:00"))
-            age_days = max(1.0, (now - published).total_seconds() / 86400)
-            views = int(stats.get("viewCount", 0))
-        except (KeyError, ValueError, TypeError):
+        video_id = video.get("id")
+        rate = get_views_per_day(video, now)
+        if rate is None:
             continue
-        velocities.append(views / age_days)
+        if video_id in recent_set:
+            recent_rates.append(rate)
+        elif video_id in prior_set:
+            prior_rates.append(rate)
 
-    velocities.sort(reverse=True)
-    # Use the newest 25 uploads rather than only the top 5 by lifetime views. The median
-    # reduces outlier impact and makes topic comparisons less biased toward established hits.
-    median_velocity = int(statistics.median(velocities)) if velocities else 0
-    top_velocity = int(velocities[0]) if velocities else 0
+    recent_median = statistics.median(recent_rates) if recent_rates else 0
+    prior_median = statistics.median(prior_rates) if prior_rates else 0
+    # Missing/zero prior data is neutral, not an artificial momentum boost.
+    ratio = recent_median / prior_median if prior_median > 0 else 1.0
+    # Cap the boost so a tiny baseline cannot dominate; recent performance still matters.
+    factor = 0.5 + 0.5 * min(3.0, max(0.0, ratio))
+    score = int(recent_median * factor)
     return {
         "topic": query,
-        "score": median_velocity,
-        "videos": len(velocities),
-        "median_views_per_day": median_velocity,
-        "top_views_per_day": top_velocity,
+        "score": score,
+        "recent_median": int(recent_median),
+        "prior_median": int(prior_median),
+        "momentum_ratio": ratio,
+        "recent_videos": len(recent_rates),
+        "prior_videos": len(prior_rates),
+        "top_recent": int(max(recent_rates)) if recent_rates else 0,
     }
 
 
 def main():
     token = get_token()
-    after = (datetime.now(timezone.utc) - timedelta(days=LOOKBACK_DAYS)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now = datetime.now(timezone.utc)
+    recent_start = now - timedelta(days=RECENT_DAYS)
+    lookback_start = now - timedelta(days=LOOKBACK_DAYS)
+    fmt = lambda value: value.strftime("%Y-%m-%dT%H:%M:%SZ")
     results = []
     for topic in TOPICS:
-        result = score_topic(token, topic, after)
+        result = score_topic(
+            token, topic, fmt(recent_start), fmt(lookback_start), fmt(recent_start)
+        )
         results.append(result)
+        ratio_text = f'{result["momentum_ratio"]:.2f}x' if result["prior_videos"] else "n/a"
         print(
-            f'{topic}: median approx {result["median_views_per_day"]:,} views/day '
-            f'across {result["videos"]} recent videos; top approx '
-            f'{result["top_views_per_day"]:,}/day',
+            f'{topic}: recent median approx {result["recent_median"]:,} views/day; '
+            f'prior median {result["prior_median"]:,}/day; cohort ratio {ratio_text}; '
+            f'{result["recent_videos"]} recent and {result["prior_videos"]} prior videos',
             file=sys.stderr,
         )
 
-    # Stable tie-breaker: median velocity, then sample count, then topic name.
-    results.sort(key=lambda item: (item["score"], item["videos"], item["topic"]), reverse=True)
+    results.sort(
+        key=lambda item: (item["score"], item["recent_median"], item["recent_videos"], item["topic"]),
+        reverse=True,
+    )
     winner = results[0]
-    if winner["videos"] == 0:
-        raise RuntimeError("No usable recent video statistics were found for any candidate topic.")
+    if winner["recent_videos"] == 0:
+        raise RuntimeError("No usable video statistics found for uploads in the last 7 days.")
 
     with open("topic-discovery-scorecard.txt", "w", encoding="utf-8") as report:
         report.write(
-            "YouTube topic comparison (recent uploads only)\n"
-            f"Lookback window: {LOOKBACK_DAYS} days\n"
-            "Metric: median estimated lifetime views per day among up to 25 of the newest "
-            "uploads per topic within the lookback window. One search call per topic; "
-            "video statistics are fetched in one batch. This is a proxy, not real-time "
-            "velocity or an official YouTube trending ranking.\n"
-            f"Estimated API requests: {len(TOPICS)} search.list + {len(TOPICS)} videos.list "
-            "for the scorecard; the playlist stage makes two more search.list calls, "
-            "one videos.list call, one playlist insert and up to five playlist-item inserts.\n\n"
+            "YouTube topic comparison (fresh-upload momentum proxy)\n"
+            f"Lookback window: {LOOKBACK_DAYS} days; recent cohort: last {RECENT_DAYS} days\n"
+            f"Sample: up to {SAMPLE_SIZE} newest uploads per topic in each cohort\n"
+            "Metric: recent-cohort median lifetime views/day adjusted by a capped ratio "
+            "against the prior cohort's median lifetime views/day. This is a proxy for "
+            "which topics have stronger-performing fresh uploads, not true view acceleration "
+            "or an official YouTube trending ranking. Public video statistics do not expose "
+            "historical view-count snapshots. Missing/zero prior medians are treated neutrally.\n"
+            f"Estimated API requests: {len(TOPICS) * 2} search.list + {len(TOPICS)} videos.list "
+            "for the scorecard; playlist stage adds two search.list calls, one videos.list "
+            "call, one playlist insert and up to five playlist-item inserts.\n\n"
         )
         for index, result in enumerate(results, 1):
+            ratio_text = f'{result["momentum_ratio"]:.2f}x' if result["prior_videos"] else "n/a"
             report.write(
-                f'{index}. {result["topic"]} | median estimated views/day: '
-                f'{result["median_views_per_day"]:,} | top estimated views/day: '
-                f'{result["top_views_per_day"]:,} | videos scored: {result["videos"]}\n'
+                f'{index}. {result["topic"]} | momentum-adjusted score: {result["score"]:,} '
+                f'| last-7-day cohort median: {result["recent_median"]:,} views/day '
+                f'| prior cohort median: {result["prior_median"]:,} views/day '
+                f'| cohort ratio: {ratio_text} | videos: {result["recent_videos"]} recent, '
+                f'{result["prior_videos"]} prior | top recent: {result["top_recent"]:,}/day\n'
             )
         report.write(f'\nSelected topic: {winner["topic"]}\n')
 
