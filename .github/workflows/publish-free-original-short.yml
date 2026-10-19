@@ -15,16 +15,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg espeak-ng
           python -m pip install --upgrade pip pillow
-      - name: Discover a topic from multi-region global trends
+      - name: Discover a topic from English-market global trends
         id: topic
         env:
-          TRENDS_GEOS: "US,GB,IN,BR,CA,AU,DE,JP,MX,KR,FR,ID,NG,ZA"
+          TRENDS_GEOS: "US,GB,CA,AU,NZ,IE"
         shell: bash
         run: |
           set -euo pipefail
           topic=$(python free_trend_selector.py)
           echo "topic=$topic" >> "$GITHUB_OUTPUT"
-          echo "Selected global candidate: $topic"
+          echo "Selected English-market candidate: $topic"
           echo "YouTube Search API calls used for discovery: 0"
       - name: Render and upload an original public Short
         env:
