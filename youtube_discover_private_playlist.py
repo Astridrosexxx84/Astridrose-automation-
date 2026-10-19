@@ -51,34 +51,49 @@ def get_token():
     return payload["access_token"]
 
 def discover(token, query, candidate_count, lookback_days):
+    """Combine recent uploads and popular uploads, then rank by estimated views/day."""
     after = (datetime.now(timezone.utc) - timedelta(days=lookback_days)).strftime("%Y-%m-%dT%H:%M:%SZ")
-    params = {"part":"snippet", "type":"video", "q":query, "maxResults":candidate_count,
-              "order":"viewCount", "safeSearch":"moderate", "publishedAfter":after}
-    found = request_json(API + "/search?" + urllib.parse.urlencode(params), token).get("items", [])
-    if not found:
+    base = {"part":"snippet", "type":"video", "q":query, "maxResults":min(50, candidate_count),
+            "safeSearch":"moderate", "publishedAfter":after}
+    found_by_id = {}
+    for order in ("date", "viewCount"):
+        params = dict(base, order=order)
+        items = request_json(API + "/search?" + urllib.parse.urlencode(params), token).get("items", [])
+        for item in items:
+            video_id = item.get("id", {}).get("videoId")
+            if video_id:
+                found_by_id[video_id] = item
+        print(f"YouTube search ({order}) returned {len(items)} results.")
+    if not found_by_id:
+        print("No recent matches; trying an all-time popular search fallback.")
+        params = dict(base, order="viewCount")
         params.pop("publishedAfter", None)
-        found = request_json(API + "/search?" + urllib.parse.urlencode(params), token).get("items", [])
-        print("No recent matches; used all-time search fallback.")
-    ids = list(dict.fromkeys(i.get("id", {}).get("videoId") for i in found if i.get("id", {}).get("videoId")))
+        items = request_json(API + "/search?" + urllib.parse.urlencode(params), token).get("items", [])
+        for item in items:
+            video_id = item.get("id", {}).get("videoId")
+            if video_id:
+                found_by_id[video_id] = item
+    ids = list(found_by_id)
     if not ids:
         raise RuntimeError("No videos found for this topic; no playlist created.")
     details = request_json(API + "/videos?" + urllib.parse.urlencode({
-        "part":"snippet,statistics", "id":",".join(ids), "maxResults":len(ids)}), token).get("items", [])
+        "part":"snippet,statistics", "id":",".join(ids[:50]), "maxResults":min(50, len(ids))}), token).get("items", [])
     now = datetime.now(timezone.utc)
     ranked = []
     for video in details:
         snippet, stats = video.get("snippet", {}), video.get("statistics", {})
         try:
             published = datetime.fromisoformat(snippet.get("publishedAt", "").replace("Z", "+00:00"))
-            age_days = max(1, (now - published).days)
+            age_days = max(1, (now - published).total_seconds() / 86400)
         except (ValueError, TypeError):
             age_days = 1
         views = int(stats.get("viewCount", 0))
         ranked.append({"id":video["id"], "title":snippet.get("title",""),
                        "channel":snippet.get("channelTitle",""), "views":views,
-                       "views_per_day":views // age_days,
+                       "views_per_day":int(views / age_days),
+                       "published_at":snippet.get("publishedAt",""),
                        "url":"https://www.youtube.com/watch?v=" + video["id"]})
-    return sorted(ranked, key=lambda v:(v["views_per_day"],v["views"]), reverse=True)
+    return sorted(ranked, key=lambda v:(v["views_per_day"], v["views"]), reverse=True)
 
 def main():
     query = os.getenv("SEARCH_QUERY", "popular music 2026").strip()
