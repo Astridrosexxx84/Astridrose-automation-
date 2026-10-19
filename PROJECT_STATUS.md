@@ -163,3 +163,12 @@ Run `.github/workflows/topic-viability-audit.yml` once with the topic field blan
 - Coordinator code commit: aff8349a1187684e31798c9c8ba0333f6fb1370c. The corresponding AI battery CI run #8 passed: https://github.com/Astridrosexxx84/Astridrose-automation-/actions/runs/39343062351
 - No live provider generation was used for the code change; no paid use or public publishing occurred.
 - Direct ChatGPT-to-Gemini/Copilot chat is not configured. Current collaboration runs through API calls and shared GitHub artifacts. Groq's phone app is not required; a Groq API key is needed if we want it as a worker.
+
+## Conservative free-tier routing gate (2026-10-20)
+
+- Updated `ai_team_coordinator.py` so Gemini and Groq generation calls are disabled by default even when their API keys exist. They require explicit `ALLOW_GEMINI_FREE_TIER_CALLS=true` / `ALLOW_GROQ_FREE_TIER_CALLS=true` opt-in, after the account holder has confirmed free-tier-only access and disabled billing.
+- Wired those opt-in values from GitHub Actions repository variables into the manual coordinator workflow. They remain unset/off by default; an opt-in is an acknowledgement, not a technical guarantee of zero cost.
+- OpenRouter remains gated by the live model listing requiring a `:free` model ID and zero prompt/completion pricing. If no eligible synthesis route completes, partial work is preserved rather than falling back to a paid model.
+- Updated `AI_TEAM_SETUP.md` to explain the safe defaults and accurate setup. No live AI requests, public posts, account changes, or paid actions were performed.
+- Commits: `1c2c72f` (default-off gates), `6f9949a` (accurate report labels), `aa80bc5` (setup guidance), `c46f01e` (workflow variable wiring).
+- Verification: code changes are committed; the next check is the Actions test result. Do not enable Gemini/Groq flags until free-only access and disabled billing are confirmed.
