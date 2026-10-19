@@ -151,8 +151,9 @@ def main():
     task = os.environ.get("AI_TEAM_TASK", "").strip()
     # OpenRouter is gated separately by a live zero-price :free model listing.
     usable_count = sum((bool(openrouter_key), bool(gemini_key and allow_gemini), bool(groq_key and allow_groq)))
-    if not usable_count:
-        raise SystemExit("No provider route is enabled for this $0 run. OpenRouter needs a key and a listed zero-price :free model; Gemini/Groq need explicit free-tier opt-in flags. Never paste keys into source code or chat.")
+    report_only_mode = not usable_count
+    if report_only_mode:
+        print("No provider route is enabled. Continuing in report-only mode; no external AI calls will be made.")
     missing = [
         name for name, value in [
             ("GEMINI_API_KEY", gemini_key),
