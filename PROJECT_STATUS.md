@@ -47,7 +47,7 @@ Phone-first support: give one small next step at a time. Prefer free searches an
 - Keep user in control of public-facing changes and publishing.
 
 ## Next action
-Re-run `.github/workflows/topic-viability-audit.yml` once from GitHub Actions with the topic field blank to validate the latest MediaWiki fallback and conservative scoring changes. The prior run is confirmed successful but its output is not production-ready: Helen Haines was selected, research returned unavailable, and the media list was only search-result leads. Do not let this audit choose production topics or start storyboarding until stock-video coverage, asset relevance, and rights are verified. Keep generation spending at zero and do not publish without approval.
+Run `.github/workflows/topic-viability-audit.yml` once with the topic field blank. The workflow now compares up to 10 unique Google Trends candidates against research and topic-keyword-matched Wikimedia/NASA media leads, then produces a ranked review shortlist rather than blindly treating the top trend as the winner. Inspect `shortlist-comparison.md` and the per-candidate inventories. This is still preliminary: keyword overlap is a weak heuristic; verify primary sources, real downloadable/playable video coverage, free stock supply, and item-level rights before scripting or storyboarding. Keep generation spending at zero and do not publish without approval.
 
 ## Latest production progress (2026-10-19)
 - Verified Pexels stock video pages and imported two actual MP4 assets into the connected Canva media library:
@@ -74,3 +74,11 @@ Re-run `.github/workflows/topic-viability-audit.yml` once from GitHub Actions wi
 - Added `TOPIC_SELECTION_GATE.md` documenting the required order: trend discovery → subject research → media inventory → rights assessment → candidate scoring/go-no-go → story/script/storyboard → production/QA → human approval → measurement.
 - The new workflow does not call YouTube Search API, download/re-upload media, spend generation credits, change playlists, or publish videos.
 - Status: code and workflow committed; first GitHub Actions run and score calibration still need verification. API search results are leads, not cleared assets. Human review of facts and each asset's licence/rights is mandatory before story writing and publication.
+
+
+## Shortlist comparison update (2026-10-19)
+- Added `topic_shortlist_audit.py` to compare up to 10 unique trending topics before choosing what to produce.
+- Blank-topic workflow runs free Google Trends RSS discovery, then creates per-candidate JSON/CSV inventories and an overall Markdown/JSON comparison report.
+- Candidates are ranked for human review using trend signal, research availability, media leads and a rough keyword-overlap relevance hint. No automatic winner is selected and no topic is cleared for storyboarding.
+- Manual topic input still uses the single-topic audit.
+- Not yet verified end-to-end; next step is one blank-topic workflow run. No AI credits or publishing are involved.
