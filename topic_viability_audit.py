@@ -128,6 +128,75 @@ def nasa_media(topic, limit=10):
         return [], f"{type(exc).__name__}: {exc}"
 
 
+
+def openverse_media(topic, limit=8):
+    """Find openly licensed image leads; verify the original host and exact licence."""
+    url = "https://api.openverse.org/v1/images/?" + urllib.parse.urlencode({"q": topic, "page_size": str(limit)})
+    try:
+        data = get_json(url)
+        assets = []
+        for item in data.get("results", []):
+            lic, lic_url = item.get("license", ""), item.get("license_url", "")
+            assets.append({"source": "Openverse", "title": item.get("title", ""),
+                "page_url": item.get("foreign_landing_url") or item.get("url", ""),
+                "file_url": item.get("url", ""), "preview_url": item.get("thumbnail", ""),
+                "media_type": "image", "creator": item.get("creator", ""),
+                "license": lic, "license_url": lic_url,
+                "rights_status": "REVIEW_REQUIRED" if lic and lic_url else "LICENCE_UNVERIFIED",
+                "rights_note": "Openverse is an index; verify original host, exact licence, attribution and third-party rights."})
+        return assets, None
+    except Exception as exc:
+        return [], f"{type(exc).__name__}: {exc}"
+
+
+def loc_media(topic, limit=8):
+    """Search Library of Congress catalog; every item still needs rights review."""
+    url = "https://www.loc.gov/search/?" + urllib.parse.urlencode({"q": topic, "fo": "json", "c": str(limit), "at": "results"})
+    try:
+        data = get_json(url)
+        assets = []
+        for item in data.get("results", []):
+            rights = item.get("rights", "")
+            images = item.get("image_url") or []
+            formats = item.get("online_format") or []
+            creator = item.get("contributor", "")
+            if isinstance(creator, list):
+                creator = ", ".join(str(x) for x in creator)
+            assets.append({"source": "Library of Congress", "title": item.get("title", ""),
+                "page_url": item.get("url", ""), "file_url": images[0] if images else "",
+                "preview_url": images[0] if images else "", "media_type": ", ".join(str(x) for x in formats),
+                "creator": creator, "date_created": item.get("date", ""), "license": rights,
+                "license_url": item.get("rights_url", ""), "rights_status": "REVIEW_REQUIRED",
+                "rights_note": "Check the individual item's rights note; only dedicated Free to Use and Reuse sets are preselected as rights-free."})
+        return assets, None
+    except Exception as exc:
+        return [], f"{type(exc).__name__}: {exc}"
+
+
+def internet_archive_media(topic, limit=8):
+    """Search archive catalogue for movies/images; catalogue presence is not a reuse grant."""
+    params = {"q": f"({topic}) AND (mediatype:movies OR mediatype:image)",
+              "fl[]": ["identifier", "title", "mediatype", "creator", "date", "description", "licenseurl", "rights"],
+              "rows": str(limit), "page": "1", "output": "json"}
+    url = "https://archive.org/advancedsearch.php?" + urllib.parse.urlencode(params, doseq=True)
+    try:
+        data = get_json(url)
+        assets = []
+        for item in data.get("response", {}).get("docs", []):
+            identifier = item.get("identifier", "")
+            lic_url, rights = item.get("licenseurl", ""), item.get("rights", "")
+            assets.append({"source": "Internet Archive", "title": item.get("title", ""),
+                "page_url": "https://archive.org/details/" + urllib.parse.quote(identifier, safe="") if identifier else "",
+                "file_url": "", "media_type": item.get("mediatype", ""), "creator": item.get("creator", ""),
+                "date_created": item.get("date", ""), "license": rights or ("See item metadata" if lic_url else ""),
+                "license_url": lic_url, "description": str(item.get("description", ""))[:500],
+                "rights_status": "REVIEW_REQUIRED",
+                "rights_note": "Inspect item metadata and individual file rights. Downloadable file URL is not yet resolved."})
+        return assets, None
+    except Exception as exc:
+        return [], f"{type(exc).__name__}: {exc}"
+
+
 def search_links(topic):
     q = urllib.parse.quote_plus(topic)
     official_q = urllib.parse.quote_plus(topic + " official")
@@ -145,13 +214,16 @@ def main():
     research = wikipedia_research(topic)
     commons, commons_error = commons_media(topic)
     nasa, nasa_error = nasa_media(topic)
-    assets = commons + nasa
+    openverse, openverse_error = openverse_media(topic)
+    loc, loc_error = loc_media(topic)
+    archive, archive_error = internet_archive_media(topic)
+    assets = commons + nasa + openverse + loc + archive
     commons_licensed = sum(1 for x in commons if x.get("license") and x.get("license_url"))
     # Scores are deliberately conservative: search-result counts and licence labels
     # are only leads, not proof of relevance, usability, or commercial clearance.
     research_chars = len(research.get("extract", "").strip())
     research_score = 2 if research["status"] == "found" and research_chars >= 250 else (1 if research_chars else 0)
-    raw_media_count = len(commons) + len(nasa)
+    raw_media_count = len(assets)
     media_score = 0 if raw_media_count == 0 else (1 if raw_media_count <= 2 else 2)
     rights_score = 0 if not assets else 1  # Human item-by-item rights review is not yet implemented.
     feasibility_score = 3 if assets and research_chars >= 250 else (2 if assets or research_chars else 0)
@@ -192,11 +264,13 @@ def main():
             "media_inventory": media_score, "rights_readiness": rights_score, "production_feasibility": feasibility_score},
         "research": research,
         "media_counts": {"commons_search_results": len(commons), "commons_with_licence_metadata": commons_licensed,
-                         "nasa_search_results": len(nasa), "automatically_cleared_assets": 0},
-        "errors": {"commons": commons_error, "nasa": nasa_error},
+                         "nasa_search_results": len(nasa), "openverse_image_results": len(openverse), "loc_results": len(loc), "internet_archive_results": len(archive), "automatically_cleared_assets": 0},
+        "errors": {"commons": commons_error, "nasa": nasa_error, "openverse": openverse_error, "loc": loc_error, "internet_archive": archive_error},
         "search_links": search_links(topic), "assets": assets,
         "important_limitations": [
             "Search results are leads, not proof that each asset is relevant, downloadable, or legally reusable.",
+            "Openverse currently adds image discovery only; it is not a video source in this pipeline.",
+            "Library of Congress and Internet Archive records may have unclear rights or downloadability; review each item.",
             "This version does not yet inventory stock-video libraries or verify playable/downloadable video coverage.",
             "No topic is automatically approved for storyboarding; human review is mandatory.",
             "Audience score is not measured for manually entered topics. Media counts do not indicate popularity.",
@@ -222,7 +296,7 @@ def main():
         "", "## Topic research", "", f"**Source:** [{research.get('title', topic)}]({research.get('url', '')})", "",
         research.get("extract", "No automated summary was returned."), "", "## Media inventory", "",
         f"- Wikimedia Commons results: {len(commons)}; with licence metadata: {commons_licensed}",
-        f"- NASA image/video results: {len(nasa)}", "- No assets are automatically marked cleared. Review the CSV and each source page.", "",
+        f"- NASA image/video results: {len(nasa)}", f"- Openverse image results: {len(openverse)}", f"- Library of Congress results: {len(loc)}", f"- Internet Archive results: {len(archive)}", "- No assets are automatically marked cleared. Review the CSV and each source page.", "",
         "## Search more free media", ""]
     lines += [f"- [{label}]({url})" for label, url in report["search_links"].items()]
     lines += ["", "## Rights and go/no-go gate", "",
