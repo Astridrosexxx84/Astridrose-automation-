@@ -1,0 +1,27 @@
+name: Test footage editor (synthetic clip, free)
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/test-footage-editor.yml"
+      - "test_footage_editor.py"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free video tools
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Test trim, vertical reframe, audio replacement and metadata
+        run: python test_footage_editor.py
+      - name: Save test video
+        uses: actions/upload-artifact@v4
+        with:
+          name: footage-editor-self-test
+          path: editor-self-test/
+          if-no-files-found: error
+          retention-days: 7
