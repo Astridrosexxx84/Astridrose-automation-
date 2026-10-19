@@ -1,0 +1,43 @@
+name: Topic viability audit — research and free media
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "Topic to audit; leave blank to use the free trend detector"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Detect a topic from free Google Trends RSS when none was entered
+        if: ${{ inputs.topic == '' }}
+        run: python free_trend_selector.py
+
+      - name: Research topic and audit media inventory
+        env:
+          AUDIT_TOPIC: ${{ inputs.topic }}
+        run: python topic_viability_audit.py
+
+      - name: Save decision report and media inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: topic-viability-audit
+          path: topic-audit/
+          if-no-files-found: error
+          retention-days: 14
