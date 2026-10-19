@@ -34,7 +34,7 @@ def main():
      f.write(chunk)
   audio=MEDIA/f"voice{i}.mp3"; asyncio.run(voice(narr,audio)); d=probe(audio)
   title=title.replace("'","\\'")
-  vf=f"scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black,fps=30,drawbox=x=0:y=0:w=iw:h=100:color=black@0.6:t=fill,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:text='{title}':fontcolor=white:fontsize=36:x=48:y=28"
+  base_filter="crop=iw:ih*0.62:0:ih*0.38,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black" if i==5 else "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black"\n  vf=f"{base_filter},fps=30,drawbox=x=0:y=0:w=iw:h=100:color=black@0.6:t=fill,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:text='{title}':fontcolor=white:fontsize=36:x=48:y=28"
   seg=MEDIA/f"scene{i}.mp4"
   run(["ffmpeg","-y","-stream_loop","-1","-i",str(src),"-i",str(audio),"-t",str(d),"-vf",vf,"-map","0:v:0","-map","1:a:0","-c:v","libx264","-preset","veryfast","-crf","21","-pix_fmt","yuv420p","-c:a","aac","-b:a","160k","-af","loudnorm=I=-16:TP=-1.5:LRA=11","-shortest",str(seg)])
   segs.append(seg); caps.append(f"{i}\n{stamp(clock)} --> {stamp(clock+d)}\n{narr}\n"); clock+=d; credits.append("- "+credit)
@@ -43,6 +43,6 @@ def main():
  run(["ffmpeg","-y","-f","concat","-safe","0","-i",str(concat),"-c","copy","-movflags","+faststart",str(final)])
  (OUT/"VIDEO_001_captions.srt").write_text("\n".join(caps))
  (OUT/"VIDEO_001_credits.txt").write_text("Visual credits; source audio excluded:\n"+"\n".join(credits)+"\n\nConfirm item-specific restrictions and complete visual/audio review before publication.\n")
- (OUT/"VIDEO_001_render_report.txt").write_text(f"Draft rendered: {final.name}\nDuration: {probe(final):.1f} seconds\n1280x720, 30fps, H.264/AAC\nHuman review required. Not uploaded.\n")
+ duration=probe(final)\n info=subprocess.check_output(["ffprobe","-v","error","-select_streams","v:0","-show_entries","stream=width,height,r_frame_rate","-of","default=noprint_wrappers=1",str(final)],text=True).strip()\n black=subprocess.run(["ffmpeg","-hide_banner","-i",str(final),"-vf","blackdetect=d=1.0:pix_th=0.10","-an","-f","null","-"],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)\n black_hits=[line.strip() for line in black.stderr.splitlines() if "black_start:" in line]\n if duration < 120: raise RuntimeError(f"Quality gate failed: duration only {duration:.1f}s; expected at least 120s.")\n if "width=1280" not in info or "height=720" not in info: raise RuntimeError("Quality gate failed: output is not 1280x720.")\n if len(segs)!=7 or len(caps)!=7 or len(credits)!=7: raise RuntimeError("Quality gate failed: scene, caption, or credit count mismatch.")\n if black_hits: raise RuntimeError("Quality gate failed: possible black frame/scene detected: "+"; ".join(black_hits[:5]))\n (OUT/"VIDEO_001_render_report.txt").write_text(f"TECHNICAL QC: PASS\\nFile: {final.name}\\nDuration: {duration:.1f} seconds\\n{info}\\nScenes: {len(segs)}\\nCaptions: {len(caps)}\\nCredits: {len(credits)}\\nBlack-frame scan: no hits\\nStatus: candidate for final human review; not uploaded.\\n")
  print("Draft rendered:",final)
 if __name__=="__main__": main()
