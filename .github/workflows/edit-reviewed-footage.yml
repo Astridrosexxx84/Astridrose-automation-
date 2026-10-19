@@ -1,0 +1,38 @@
+name: Edit reviewed footage into video draft (free, no publishing)
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/edit-reviewed-footage.yml"
+      - "edit_reviewed_footage.py"
+      - "footage-edit-plan.json"
+  workflow_dispatch:
+    inputs:
+      confirm_review:
+        description: "Confirm you reviewed the source pages and have permission to reuse every clip in footage-edit-plan.json"
+        required: true
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  edit:
+    if: ${{ github.event_name == 'push' || inputs.confirm_review == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install free editor
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg espeak-ng
+      - name: Render approved clip edit
+        run: python edit_reviewed_footage.py
+      - name: Save edited draft and rights records
+        uses: actions/upload-artifact@v4
+        with:
+          name: edited-footage-draft
+          path: edited-footage-draft/
+          if-no-files-found: error
+          retention-days: 14
