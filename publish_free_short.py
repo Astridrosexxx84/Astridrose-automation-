@@ -112,15 +112,15 @@ def main():
     if not topic:
         raise RuntimeError("DISCOVERY_TOPIC is empty")
     topic = re.sub(r"\s+", " ", topic).strip()[:100]
-    safe = re.sub(r"[^A-Za-z0-9 ]+", "", topic).strip()
-    title = ("The Internet Rabbit Hole: " + safe)[:95]
+    # A deliberately original, polished discussion Short: no borrowed gameplay or music.
+    title = "Why Zelda Remakes Have to Get More Than Nostalgia Right"
     slides = [
-        ("THIS WEEK'S RABBIT HOLE", topic, "A quick original conversation starter"),
-        ("QUESTION 1", "Why does this grab people's attention?", "Think beyond the obvious answer"),
-        ("QUESTION 2", "What's the biggest misconception?", "Share a take, not just a hot take"),
-        ("QUESTION 3", "What would you tell a beginner?", "One useful tip can start a great thread"),
-        ("YOUR TURN", "Agree, disagree, or add context", "Make the comments more interesting"),
-        ("NEXT RABBIT HOLE", "What should we explore next?", "Comment below and follow for the next topic"),
+        ("THE ZELDA QUESTION", "A remake is more than a fresh coat of paint", "The real test is what it preserves — and what it dares to improve."),
+        ("01 / THE MAGIC", "Keep the feeling of discovery", "A world should still reward curiosity, not just look sharper."),
+        ("02 / THE BALANCE", "Modernise the friction, not the soul", "Better controls and clarity can help without flattening the challenge."),
+        ("03 / THE RISK", "Nostalgia sets a high bar", "Fans remember how a game felt. Matching screenshots isn't enough."),
+        ("THE REAL TEST", "Would a newcomer love it too?", "The strongest remake respects longtime fans and earns a new audience."),
+        ("YOUR TAKE", "What should never change?", "The world, the puzzles, the music, or the sense of adventure?"),
     ]
     frames = []
     for i, (k,h,s) in enumerate(slides):
@@ -134,11 +134,12 @@ def main():
             f.write("duration 3.8\n")
         f.write(f"file '{frames[-1].resolve()}'\n")
     narration = (
-        f"Today's internet rabbit hole is {topic}. "
-        "Question one: why does this grab people's attention? "
-        "Question two: what's the biggest misconception? "
-        "Question three: what would you tell a beginner? "
-        "Share your take in the comments, and follow for the next rabbit hole."
+        "A great Zelda remake has a tougher job than making an old game look new. "
+        "First, it has to preserve that feeling of discovery — the sense that the next hill might hide something wonderful. "
+        "Second, modern controls and clearer design should remove needless friction, not the challenge itself. "
+        "And third, nostalgia is a high bar: matching old screenshots is not the same as recreating how a game felt. "
+        "The real test is simple: would someone playing for the first time love it too? "
+        "What part of Zelda should never change?"
     )
     run(["espeak-ng", "-s", "155", "-v", "en-us", "-w", str(OUT/"voice.wav"), narration])
     run(["ffmpeg","-y","-f","concat","-safe","0","-i",str(concat),"-i",str(OUT/"voice.wav"),
