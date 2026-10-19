@@ -108,7 +108,7 @@ def audit_candidate(candidate):
     folder.mkdir(parents=True, exist_ok=True)
     (folder / "audit.json").write_text(json.dumps(record, indent=2, ensure_ascii=False), encoding="utf-8")
     with (folder / "media-inventory.csv").open("w", newline="", encoding="utf-8") as f:
-        fields = ["source", "title", "page_url", "file_url", "preview_url", "mime", "media_type",
+        fields = ["source", "title", "page_url", "file_url", "file_name", "preview_url", "mime", "runtime", "retrieval_status", "media_type",
                   "creator", "license", "license_url", "date_created", "topic_keyword_overlap",
                   "relevance_status", "rights_status", "rights_note"]
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
