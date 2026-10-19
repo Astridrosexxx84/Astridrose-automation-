@@ -73,7 +73,9 @@ def request_json(url, token):
                 return json.loads(response.read().decode())
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode("utf-8", errors="replace")
-            if exc.code not in (408, 429, 500, 502, 503, 504) or attempt == 3:
+            lowered = detail.lower()
+            quota_exhausted = exc.code == 429 and ("quota exceeded" in lowered or "search queries per day" in lowered)
+            if quota_exhausted or exc.code not in (408, 429, 500, 502, 503, 504) or attempt == 3:
                 raise RuntimeError(f"YouTube API error {exc.code}: {detail[:500]}") from None
         except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
             if attempt == 3:
