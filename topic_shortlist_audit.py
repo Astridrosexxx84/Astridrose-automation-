@@ -71,9 +71,17 @@ def audit_candidate(candidate):
 
     research_chars = len(research.get("extract", "").strip())
     research_score = 2 if research["status"] == "found" and research_chars >= 250 else (1 if research_chars else 0)
-    media_score = 0 if not relevant else (1 if len(relevant) <= 2 else 2)
-    rights_score = 0 if not assets else 1
-    feasibility_score = 3 if relevant and research_chars >= 250 else (2 if relevant or research_chars else 0)
+    # Count independent source types, not raw result volume: one noisy API must not
+    # make a topic look media-rich. Keyword matches remain leads, not verified assets.
+    relevant_sources = {str(x.get("source", "unknown")) for x in relevant}
+    video_candidates = [x for x in relevant if x.get("file_url") and
+                        ("video" in str(x.get("mime", "")).casefold() or
+                         str(x.get("file_name", "")).casefold().endswith((".mp4", ".m4v", ".webm", ".ogv", ".mov")))]
+    media_score = 0 if not relevant else (1 if len(relevant_sources) < 2 or len(relevant) < 3 else 2)
+    # Rights readiness is zero until actual candidate assets have explicit licence
+    # metadata. Even then, the record still needs item-level review.
+    rights_score = 1 if relevant and all(x.get("license") and x.get("license_url") for x in relevant) else 0
+    feasibility_score = 3 if len(relevant_sources) >= 2 and research_chars >= 250 else (2 if relevant or research_chars else 0)
     market_count = len(candidate["markets"])
     rank = candidate["trend_rank"]
     trend_score = 5 if market_count >= 4 and rank <= 5 else 4 if market_count >= 3 and rank <= 10 else 3 if market_count >= 2 else 2 if market_count >= 1 else 0
@@ -92,6 +100,9 @@ def audit_candidate(candidate):
             "commons_with_licence_metadata": sum(1 for x in commons if x.get("license") and x.get("license_url")),
             "nasa_search_results": len(nasa), "openverse_image_results": len(openverse),
             "loc_results": len(loc), "internet_archive_results": len(archive), "keyword_matched_leads": len(relevant),
+            "distinct_sources_with_keyword_matches": len(relevant_sources),
+            "keyword_matched_video_file_candidates": len(video_candidates),
+            "keyword_matched_assets_with_license_metadata": sum(1 for x in relevant if x.get("license") and x.get("license_url")),
             "automatically_cleared_assets": 0},
         "errors": {"commons": commons_error, "nasa": nasa_error, "openverse": openverse_error, "loc": loc_error, "internet_archive": archive_error},
         "assets": assets,
@@ -147,7 +158,7 @@ def main():
         counts = r.get("media_counts", {})
         lines.append(f"| {priority} | {r['trend_rank']} | {r['topic'].replace('|', '/')} | {r.get('score_out_of_100', 0)} | {r.get('decision', 'AUDIT_ERROR')} | {', '.join(r.get('markets', []))} | {research_status} | {counts.get('commons_search_results', 0)} | {counts.get('nasa_search_results', 0)} | {counts.get('openverse_image_results', 0)} | {counts.get('loc_results', 0)} | {counts.get('internet_archive_results', 0)} | {counts.get('keyword_matched_leads', 0)} |")
     lines += ["", "## Interpretation and next gate", "",
-        "A high trend rank does not automatically make a good video. The shortlist compares audience signal with a shallow research check and early media leads; keyword overlap is only a rough relevance hint.",
+        "A high trend rank does not automatically make a good video. The shortlist compares audience signal with a shallow research check and early media leads; keyword overlap is only a rough relevance hint. Media scoring now considers distinct source types, and rights readiness stays at zero unless matched leads expose licence metadata.",
         "Before story writing, open each candidate's audit.json and media-inventory.csv, inspect the exact source pages, find credible primary sources, verify downloadable/playable footage and free stock coverage, and review item-level licences and third-party rights.",
         "If a candidate has weak or irrelevant media, reject it or change the angle. Do not spend AI credits or storyboard from search-result counts alone.", "",
         "## Per-candidate files", ""]
