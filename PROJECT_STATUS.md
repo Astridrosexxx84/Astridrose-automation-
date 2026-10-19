@@ -110,3 +110,12 @@ Run `.github/workflows/topic-viability-audit.yml` once with the topic field blan
 - GitHub Actions run #1 for AI battery logic tests: the test step completed successfully. Run link: https://github.com/Astridrosexxx84/Astridrose-automation-/actions/runs/39341674095
 - Current limitation: these are tested building blocks, not yet integrated into `ai_team_coordinator.py`; the dashboard only reflects recorded observations and configured-secret presence. It does not probe provider APIs or expose actual remaining quota. The current coordinator still does not dynamically switch providers for each task.
 - Next implementation: wire provider call outcomes into the persistent ledger, add bounded failover between eligible free providers, and keep the report useful when any/all providers fail. Test routing with mocked failures before any live provider call. Keep billing and publishing disabled.
+
+
+## Battery ledger integrated into AI team workflow (2026-10-20)
+
+- Integrated provider outcome recording into `ai_team_coordinator.py`: observed successes and failures for Gemini, Groq, and OpenRouter now update a persistent `ai-battery-status.json` ledger.
+- The coordinator now generates `ai-battery-status.md` with explicit quota-unknown states and includes the ledger/dashboard in the review artifact.
+- OpenRouter is marked as a verified zero-price route only when the coordinator selects a model whose current model listing says both prompt and completion pricing are zero and the model ID ends in `:free`. Gemini/Groq free-route eligibility stays unknown in the ledger rather than being assumed.
+- Expanded the battery CI workflow to compile both Python modules and run the unit tests. No live provider calls were made to test this integration, so provider API behavior and artifact upload still require a later manual run.
+- Next: add bounded, task-level provider fallback and test it with mock providers; only then run the live manual workflow if configured free access is confirmed. No paid route, publishing, or account changes are allowed.
