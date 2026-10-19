@@ -90,3 +90,13 @@ Run `.github/workflows/topic-viability-audit.yml` once with the topic field blan
 - Added direct search links for Openverse, LOC, Internet Archive, Pexels videos, and Pixabay videos. Pexels/Pixabay APIs need keys, so no new secrets or API keys were added.
 - Increased workflow timeout to 20 minutes to allow more free API checks across up to 10 candidates.
 - Not yet run after these code changes; syntax and API compatibility must be confirmed by the next workflow run. No media was downloaded, no AI credits used, and nothing published.
+
+
+## Collaborative AI battery architecture (2026-10-20)
+
+- Added `AI_BATTERY_SYSTEM.md` defining the battery meter, dynamic provider switchboard, collaborative proposal/challenge/synthesis loop, portable work packets, honest quota states, failover rules, and a phased build plan.
+- Updated `PORTABLE_AI_MANAGER.md` to make the battery/switchboard model part of the project manager's operating rules.
+- Verified the existing `ai_team_coordinator.py` and `.github/workflows/ai-team-coordinator.yml`: they already support a limited collaborative pass (Gemini analysis, Groq challenge, OpenRouter zero-price model challenge, Gemini synthesis) and preserve partial contributions when one provider fails. This is not yet a general router or live battery meter.
+- A fresh Actions run list shows topic-viability runs #27 and #28 completed successfully, but those were push-triggered runs from 2026-10-19, not proof that the newest free-media expansion has been run manually end-to-end. No new AI-provider request was made during this review.
+- Important design rule: provider quotas are often not exposed as a reliable live percentage. Record observed success/errors and provider-reported limits/reset times; show quota as unknown when it cannot be measured. Do not invent battery percentages.
+- Next: build the smallest useful status ledger and bounded provider failover into the existing coordinator, then test its routing logic without sending paid requests. Keep the coordinator manual and report-only until this is validated. Separately, run the topic-viability workflow with blank topic when a manual workflow dispatch is available, then inspect its artifact.
