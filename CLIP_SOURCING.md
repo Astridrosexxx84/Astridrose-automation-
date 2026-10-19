@@ -9,7 +9,7 @@ For each trend/topic, discover potentially useful source videos such as intervie
 2. Source files licensed for reuse, direct permission, or platform-native clipping/remix features whose terms cover the intended use.
 3. A short excerpt only where the use has been reviewed for an applicable copyright exception (for example, criticism/review, quotation, parody or other locally recognized categories). Do not assume an exception applies just because the clip is short.
 
-Use official APIs or permitted search/browsing routes to discover sources. Do not bypass access controls, paywalls or technical restrictions. The current audit does not yet implement this discovery module.
+Use official APIs or permitted search/browsing routes to discover sources. Do not bypass access controls, paywalls or technical restrictions. The current topic audit now resolves candidate video-file URLs for Internet Archive movie records and exposes the URL, filename, format and runtime in the inventory without downloading the file. This is only a first media-retrieval building block: actual playback/download is untested, and discovery/timestamping of moments inside YouTube and other source videos is not implemented yet.
 
 ## Per-clip record
 Store one row per proposed excerpt:
