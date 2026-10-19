@@ -1,0 +1,38 @@
+name: Render VIDEO_001 draft
+
+on:
+  push:
+    paths:
+      - ".github/workflows/video001-render.yml"
+      - "production/VIDEO_001_RENDER.py"
+      - "production/VIDEO_001_SCRIPT.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install render dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-dejavu-core
+          python -m pip install --upgrade pip
+          pip install edge-tts
+      - name: Render video draft
+        run: python production/VIDEO_001_RENDER.py
+      - name: Upload review package
+        uses: actions/upload-artifact@v4
+        with:
+          name: VIDEO_001_review_draft
+          path: |
+            output/VIDEO_001_Earth_From_Space.mp4
+            output/VIDEO_001_captions.srt
+            output/VIDEO_001_credits.txt
+            output/VIDEO_001_render_report.txt
+          if-no-files-found: error
+          retention-days: 14
