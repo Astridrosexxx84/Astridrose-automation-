@@ -6,8 +6,8 @@ This is a required stage of the topic-agnostic YouTube pipeline. A detected tren
 
 1. Discover candidates using free trend signals.
 2. Research the subject and locate credible primary sources.
-3. Inventory topic-specific media and supplementary free stock media.
-4. Review exact asset pages, licences, attribution, adaptation/commercial terms and third-party rights.
+3. Inventory topic-specific media, supplementary free stock/audio, and potentially useful excerpts from existing published content.
+4. Review exact asset pages and, for clips, the exact in/out timestamps, purpose, excerpt length and significance, original-work context, transformation/commentary, likely market impact, licence/permission basis, platform terms and third-party rights.
 5. Compare candidates on audience opportunity, research depth, media coverage, rights readiness and production feasibility.
 6. Record GO, CONDITIONAL or HOLD/RESELECT with reasons.
 7. Only after the gate passes, write the storyline, script and storyboard against the verified inventory.
@@ -46,8 +46,9 @@ The current scripts never automatically approve a topic for storyboarding. The s
 - Record the exact source page, creator, licence, attribution text, download date and planned scene for each chosen asset.
 - Review third-party material, music, logos, people, trademarks, and licence restrictions separately.
 - Public availability is not a reuse licence. Attribution alone does not grant permission.
-- Fair use and fair dealing are different, jurisdiction-specific exceptions. A clip compilation or superficial edit is not automatically lawful or monetizable.
-- Do not build a pipeline that downloads and repackages other creators' videos as a default strategy.
+- Fair use and fair dealing are different, jurisdiction-specific exceptions. No fixed number of seconds is universally safe; attribution or a disclaimer is not a substitute for permission or a valid exception.
+- Clipping existing content is an explicit sourcing route. Prefer native clipping/remix tools, licensed source files, public-domain/permissively licensed content, or excerpts with a documented legal basis. A simple compilation may still infringe copyright and may fail YouTube monetization rules even if copyright permission exists.
+- Never bypass paywalls/access controls or treat public viewability as permission. Do not automate mass downloading/re-uploading as a default. Record the original URL, creator, exact timestamps, licence/permission or exception rationale, planned commentary/story purpose, and platform-policy risks for each clip.
 - If rights are unclear, exclude the asset, obtain permission, or use an alternative. Human review is required before publication.
 
 ## Current implementation status
@@ -57,3 +58,6 @@ The first shortlist-audit version selected Helen Haines from the trend feed and 
 
 ## Additional free-media sources (2026-10-20)
 The audit now queries Openverse for openly licensed image leads, the Library of Congress catalog, and Internet Archive image/movie records, in addition to Wikimedia Commons and NASA. Candidate reports also link to Pexels and Pixabay stock-video searches. The Pexels/Pixabay API endpoints require keys, so they are not queried automatically. Openverse is image-only in this implementation; Internet Archive direct file resolution and real video playback checks are not yet implemented. Treat every returned record as a lead until the source page, licence, download/playback and commercial/adaptation terms have been reviewed.
+
+## Existing-content clipping route
+Clipping is now part of the planned sourcing layer, alongside licensed/public-domain media and original/AI-assisted assets. See `CLIP_SOURCING.md` for a per-clip review record and workflow. The current topic-audit scripts do not yet discover, timestamp, download, or assemble clips from existing videos; that is a future module, and must not be described as implemented until tested.
