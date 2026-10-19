@@ -7,9 +7,9 @@ Purpose: atmospheric cutaways for an original commentary Short. These are illust
 
 | Asset ID | Source page | What it shows | Planned use | Status |
 |---|---|---|---|---|
-| STOCK-01 | https://www.pexels.com/video/a-misty-forest-6656520/ | Serene misty forest landscape enveloped in fog and lush greenery; creator Edwin Lopez; page shows free download and free-to-use | Forest/atmosphere transition | Candidate; download and check page/licence before use |
+| STOCK-01 | https://www.pexels.com/video/a-misty-forest-6656520/ | Serene misty forest landscape enveloped in fog and lush greenery; creator Edwin Lopez; page shows free download and free-to-use | Forest/atmosphere transition | **Imported to Canva media library** (asset ID `VAHYcMR-y2g`); still needs scene selection in an edit |
 | STOCK-02 | https://www.pexels.com/video/a-misty-forest-15346324/ | Tall trees in fog; page describes it as a serene foggy forest and labels it free to use | Opening or transition | Candidate; download and check page/licence before use |
-| STOCK-03 | https://www.pexels.com/video/misty-forest-walk-with-sunlight-rays-31381734/ | A lone hiker walks through a misty forest with sunlight streaming through trees; creator Matthias Groeneveld; page shows free to use | Exploration / discovery beat | Candidate; check whether the hiker suits the scene and download page/licence before use |
+| STOCK-03 | https://www.pexels.com/video/misty-forest-walk-with-sunlight-rays-31381734/ | A lone hiker walks through a misty forest with sunlight streaming through trees; creator Matthias Groeneveld; page shows free to use | Exploration / discovery beat | **Imported to Canva media library** (asset ID `VAHYcKYcwI4`); still needs scene selection in an edit |
 | STOCK-04 | https://www.pexels.com/video/aerial-view-of-lush-forest-and-misty-horizon-38767474/ | 9-second aerial forest shot, 2720×1530, 16:9, 25 fps; creator Siarhei Dalivelia; page lists free licence | Wide establishing shot, crop to vertical | Candidate; check page/licence before use |
 
 ## Official topic references
@@ -32,9 +32,9 @@ Stock footage must be presented as illustrative atmosphere, not misrepresented a
 ## Asset register — fill once each file is actually downloaded
 | Asset ID | Local filename | Creator | Exact source page | Licence checked on | Attribution required? | Scene | Downloaded? |
 |---|---|---|---|---|---|---|---|
-| STOCK-01 | TBD | Edwin Lopez | https://www.pexels.com/video/a-misty-forest-6656520/ | TBD | Check current licence | Scene 6 / atmosphere | No |
+| STOCK-01 | Canva asset `VAHYcMR-y2g` | Edwin Lopez | https://www.pexels.com/video/a-misty-forest-6656520/ | 2026-10-19: Pexels page shows Free licence; review current terms before publication | Pexels says attribution not required; optional credit recommended | Scene 6 / atmosphere | Imported to Canva |
 | STOCK-02 | TBD | Check page | https://www.pexels.com/video/a-misty-forest-15346324/ | TBD | Check current licence | Scene 6 / atmosphere | No |
-| STOCK-03 | TBD | Matthias Groeneveld | https://www.pexels.com/video/misty-forest-walk-with-sunlight-rays-31381734/ | TBD | Check current licence | Scene 6 / exploration | No |
+| STOCK-03 | Canva asset `VAHYcKYcwI4` | Matthias Groeneveld | https://www.pexels.com/video/misty-forest-walk-with-sunlight-rays-31381734/ | 2026-10-19: Pexels page shows free-to-use; review current terms before publication | Pexels says attribution not required; optional credit recommended | Scene 6 / exploration | Imported to Canva |
 | STOCK-04 | TBD | Siarhei Dalivelia | https://www.pexels.com/video/aerial-view-of-lush-forest-and-misty-horizon-38767474/ | TBD | Check current licence | Scene 6 / establishing | No |
 
 ## Use of Nintendo footage
