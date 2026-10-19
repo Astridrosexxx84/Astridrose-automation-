@@ -18,6 +18,19 @@ SCORECARD = Path("topic-discovery-scorecard.txt")
 OUT = Path("topic-audit")
 MAX_TOPICS = 12
 MAX_RESULTS_PER_TOPIC = 15
+def topics_from_scorecard():
+    if not SCORECARD.exists():
+        return []
+    topics = []
+    for line in SCORECARD.read_text(encoding='utf-8').splitlines():
+        match = re.match(r'^\\s*\\d+\\.\\s*(.*?)\\s*\\|\\s*markets=', line)
+        if match:
+            topic = match.group(1).strip()
+            if topic and topic.casefold() not in {x.casefold() for x in topics}:
+                topics.append(topic)
+        if len(topics) >= MAX_TOPICS:
+            break
+    return topics
 def parse_int(value):
     try:
         return int(value or 0)
