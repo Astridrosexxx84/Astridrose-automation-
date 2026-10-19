@@ -11,7 +11,7 @@ on:
       - "free_trend_selector.py"
       - "build_storyboard.py"
       - "build_rights_review_queue.py"
-      - "build_footage_review_queue.py"
+      - "build_footage_review_queue.py"\n      - "build_footage_edit_plan.py"
   workflow_dispatch:
     inputs:
       topic:
