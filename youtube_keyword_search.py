@@ -51,12 +51,23 @@ def get_access_token():
     return payload["access_token"]
 
 
-def search(token, query, max_results):
-    # Start with videos YouTube ranks highly by total views for this query.
-    data = api_get(token, "search", {
+def search(token, query, max_results, lookback_days):
+    # Prefer videos published recently, sorted by total views, then rank by views/day.
+    published_after = datetime.now(timezone.utc).timestamp() - lookback_days * 86400
+    published_after = datetime.fromtimestamp(published_after, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    params = {
         "part": "snippet", "type": "video", "q": query,
         "maxResults": max_results, "order": "viewCount", "safeSearch": "moderate",
-    })
+        "publishedAfter": published_after,
+    }
+    data = api_get(token, "search", params)
+    scope = f"videos published in the last {lookback_days} days"
+    if not data.get("items"):
+        # Avoid a dead end if a niche has no recent matches.
+        params.pop("publishedAfter", None)
+        data = api_get(token, "search", params)
+        scope = "all-time fallback (no recent matches found)"
+
     # De-duplicate IDs while preserving search order.
     found = {}
     for item in data.get("items", []):
@@ -95,7 +106,7 @@ def search(token, query, max_results):
             "url": f"https://www.youtube.com/watch?v={video_id}",
         })
     # A rough discovery signal: recent view velocity, with total views as tie-breaker.
-    return sorted(results, key=lambda v: (v["views_per_day"], v["views"]), reverse=True)
+    return sorted(results, key=lambda v: (v["views_per_day"], v["views"]), reverse=True), scope
 
 
 def main():
@@ -106,11 +117,16 @@ def main():
         max_results = max(1, min(25, int(os.environ.get("MAX_RESULTS", "10"))))
     except ValueError:
         max_results = 10
+    try:
+        lookback_days = max(1, min(365, int(os.environ.get("LOOKBACK_DAYS", "30"))))
+    except ValueError:
+        lookback_days = 30
 
-    results = search(get_access_token(), query, max_results)
+    results, scope = search(get_access_token(), query, max_results, lookback_days)
     lines = [
         f"YouTube topic discovery: {query}",
         f"Unique videos returned: {len(results)}",
+        f"Search scope: {scope}",
         "",
         "Ranked by estimated views per day, then total views. This is a rough signal, not proof of current trend growth.",
         "Use these candidates for review; the workflow does not create playlists or change YouTube.",
