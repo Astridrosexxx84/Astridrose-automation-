@@ -212,7 +212,7 @@ def internet_archive_media(topic, limit=8):
                     retrieval_status = "METADATA_LOOKUP_FAILED: " + type(meta_exc).__name__
             assets.append({"source": "Internet Archive", "title": item.get("title", ""),
                 "page_url": page_url, "file_url": file_url, "file_name": file_name,
-                "mime": mime, "duration_seconds": duration, "retrieval_status": retrieval_status,
+                "mime": mime, "runtime": duration, "retrieval_status": retrieval_status,
                 "media_type": item.get("mediatype", ""), "creator": item.get("creator", ""),
                 "date_created": item.get("date", ""), "license": rights or ("See item metadata" if lic_url else ""),
                 "license_url": lic_url, "description": str(item.get("description", ""))[:500],
@@ -299,15 +299,15 @@ def main():
         "important_limitations": [
             "Search results are leads, not proof that each asset is relevant, downloadable, or legally reusable.",
             "Openverse currently adds image discovery only; it is not a video source in this pipeline.",
-            "Library of Congress and Internet Archive records may have unclear rights or downloadability; review each item.",
-            "This version does not yet inventory stock-video libraries or verify playable/downloadable video coverage.",
+            "Library of Congress rights and Internet Archive file links are leads only; verify actual playback, downloadability, and item/file-level rights.",
+            "This version resolves candidate Internet Archive movie-file URLs but does not download or test playback; stock-video APIs are not yet integrated.",
             "No topic is automatically approved for storyboarding; human review is mandatory.",
             "Audience score is not measured for manually entered topics. Media counts do not indicate popularity.",
             "Fair use/fair dealing is context-specific; this script does not determine whether a copyright exception applies.",
             "A human must check facts, exact asset pages, licences, commercial/adaptation terms, and coverage gaps before story writing."
         ]}
     (OUT / "topic-audit.json").write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
-    fields = ["source", "title", "page_url", "file_url", "preview_url", "mime", "media_type", "creator",
+    fields = ["source", "title", "page_url", "file_url", "file_name", "preview_url", "mime", "runtime", "retrieval_status", "media_type", "creator",
               "license", "license_url", "date_created", "rights_status", "rights_note"]
     with (OUT / "media-inventory.csv").open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
