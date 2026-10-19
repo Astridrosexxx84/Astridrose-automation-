@@ -234,16 +234,39 @@ def main():
         print("Gemini synthesis complete.")
         synthesis_status = "completed"
     except RuntimeError as exc:
-        # Keep the completed independent work even if the final Gemini call is unavailable.
+        # First fallback is the already-selected zero-price OpenRouter model.
         record_event(battery, "gemini", "unknown_error", error=str(exc), model=GEMINI_MODEL, free_route="unknown", configured=True)
-        final = (
-            "Gemini final synthesis unavailable: " + str(exc) +
-            "\n\nFallback summary: use the Gemini initial analysis below as the baseline, "
-            "then compare it with the Groq and OpenRouter challenges. Prioritize only actions "
-            "that remain consistent with the $0 budget and review-only safety constraints."
-        )
-        synthesis_status = "unavailable; fallback report generated"
-        print("Gemini synthesis unavailable; generating fallback report: " + str(exc))
+        final = None
+        if openrouter_model != "unavailable":
+            try:
+                fallback_prompt = (
+                    "Synthesize the independent analyses into one actionable recommendation. "
+                    "Preserve disagreements, flag unverified claims, list next actions and risks. "
+                    "Respect $0 spending, do not publish, and use only the supplied material.\n\n"
+                    "TASK:\n" + task + "\n\nGEMINI ANALYSIS:\n" + first
+                    + "\n\nGROQ CHALLENGE:\n" + groq_answer
+                    + "\n\nOPENROUTER CHALLENGE:\n" + openrouter_answer
+                )
+                final = openai_compatible_chat(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    openrouter_key,
+                    openrouter_model,
+                    fallback_prompt,
+                    "Astrid Rose AI Team - OpenRouter fallback synthesis",
+                )
+                record_event(battery, "openrouter", "success", model=openrouter_model, free_route="verified_zero_price", configured=True)
+                synthesis_status = "OpenRouter zero-price fallback"
+                print("Gemini synthesis unavailable; OpenRouter zero-price fallback succeeded.")
+            except RuntimeError as fallback_exc:
+                record_event(battery, "openrouter", "unknown_error", error=str(fallback_exc), model=openrouter_model, free_route="verified_zero_price", configured=True)
+                print("OpenRouter fallback unavailable; preserving completed analyses: " + str(fallback_exc))
+        if final is None:
+            final = (
+                "AI synthesis providers unavailable. Preserve the completed independent analyses below, "
+                "compare them manually, and prioritize only actions consistent with the $0 budget and review-only safety constraints. "
+                "Gemini diagnostic category: " + str(exc)[:180]
+            )
+            synthesis_status = "AI synthesis unavailable; deterministic fallback report generated"
 
 
     report = f"""# Astrid Rose AI Team Report
