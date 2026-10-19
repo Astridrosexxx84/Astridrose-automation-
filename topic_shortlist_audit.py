@@ -81,8 +81,9 @@ def audit_candidate(candidate):
     # Rights readiness is zero until actual candidate assets have explicit licence
     # metadata. Even then, the record still needs item-level review.
     rights_score = 1 if relevant and all(
-        str(x.get("license", "")).strip().casefold() not in {"", "see item metadata", "unknown", "n/a", "not provided"}
-        and str(x.get("license_url", "")).strip()
+        x.get("license") and str(x.get("license", "")).strip().casefold() not in
+        {"see item metadata", "unknown", "n/a", "not provided", "none"}
+        and x.get("license_url") and str(x.get("license_url", "")).strip()
         for x in relevant
     ) else 0
     feasibility_score = 3 if len(relevant_sources) >= 2 and research_chars >= 250 else (2 if relevant or research_chars else 0)
