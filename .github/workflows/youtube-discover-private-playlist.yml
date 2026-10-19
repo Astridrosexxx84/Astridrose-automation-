@@ -1,0 +1,54 @@
+name: Discover videos and build a private playlist
+on:
+  workflow_dispatch:
+    inputs:
+      search_query:
+        description: "Topic to discover videos for"
+        required: true
+        default: "popular music 2026"
+        type: string
+      playlist_title:
+        description: "Title for the new private playlist"
+        required: true
+        default: "Automation Discovery Test"
+        type: string
+      max_results:
+        description: "Maximum videos to add (1–5)"
+        required: true
+        default: "5"
+        type: string
+      lookback_days:
+        description: "Prefer videos published in the last N days"
+        required: true
+        default: "30"
+        type: string
+permissions:
+  contents: read
+jobs:
+  discover-and-create-private-playlist:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Discover, rank, and add videos to a private playlist
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          SEARCH_QUERY: ${{ inputs.search_query }}
+          PLAYLIST_TITLE: ${{ inputs.playlist_title }}
+          MAX_RESULTS: ${{ inputs.max_results }}
+          LOOKBACK_DAYS: ${{ inputs.lookback_days }}
+        run: python youtube_discover_private_playlist.py
+      - name: Save playlist report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: discovery-private-playlist-result
+          path: discovery-playlist-result.txt
+          if-no-files-found: ignore
+          retention-days: 7
