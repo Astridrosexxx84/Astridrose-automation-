@@ -83,3 +83,4 @@ jobs:
           retention-days: 14
 
 # Triggered by a workflow-only comment change from the connected GitHub integration; no publishing occurs.
+# Refresh run requested 2026-10-20: compare current free-trend shortlist and media leads.
