@@ -19,7 +19,7 @@ OUT = Path("topic-audit")
 OUT.mkdir(exist_ok=True)
 
 
-def get_json(url, timeout=25):
+def get_json(url, timeout=8):
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
     with urllib.request.urlopen(req, timeout=timeout) as response:
         return json.loads(response.read().decode("utf-8"))
