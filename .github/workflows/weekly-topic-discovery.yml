@@ -1,0 +1,45 @@
+name: Weekly automatic topic discovery (private playlists)
+on:
+  schedule:
+    - cron: "0 12 * * 1"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Choose this week's topic
+        id: topic
+        shell: bash
+        run: |
+          query=$(python weekly_topic_selector.py)
+          date_tag=$(date -u +%Y-%m-%d)
+          safe_topic=$(printf '%s' "$query" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed 's/^-//;s/-$//' | cut -c1-45)
+          echo "query=$query" >> "$GITHUB_OUTPUT"
+          echo "title=Discovery - $safe_topic - $date_tag" >> "$GITHUB_OUTPUT"
+          echo "Selected topic: $query"
+      - name: Discover and create a private playlist
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          SEARCH_QUERY: ${{ steps.topic.outputs.query }}
+          PLAYLIST_TITLE: ${{ steps.topic.outputs.title }}
+          MAX_RESULTS: "5"
+          LOOKBACK_DAYS: "30"
+        run: python youtube_discover_private_playlist.py
+      - name: Save discovery report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-discovery-result
+          path: discovery-playlist-result.txt
+          if-no-files-found: ignore
+          retention-days: 30
