@@ -15,16 +15,22 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Choose this week's topic
+      - name: Choose this week's topic from recent YouTube performance
         id: topic
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          TOPIC_LOOKBACK_DAYS: "30"
         shell: bash
         run: |
+          set -euo pipefail
           query=$(python weekly_topic_selector.py)
           date_tag=$(date -u +%Y-%m-%d)
           safe_topic=$(printf '%s' "$query" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed 's/^-//;s/-$//' | cut -c1-45)
           echo "query=$query" >> "$GITHUB_OUTPUT"
           echo "title=Discovery - $safe_topic - $date_tag" >> "$GITHUB_OUTPUT"
-          echo "Selected topic: $query"
+          echo "Selected evidence-based topic: $query"
       - name: Discover and create a private playlist
         env:
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
@@ -44,17 +50,25 @@ jobs:
             echo
             echo "Topic: ${{ steps.topic.outputs.query }}"
             echo
+            if [ -f topic-discovery-scorecard.txt ]; then
+              echo "### Topic comparison"
+              cat topic-discovery-scorecard.txt
+              echo
+            fi
             if [ -f discovery-playlist-result.txt ]; then
+              echo "### Playlist result"
               cat discovery-playlist-result.txt
             else
-              echo "No discovery report file was produced. Check the job logs above for the error."
+              echo "No discovery playlist report was produced. Check the job logs above for the error."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
-      - name: Save discovery report
+      - name: Save topic comparison and playlist report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: weekly-discovery-result
-          path: discovery-playlist-result.txt
+          path: |
+            topic-discovery-scorecard.txt
+            discovery-playlist-result.txt
           if-no-files-found: ignore
           retention-days: 30
