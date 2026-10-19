@@ -11,7 +11,8 @@ on:
       - "free_trend_selector.py"
       - "build_storyboard.py"
       - "build_rights_review_queue.py"
-      - "build_footage_review_queue.py"\n      - "build_footage_edit_plan.py"
+      - "build_footage_review_queue.py"
+      - "build_footage_edit_plan.py"
   workflow_dispatch:
     inputs:
       topic:
@@ -37,7 +38,7 @@ jobs:
           python-version: "3.12"
 
       - name: Validate Python syntax
-        run: python -m py_compile topic_viability_audit.py topic_shortlist_audit.py free_trend_selector.py build_storyboard.py build_rights_review_queue.py build_footage_review_queue.py
+        run: python -m py_compile topic_viability_audit.py topic_shortlist_audit.py free_trend_selector.py build_storyboard.py build_rights_review_queue.py build_footage_review_queue.py build_footage_edit_plan.py
 
       - name: Detect candidates from free Google Trends RSS when no topic was entered
         if: ${{ inputs.topic == '' }}
@@ -62,6 +63,9 @@ jobs:
       - name: Build conservative video footage review queue
         run: python build_footage_review_queue.py
 
+      - name: Create unapproved edit-plan template from licence leads
+        run: python build_footage_edit_plan.py
+
       - name: Save decision reports, media inventories, storyboard drafts and rights queue
         uses: actions/upload-artifact@v4
         with:
@@ -69,5 +73,6 @@ jobs:
           path: |
             topic-audit/
             storyboard-drafts/
+            footage-edit-plan.json
           if-no-files-found: error
           retention-days: 14
