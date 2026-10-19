@@ -13,6 +13,11 @@ on:
         required: true
         default: "10"
         type: string
+      lookback_days:
+        description: "Prefer videos published within the last N days (1–365)"
+        required: true
+        default: "30"
+        type: string
 
 permissions:
   contents: read
@@ -36,6 +41,7 @@ jobs:
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
           SEARCH_QUERY: ${{ inputs.search_query || 'popular trending videos 2026' }}
           MAX_RESULTS: ${{ inputs.max_results || '10' }}
+          LOOKBACK_DAYS: ${{ inputs.lookback_days || '30' }}
         run: python youtube_keyword_search.py
 
       - name: Save search results for review
