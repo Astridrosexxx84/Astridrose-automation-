@@ -12,7 +12,7 @@ on:
         description: "A topic from trend discovery or any topic to prototype"
         required: true
         type: string
-        default: "Alexandra Eala"
+        default: "The Legend of Zelda remake"
 permissions:
   contents: read
 jobs:
@@ -29,7 +29,7 @@ jobs:
           python -m pip install --upgrade pip pillow
       - name: Build a topic-specific draft from relevant, explicitly licensed stills
         env:
-          VIDEO_TOPIC: ${{ inputs.topic || 'Alexandra Eala' }}
+          VIDEO_TOPIC: ${{ inputs.topic || 'The Legend of Zelda remake' }}
         run: python create_topic_video_draft.py
       - name: Save video and review notes
         uses: actions/upload-artifact@v4
