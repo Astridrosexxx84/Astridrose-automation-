@@ -2,51 +2,49 @@
 
 Last checked: 2026-10-19
 
-## Active goal (current instruction takes priority)
-Work only on YouTube curation and playlist-building for Dragon Ball Z for now. Do not create social-media posts or promotional content. Use existing YouTube uploads and links; do not download or re-upload other creators' videos. Work phone-first, $0 upfront, and give the user one small next step at a time.
+## Active goal — supersedes earlier DBZ-only scope
+Build a topic-agnostic, $0-upfront YouTube content pipeline. A trend detector selects the topic; the pipeline researches it, finds relevant rights-cleared topic media and free stock media, develops an original storyline/script/storyboard, uses AI generation only for genuine visual gaps, assembles and quality-checks a video, then asks for approval before public publishing. Zelda is the current example topic, not the permanent niche. Do not revert to DBZ-only work unless the user changes scope again.
+
+Phone-first support: give one small next step at a time. Prefer free searches and tools; reuse existing workflows rather than rebuilding without cause. Do not buy credits, start paid trials, or trigger paid usage without explicit approval. Public upload needs approval.
 
 ## Repository
 - Repository: Astridrosexxx84/Astridrose-automation-
 - Default branch: main
-- Public repository; GitHub integration can read and write.
+- Public repository; connected GitHub integration can read and write.
 - Existing files include README.md, AI_TEAM_SETUP.md, AUTOMATION_PLAN.md, ai_team_coordinator.py, youtube_keyword_search.py, youtube_playlist_manager.py, and GitHub Actions workflows.
 
-## Verified current setup
-- A manual multi-provider AI coordinator workflow exists: .github/workflows/ai-team-coordinator.yml.
-- It calls Gemini, Groq, and OpenRouter free models for analysis only and uploads a report artifact. Latest observed run #4 succeeded on 2026-10-17. Earlier run #2 and #1 failed; later run #4 succeeded.
-- YouTube keyword search workflow exists: .github/workflows/youtube-keyword-search.yml. It is configured with a weekly schedule and manual dispatch. It requires YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, and YOUTUBE_REFRESH_TOKEN secrets.
-- YouTube playlist manager workflow exists: .github/workflows/youtube-playlist-manager.yml. It requires the same three YouTube OAuth secrets and selected video URLs.
-- README says Google Cloud project and YouTube Data API v3 are set up and an OAuth desktop client was created.
-- Latest verified YouTube keyword-search run: [run #5](https://github.com/Astridrosexxx84/Astridrose-automation-/actions/runs/39162516868) succeeded on 2026-10-18 and uploaded the `dbz-video-candidates` artifact. This proves the OAuth secrets can refresh successfully and YouTube search works.
-- Important: that scheduled run used the OLD generic 1990s-cartoon fallback because it ran from an earlier commit. The current `main` version of `.github/workflows/youtube-keyword-search.yml` now defaults to `Dragon Ball Z official clips music trailers retrospectives`.
-- The current playlist-manager workflow/script have been inspected but no successful playlist-manager run is verified. Do not run it without user-selected video URLs and explicit approval.
-- No secret values are readable through this integration; never ask the user to paste keys or tokens into chat.
+## Current production package
+- `content-packages/zelda-ocarina-of-time-remake-2026.md`: original short-form concept, draft narration, storyboard, rights checklist, metadata and QA gate.
+- `content-packages/zelda-assets-shortlist.md`: specific candidate free stock clips and official Nintendo reference URLs.
+- These are planning artifacts only. No assets downloaded, no video rendered, and no upload made as part of this package.
+- Primary topic source: Nintendo Australia official overview and game page. Confirm current facts against official sources before editing/publishing.
+- Rights rule: official Nintendo promotional material may only be used consistently with Nintendo's current game-content guidelines and with original creative input/commentary; do not repost a trailer or other creators' gameplay. Free stock licences must be checked per asset and recorded.
 
-## Current blocker / next action
-The search connection works. Next, launch the manual keyword-search workflow using the Dragon Ball Z default, review its artifact, then build the Yes/No approval step before sending selected URLs to the playlist manager. The GitHub connector available to ChatGPT can inspect and edit repository files but does not expose a workflow-dispatch action, so a manual run may require one user tap. Do not repeat OAuth setup unless a new run proves authentication has broken.
+## Trend discovery
+- `free_trend_selector.py` reads Google Trends RSS across US, UK, Canada, Australia, New Zealand and Ireland, ranks recurring/high-position topics, and writes `topic-discovery-scorecard.txt`.
+- It makes zero YouTube Search API calls during discovery, helping avoid quota use.
+- Discovery workflow was added and the script syntax was fixed on main on 2026-10-19. It was awaiting a user-triggered run at last status check; verify actual latest run before relying on its selected topic.
 
-## Coordinator rules
-- Read this file first when resuming work.
-- Keep it updated when a milestone changes.
-- Delegate independent research or review to Gemini/Groq/OpenRouter only if their free quotas are available; do not treat provider switching as a way to bypass usage limits.
-- Prefer deterministic scripts and scheduled GitHub Actions over using AI calls for repeatable tasks.
-- Keep the user in control of public playlist changes and any publishing.
+## Existing YouTube automation
+- YouTube keyword-search workflow: `.github/workflows/youtube-keyword-search.yml`; uses `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET`, and `YOUTUBE_REFRESH_TOKEN` secrets.
+- YouTube playlist-manager workflow: `.github/workflows/youtube-playlist-manager.yml`; do not run without selected video URLs and explicit approval.
+- Latest previously verified keyword-search run #5 succeeded on 2026-10-18 and uploaded the `dbz-video-candidates` artifact. This verified OAuth refresh and YouTube search at that time, but the run used an older generic fallback. Check current code and latest run before assuming current behavior.
+- A public YouTube upload was previously reported successful (video ID `23HeRIIb2QU`); returned visibility was public, but independent playback was not verified.
+- Do not repeat OAuth setup unless a new run proves authentication is broken. Secret values are not readable through the connector; never ask the user to paste keys or tokens into chat.
+- GitHub connector has no confirmed workflow-dispatch action; if manual triggering is required, explain the single mobile-friendly step.
 
+## Free-tool/resource policy
+- Existing tool registry: `TOOL_REGISTRY.md`. Read it before spending any generation credits.
+- Current registry records Runway connected/free with 485 credits at last check but no video generation models available; HeyGen Free with quota unverified; vidIQ at 0/150 renewable credits until 2026-11-16 06:11 UTC; Canva connected with export limits unverified; PixVerse listed as a candidate needing account/quota/export/licence verification. Do not assume advertised allowances equal usable access.
+- Prioritize free media search and deterministic tools before AI generation. Use AI only where needed, and verify commercial-use rights and export constraints first.
 
-## Shared AI coordination model (user's explicit instruction, 2026-10-18)
-The user wants **all available AIs to share project coordination**, not merely separate specialist roles. This includes ChatGPT, Gemini, Groq, OpenRouter, and any other AI services later added to the workflow.
+## Coordination rules
+- Read this file and `TOOL_REGISTRY.md` before acting.
+- User explicitly wants all available AIs to contribute to shared project coordination when legitimately available; do not claim a service reviewed anything unless it actually did.
+- Respect real free-tier limits; do not evade quotas via account rotation.
+- Record meaningful decisions, evidence, blockers, and completed work in repository artifacts.
+- Keep credentials out of commits, reports and chat.
+- Keep user in control of public-facing changes and publishing.
 
-### How coordination should work
-- Every participating AI should be invited to consider the overall project objective, current status, blockers, risks, and next best action when its available tools/context allow.
-- AIs may suggest tasks, critique decisions, identify mistakes, and review each other's recommendations; do not assume any one AI is automatically correct.
-- Specialist strengths can guide delegation, but roles are flexible: this is shared coordination, not rigid silos.
-- Use this file and committed project artifacts as the shared durable record. Each AI must read the latest status before making recommendations or changes, then record material decisions, evidence, changes, and unresolved questions.
-- Since AIs do not automatically share live conversations or all account access, pass context through this repository or an explicit handover. Never claim another AI has reviewed something unless that review actually happened.
-- Keep one current action at a time for the user; instructions must be mobile-friendly and simple.
-- Respect each provider's legitimate free-tier limits. Do not attempt to bypass limits by account rotation or other evasion. Prefer deterministic automation for routine tasks.
-- Avoid conflicting edits: coordinate proposed changes through the shared log; inspect current files before editing; verify changes and workflow runs after committing.
-- User remains in control of credentials, account authorization, and any public-facing playlist changes. Never put secrets in this file, commits, logs, or chat.
-- The project's current scope remains Dragon Ball Z YouTube curation and playlist building only. No social-media posting or promotional content unless the user changes the scope.
-
-### AI team currently configured
-The GitHub Actions AI coordinator currently requests analysis from Gemini, Groq, and OpenRouter and produces a report artifact. ChatGPT also participates through the connected GitHub tools and conversation. These are separate service calls, not a live shared group chat. Any additional AI must be explicitly connected/configured before it can participate automatically.
+## Next action
+Continue the Zelda content package by checking and collecting the selected stock clips and official source references into an asset manifest; then produce narration and assemble a rough cut using verified free tools. Do not spend AI credits unless a specific gap remains. Do not publish until the user approves the rendered video.
