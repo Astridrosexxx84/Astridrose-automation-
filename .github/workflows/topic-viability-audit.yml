@@ -25,6 +25,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Validate Python syntax
+        run: python -m py_compile topic_viability_audit.py free_trend_selector.py
+
       - name: Detect a topic from free Google Trends RSS when none was entered
         if: ${{ inputs.topic == '' }}
         run: python free_trend_selector.py
