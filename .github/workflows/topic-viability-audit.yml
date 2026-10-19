@@ -45,13 +45,13 @@ jobs:
         if: ${{ inputs.topic == '' }}
         run: python free_trend_selector.py
 
-      - name: Compare top trend shortlist against research and media leads
-        if: ${{ inputs.topic == '' }}
-        run: python topic_shortlist_audit.py
-
       - name: Scout YouTube videos for the discovered trend shortlist using the free public feed
         if: ${{ inputs.topic == '' }}
         run: python youtube_breakout_discovery.py
+
+      - name: Compare top trend shortlist against research and media leads
+        if: ${{ inputs.topic == '' }}
+        run: python topic_shortlist_audit.py
 
       - name: Audit manually entered topic
         if: ${{ inputs.topic != '' }}
