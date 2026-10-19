@@ -38,17 +38,45 @@ def fetch_topic():
 
 
 def wikipedia_research(topic):
-    title = urllib.parse.quote(topic.replace(" ", "_"), safe="")
-    url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{title}"
+    # Use MediaWiki's stable API rather than relying only on the REST summary endpoint,
+    # which can return 404 for valid titles or unusual capitalization.
+    api_url = "https://en.wikipedia.org/w/api.php?" + urllib.parse.urlencode({
+        "action": "query", "format": "json", "prop": "extracts|info",
+        "exintro": "1", "explaintext": "1", "inprop": "url",
+        "redirects": "1", "titles": topic
+    })
     try:
-        data = get_json(url)
-        return {"status": "disambiguation" if data.get("type") == "disambiguation" else "found",
-                "title": data.get("title", topic), "extract": data.get("extract", ""),
-                "url": data.get("content_urls", {}).get("desktop", {}).get("page", url)}
+        data = get_json(api_url)
+        pages = data.get("query", {}).get("pages", {})
+        page = next((p for p in pages.values() if "missing" not in p), None)
+        if page and page.get("extract", "").strip():
+            return {"status": "found", "title": page.get("title", topic),
+                    "extract": page.get("extract", ""),
+                    "url": page.get("fullurl", f"https://en.wikipedia.org/w/index.php?search={urllib.parse.quote(topic)}")}
+        search_url = "https://en.wikipedia.org/w/api.php?" + urllib.parse.urlencode({
+            "action": "query", "format": "json", "list": "search", "srsearch": topic, "srlimit": "1"
+        })
+        results = get_json(search_url).get("query", {}).get("search", [])
+        if results:
+            found_title = results[0].get("title", topic)
+            retry_url = "https://en.wikipedia.org/w/api.php?" + urllib.parse.urlencode({
+                "action": "query", "format": "json", "prop": "extracts|info",
+                "exintro": "1", "explaintext": "1", "inprop": "url",
+                "redirects": "1", "titles": found_title
+            })
+            retry = get_json(retry_url).get("query", {}).get("pages", {})
+            found_page = next((p for p in retry.values() if "missing" not in p), None)
+            if found_page and found_page.get("extract", "").strip():
+                return {"status": "found", "title": found_page.get("title", found_title),
+                        "extract": found_page.get("extract", ""),
+                        "url": found_page.get("fullurl", f"https://en.wikipedia.org/w/index.php?search={urllib.parse.quote(found_title)}")}
+        return {"status": "unavailable", "title": topic, "extract": "",
+                "url": f"https://en.wikipedia.org/w/index.php?search={urllib.parse.quote(topic)}",
+                "note": "No usable introductory extract was returned by the MediaWiki API."}
     except Exception as exc:
         return {"status": "unavailable", "title": topic, "extract": "",
                 "url": f"https://en.wikipedia.org/w/index.php?search={urllib.parse.quote(topic)}",
-                "note": f"Automated summary unavailable: {type(exc).__name__}: {exc}"}
+                "note": f"MediaWiki API unavailable: {type(exc).__name__}: {exc}"}
 
 
 def commons_media(topic, limit=10):
@@ -119,10 +147,14 @@ def main():
     nasa, nasa_error = nasa_media(topic)
     assets = commons + nasa
     commons_licensed = sum(1 for x in commons if x.get("license") and x.get("license_url"))
-    research_score = 4 if research["status"] == "found" and len(research.get("extract", "")) >= 250 else (2 if research.get("extract") else 1)
-    media_score = min(5, (len(commons) + len(nasa)) // 3)
-    rights_score = 1 if not assets else min(4, max(1, commons_licensed // 2 + (1 if nasa else 0)))
-    feasibility_score = 4 if assets and research.get("extract") else (3 if assets or research.get("extract") else 1)
+    # Scores are deliberately conservative: search-result counts and licence labels
+    # are only leads, not proof of relevance, usability, or commercial clearance.
+    research_chars = len(research.get("extract", "").strip())
+    research_score = 2 if research["status"] == "found" and research_chars >= 250 else (1 if research_chars else 0)
+    raw_media_count = len(commons) + len(nasa)
+    media_score = 0 if raw_media_count == 0 else (1 if raw_media_count <= 2 else 2)
+    rights_score = 0 if not assets else 1  # Human item-by-item rights review is not yet implemented.
+    feasibility_score = 3 if assets and research_chars >= 250 else (2 if assets or research_chars else 0)
     trend_score = 0
     trend_evidence = "Not measured for manually entered topics."
     scorecard = Path("topic-discovery-scorecard.txt")
@@ -144,15 +176,14 @@ def main():
         else:
             trend_evidence = "Trends run occurred but selected-topic ranking evidence was not matched; audience signal not scored."
     weighted = round((trend_score * 25 + research_score * 20 + media_score * 30 + rights_score * 15 + feasibility_score * 10) / 5)
-    if weighted >= 70 and commons_licensed >= 3 and research_score >= 3:
-        decision = "GO_TO_STORYBOARD"
-        reason = "Preliminary score and source inventory meet the threshold; individual files still require human rights review."
-    elif assets and research.get("extract"):
+    if assets and research_chars >= 250:
         decision = "CONDITIONAL_RESEARCH"
-        reason = "Research context and media leads exist, but audience demand and/or rights/coverage are not sufficiently verified to green-light story writing."
+        reason = "Initial research and media leads exist, but relevance, video coverage, stock-media supply, and item-level rights still need verification. Not yet cleared for storyboarding."
     else:
         decision = "HOLD_OR_RESELECT"
-        reason = "Insufficient evidence of both research depth and relevant media supply. Try another angle or candidate before story writing."
+        reason = "Insufficient evidence of both usable research and relevant media leads. Try another candidate or angle before story writing."
+    # No automated GO decision is allowed until relevance, actual video coverage,
+    # stock sources, and item-level rights have dedicated verification stages.
     report = {
         "topic": topic, "audited_at_utc": datetime.now(timezone.utc).isoformat(),
         "decision": decision, "decision_reason": reason, "score_out_of_100": weighted,
@@ -166,6 +197,8 @@ def main():
         "search_links": search_links(topic), "assets": assets,
         "important_limitations": [
             "Search results are leads, not proof that each asset is relevant, downloadable, or legally reusable.",
+            "This version does not yet inventory stock-video libraries or verify playable/downloadable video coverage.",
+            "No topic is automatically approved for storyboarding; human review is mandatory.",
             "Audience score is not measured for manually entered topics. Media counts do not indicate popularity.",
             "Fair use/fair dealing is context-specific; this script does not determine whether a copyright exception applies.",
             "A human must check facts, exact asset pages, licences, commercial/adaptation terms, and coverage gaps before story writing."
