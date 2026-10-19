@@ -79,6 +79,14 @@ class ScoringTests(unittest.TestCase):
         self.assertEqual(result["media_counts"]["keyword_matched_video_file_candidates"], 1)
         self.assertEqual(result["media_counts"]["automatically_cleared_assets"], 0)
 
+    def test_placeholder_archive_rights_text_does_not_count_as_licence(self):
+        result = self.run_audit([
+            asset("Internet Archive", license_name="See item metadata",
+                  license_url="https://archive.org/details/example")
+        ])
+        self.assertEqual(result["score_components_0_to_5"]["rights_readiness"], 0)
+        self.assertEqual(result["media_counts"]["automatically_cleared_assets"], 0)
+
 
 if __name__ == "__main__":
     unittest.main()
