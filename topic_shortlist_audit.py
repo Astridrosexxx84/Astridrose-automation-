@@ -79,7 +79,8 @@ def load_youtube_scores():
                            "result_count": len(scores[key])}
     return normalized, payload.get("status", "unknown")
 
-def audit_candidate(candidate, youtube_scores, youtube_status):
+def audit_candidate(candidate, youtube_scores=None, youtube_status="not_run"):
+    youtube_scores = youtube_scores or {}
     topic = candidate["topic"]
     research = audit.wikipedia_research(topic)
     commons, commons_error = audit.commons_media(topic, limit=10)
@@ -134,7 +135,8 @@ def audit_candidate(candidate, youtube_scores, youtube_status):
         "score_components_0_to_5": {"trend_and_cross_market_signal": trend_score,
             "youtube_video_demand_proxy": youtube_score, "media_inventory": media_score,
             "sex_appeal": sex_appeal_score, "research_depth": research_score,
-            "production_feasibility": feasibility_score, "rights_readiness_recorded_but_not_rank_weighted": rights_score},
+            "production_feasibility": feasibility_score, "rights_readiness": rights_score,
+            "rights_readiness_recorded_but_not_rank_weighted": rights_score},
         "youtube_discovery": {"status": youtube_status, "score_0_to_5": youtube_score,
             "result_count": video_signal.get("result_count", 0), "best_video": video_signal.get("best_video")},
         "research": research,
