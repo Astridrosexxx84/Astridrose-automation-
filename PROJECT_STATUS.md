@@ -119,3 +119,10 @@ Run `.github/workflows/topic-viability-audit.yml` once with the topic field blan
 - OpenRouter is marked as a verified zero-price route only when the coordinator selects a model whose current model listing says both prompt and completion pricing are zero and the model ID ends in `:free`. Gemini/Groq free-route eligibility stays unknown in the ledger rather than being assumed.
 - Expanded the battery CI workflow to compile both Python modules and run the unit tests. No live provider calls were made to test this integration, so provider API behavior and artifact upload still require a later manual run.
 - Next: add bounded, task-level provider fallback and test it with mock providers; only then run the live manual workflow if configured free access is confirmed. No paid route, publishing, or account changes are allowed.
+
+
+## First synthesis failover added (2026-10-20)
+
+- The AI coordinator now attempts a single fallback synthesis using the already-selected OpenRouter model only when Gemini's final synthesis fails. It uses OpenRouter only if the model was selected from the live listing as zero prompt/completion price and `:free`; if that fails too, it preserves all completed analyses and generates a deterministic fallback report.
+- The battery ledger records the fallback outcome. No new live provider call was made for this code change.
+- Updated the battery CI trigger to run syntax/tests when `ai_team_coordinator.py` changes. Next check is the resulting CI run; only after it passes should we consider a manual live run. Broader per-task dynamic routing across additional AI apps remains future work.
