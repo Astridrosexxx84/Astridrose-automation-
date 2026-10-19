@@ -66,3 +66,11 @@ Continue the Zelda content package by checking and collecting the selected stock
 - The MP4 is a **visual animatic/proof of assembly only**, not the final video: it does not yet include the two imported Pexels clips or official Nintendo reference footage, and the placeholder voice is not final. It is not uploaded to YouTube.
 - Local artifact: `/mnt/data/zelda_ocarina_animatic_draft.mp4` in the current ChatGPT work session.
 - Next: replace appropriate cards with rights-checked topic-specific official reference visuals and licensed stock footage, check caption/audio sync, then render and review a production cut before asking for publishing approval.
+
+
+## Topic viability gate added (2026-10-19)
+- Added `topic_viability_audit.py`, which researches a candidate topic using Wikipedia's public summary API and inventories leads from Wikimedia Commons and NASA's Image and Video Library, including available licence metadata and explicit rights-review flags.
+- Added `.github/workflows/topic-viability-audit.yml`. It accepts a topic or runs the existing free Google Trends RSS selector when the input is blank. It uploads a Markdown report, structured JSON and CSV media inventory as a 14-day artifact.
+- Added `TOPIC_SELECTION_GATE.md` documenting the required order: trend discovery → subject research → media inventory → rights assessment → candidate scoring/go-no-go → story/script/storyboard → production/QA → human approval → measurement.
+- The new workflow does not call YouTube Search API, download/re-upload media, spend generation credits, change playlists, or publish videos.
+- Status: code and workflow committed; first GitHub Actions run and score calibration still need verification. API search results are leads, not cleared assets. Human review of facts and each asset's licence/rights is mandatory before story writing and publication.
