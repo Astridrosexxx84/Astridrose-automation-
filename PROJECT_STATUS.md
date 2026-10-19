@@ -16,7 +16,7 @@ Phone-first support: give one small next step at a time. Prefer free searches an
 ## Current production package
 - `content-packages/zelda-ocarina-of-time-remake-2026.md`: original short-form concept, draft narration, storyboard, rights checklist, metadata and QA gate.
 - `content-packages/zelda-assets-shortlist.md`: specific candidate free stock clips and official Nintendo reference URLs.
-- These are planning artifacts only. No assets downloaded, no video rendered, and no upload made as part of this package.
+- These are planning artifacts. Two Pexels stock clips have been imported into Canva (asset IDs listed below); no local stock downloads, final timeline, video render, or upload yet. The rough-cut edit decision list is `content-packages/zelda-ocarina-of-time-remake-edit-decision-list.md`.
 - Primary topic source: Nintendo Australia official overview and game page. Confirm current facts against official sources before editing/publishing.
 - Rights rule: official Nintendo promotional material may only be used consistently with Nintendo's current game-content guidelines and with original creative input/commentary; do not repost a trailer or other creators' gameplay. Free stock licences must be checked per asset and recorded.
 
@@ -55,5 +55,6 @@ Continue the Zelda content package by checking and collecting the selected stock
   - Forest walk with sun rays, Pexels 31381734 — Canva asset ID `VAHYcKYcwI4`, 1920×1080, 15 seconds.
 - Updated `content-packages/zelda-assets-shortlist.md` with asset IDs and licence/source notes.
 - Added draft timed captions at `content-packages/zelda-ocarina-of-time-remake-captions.srt`.
-- Not yet completed: a Canva video timeline/design, narration audio, final media selection, rendering/export, final rights review, or public upload. Do not imply the video is already made.
+- Generated a free local eSpeak narration timing draft (80.04 seconds); the WAV is a placeholder voice, not final production narration. Script file: `zelda_ocarina_voiceover.txt`.
+- Not yet completed: a video timeline/design, selected official Nintendo visuals, final narration performance, rendering/export, final rights review, or public upload. Do not imply the video is already made.
 - Free-source policy remains: avoid paid generation; only consider AI after the first assembly shows a specific gap. Pexels says its videos are free for commercial use under its licence, but final usage still needs current licence and third-party-rights review.
