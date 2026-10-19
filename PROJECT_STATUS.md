@@ -154,3 +154,12 @@ Run `.github/workflows/topic-viability-audit.yml` once with the topic field blan
 - If the verified route is unavailable or fails, the coordinator preserves the independent analyses and emits a deterministic review report.
 - Commit: `453ff3ba583850e955dadd9dcb85afe04591342b`. AI battery CI run #7 is pending verification: https://github.com/Astridrosexxx84/Astridrose-automation-/actions/runs/39342620323
 - This is a bounded integration, not yet full dynamic routing for every analysis task. The analysis calls and requirement for all three provider secrets remain to be simplified in the next pass.
+
+
+## Optional-provider coordinator milestone (2026-10-20)
+
+- Coordinator no longer requires all three AI API secrets. Gemini, Groq and OpenRouter are optional workers; missing keys are skipped rather than blocking configured providers. At least one provider key is still needed to start an AI run.
+- Updated AI_TEAM_SETUP.md and the workflow default task instructions to match optional-provider behavior and verified-zero-price OpenRouter synthesis.
+- Coordinator code commit: aff8349a1187684e31798c9c8ba0333f6fb1370c. The corresponding AI battery CI run #8 passed: https://github.com/Astridrosexxx84/Astridrose-automation-/actions/runs/39343062351
+- No live provider generation was used for the code change; no paid use or public publishing occurred.
+- Direct ChatGPT-to-Gemini/Copilot chat is not configured. Current collaboration runs through API calls and shared GitHub artifacts. Groq's phone app is not required; a Groq API key is needed if we want it as a worker.
