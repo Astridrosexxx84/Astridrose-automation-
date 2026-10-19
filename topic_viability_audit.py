@@ -102,7 +102,11 @@ def nasa_media(topic, limit=10):
 
 def search_links(topic):
     q = urllib.parse.quote_plus(topic)
-    return {"Pexels videos": f"https://www.pexels.com/search/videos/{urllib.parse.quote(topic, safe='')}/",
+    official_q = urllib.parse.quote_plus(topic + " official")
+    return {"Web research": f"https://www.google.com/search?q={q}",
+            "Official and primary sources": f"https://www.google.com/search?q={official_q}",
+            "News coverage": f"https://news.google.com/search?q={q}",
+            "Pexels videos": f"https://www.pexels.com/search/videos/{urllib.parse.quote(topic, safe='')}/",
             "Pixabay videos": f"https://pixabay.com/videos/search/{urllib.parse.quote(topic, safe='')}/",
             "YouTube reference research only": f"https://www.youtube.com/results?search_query={q}",
             "Google Trends explore": f"https://trends.google.com/trends/explore?q={q}"}
@@ -120,8 +124,20 @@ def main():
     rights_score = 1 if not assets else min(4, max(1, commons_licensed // 2 + (1 if nasa else 0)))
     feasibility_score = 4 if assets and research.get("extract") else (3 if assets or research.get("extract") else 1)
     trend_score = 0
-    if not os.getenv("AUDIT_TOPIC", "").strip() and Path("topic-discovery-scorecard.txt").exists():
-        trend_score = 3
+    trend_evidence = "Not measured for manually entered topics."
+    scorecard = Path("topic-discovery-scorecard.txt")
+    if not os.getenv("AUDIT_TOPIC", "").strip() and scorecard.exists():
+        trend_text = scorecard.read_text(encoding="utf-8")
+        selected_line = next((line for line in trend_text.splitlines() if line.casefold().startswith(topic.casefold() + " |")), "")
+        if selected_line:
+            market_match = re.search(r"markets=([^|]+)", selected_line)
+            rank_match = re.search(r"^([0-9]+)\\.", selected_line)
+            market_count = len([x for x in (market_match.group(1).split(",") if market_match else []) if x.strip()])
+            rank = int(rank_match.group(1)) if rank_match else 50
+            trend_score = 5 if market_count >= 4 and rank <= 5 else 4 if market_count >= 3 and rank <= 10 else 3 if market_count >= 2 else 2 if market_count >= 1 else 0
+            trend_evidence = f"Google Trends RSS scorecard: rank {rank}, {market_count} markets. This is a limited proxy, not total audience demand."
+        else:
+            trend_evidence = "Trends run occurred but selected-topic ranking evidence was not matched; audience signal not scored."
     weighted = round((trend_score * 25 + research_score * 20 + media_score * 30 + rights_score * 15 + feasibility_score * 10) / 5)
     if weighted >= 70 and commons_licensed >= 3 and research_score >= 3:
         decision = "GO_TO_STORYBOARD"
@@ -135,6 +151,7 @@ def main():
     report = {
         "topic": topic, "audited_at_utc": datetime.now(timezone.utc).isoformat(),
         "decision": decision, "decision_reason": reason, "score_out_of_100": weighted,
+        "audience_signal_evidence": trend_evidence,
         "score_components_0_to_5": {"audience_signal": trend_score, "research_depth": research_score,
             "media_inventory": media_score, "rights_readiness": rights_score, "production_feasibility": feasibility_score},
         "research": research,
@@ -159,7 +176,7 @@ def main():
         f"- **Preliminary score:** {weighted}/100", f"- **Audited (UTC):** {report['audited_at_utc']}",
         f"- **Reason:** {reason}", "", "## Decision scores (0–5)", "",
         "| Factor | Score | Meaning |", "|---|---:|---|",
-        f"| Audience signal | {trend_score}/5 | 0 means not measured; manual topic inputs are not treated as trend evidence |",
+        f"| Audience signal | {trend_score}/5 | {trend_evidence} |",
         f"| Research depth | {research_score}/5 | Public summary is a starting point, not full fact-checking |",
         f"| Media inventory | {media_score}/5 | Search-result count only; relevance and file access need review |",
         f"| Rights readiness | {rights_score}/5 | Metadata proxy, not legal clearance |",
