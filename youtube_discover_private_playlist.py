@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Discover and rank YouTube videos, then add the top results to an public playlist."""
+"""Discover and rank YouTube videos, then add the top results to a public playlist."""
 import json, os, time, urllib.parse, urllib.request, urllib.error
 from datetime import datetime, timedelta, timezone
 
@@ -97,7 +97,7 @@ def discover(token, query, candidate_count, lookback_days):
 
 def main():
     query = os.getenv("SEARCH_QUERY", "popular music 2026").strip()
-    title = os.getenv("PLAYLIST_TITLE", "Discovery - topic").strip()
+    title = os.getenv("PLAYLIST_TITLE", "Discovery - " + query).strip()
     playlist_count = max(1, min(5, int(os.getenv("MAX_RESULTS", "5"))))
     candidate_count = max(5, min(50, int(os.getenv("SEARCH_CANDIDATES", "25"))))
     lookback = max(1, min(365, int(os.getenv("LOOKBACK_DAYS", "30"))))
