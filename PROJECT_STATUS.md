@@ -48,3 +48,12 @@ Phone-first support: give one small next step at a time. Prefer free searches an
 
 ## Next action
 Continue the Zelda content package by checking and collecting the selected stock clips and official source references into an asset manifest; then produce narration and assemble a rough cut using verified free tools. Do not spend AI credits unless a specific gap remains. Do not publish until the user approves the rendered video.
+
+## Latest production progress (2026-10-19)
+- Verified Pexels stock video pages and imported two actual MP4 assets into the connected Canva media library:
+  - Misty forest landscape, Pexels 6656520 — Canva asset ID `VAHYcMR-y2g`, 1920×810, 49 seconds.
+  - Forest walk with sun rays, Pexels 31381734 — Canva asset ID `VAHYcKYcwI4`, 1920×1080, 15 seconds.
+- Updated `content-packages/zelda-assets-shortlist.md` with asset IDs and licence/source notes.
+- Added draft timed captions at `content-packages/zelda-ocarina-of-time-remake-captions.srt`.
+- Not yet completed: a Canva video timeline/design, narration audio, final media selection, rendering/export, final rights review, or public upload. Do not imply the video is already made.
+- Free-source policy remains: avoid paid generation; only consider AI after the first assembly shows a specific gap. Pexels says its videos are free for commercial use under its licence, but final usage still needs current licence and third-party-rights review.
