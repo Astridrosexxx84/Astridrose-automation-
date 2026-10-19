@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "ai_battery.py"
+      - "ai_team_coordinator.py"
       - "tests/test_ai_battery.py"
       - ".github/workflows/ai-battery-tests.yml"
   pull_request:
