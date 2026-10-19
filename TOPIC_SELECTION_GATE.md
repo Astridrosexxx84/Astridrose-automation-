@@ -20,12 +20,12 @@ Workflow: `.github/workflows/topic-viability-audit.yml`
 
 Script: `topic_viability_audit.py`
 
-With a manually entered topic, the workflow audits that topic. Leave the input blank to run the existing Google Trends RSS detector first. The workflow uses public Wikipedia, Wikimedia Commons and NASA Image and Video Library APIs. It makes no YouTube Search API calls, does not download or republish media, and does not publish or modify any channel.
+With a manually entered topic, the workflow audits that topic. Leave the input blank to collect free Google Trends RSS signals and audit the top 10 unique candidates before ranking them for human review. The shortlist audit checks public Wikipedia, Wikimedia Commons and NASA Image and Video Library APIs. It makes no YouTube Search API calls, does not download or republish media, and does not publish or modify any channel. The shortlist ranking is a triage aid, not an automatic winner selection.
 
 Artifacts:
-- `topic-audit.md` — readable summary, score and recommendation.
-- `topic-audit.json` — structured research, score, source links, inventory and errors.
-- `media-inventory.csv` — individual media leads, creators/licence metadata where available, source URLs and rights-review flags.
+- `shortlist-comparison.md/json` — comparison of up to 10 trending candidates, with no automatic winner selection.
+- `candidates/<topic>/audit.json` and `media-inventory.csv` — per-candidate research and media leads.
+- For a manually entered topic, `topic-audit.md/json` and `media-inventory.csv` — single-topic report and inventory.
 
 ## Scorecard
 
@@ -38,7 +38,7 @@ Each component is scored 0–5 and weighted to 100:
 
 The first-pass score is only a triage tool. If a topic is entered manually, audience signal is unmeasured; do not treat media volume as evidence of popularity. API result counts do not establish that results are relevant, downloadable or reusable.
 
-The current script never automatically approves a topic for storyboarding. A CONDITIONAL result means research and media leads exist but the team must verify relevance, video coverage, stock-media supply and item-level rights. HOLD/RESELECT means the available evidence is too thin to proceed. Do not spend scarce AI credits or begin full story production until a human has checked those gaps.
+The current scripts never automatically approve a topic for storyboarding. The shortlist adds a weak keyword-overlap check to flag leads that may be more relevant, but this is not semantic verification and can miss good assets or retain false positives. A CONDITIONAL result means research and media leads exist but the team must verify relevance, video coverage, stock-media supply and item-level rights. HOLD/RESELECT means the available evidence is too thin to proceed. Do not spend scarce AI credits or begin full story production until a human has checked those gaps.
 
 ## Rights and editorial guardrails
 
@@ -52,4 +52,4 @@ The current script never automatically approves a topic for storyboarding. A CON
 
 ## Current implementation status
 
-The first GitHub Actions run succeeded, but the selected topic (Helen Haines) had no usable Wikipedia summary, and the report exposed overly generous preliminary scoring. The audit script has now been updated to use a MediaWiki API fallback, lower scores when research is unavailable, treat licence metadata as unverified, and prevent automatic storyboard approval. These changes still need a fresh workflow run. The workflow remains discovery-only and does not write a story or publish a video.
+The first shortlist-audit version selected Helen Haines from the trend feed and surfaced weak research/media relevance. The single-topic audit now uses a MediaWiki API fallback and conservative scores. A shortlist comparator has been added to audit up to 10 unique trending candidates against research and topic-keyword-matched Wikimedia/NASA media leads before human review. Its keyword check is only a heuristic; stock-video coverage, actual asset usability, primary-source research and item-level rights still require manual verification. Run the workflow once with the topic field blank to test this updated comparison.
