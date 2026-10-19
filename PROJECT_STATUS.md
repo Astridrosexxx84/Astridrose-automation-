@@ -1,6 +1,6 @@
 # Project Coordinator Handover
 
-Last checked: 2026-10-18
+Last checked: 2026-10-19
 
 ## Active goal (current instruction takes priority)
 Work only on YouTube curation and playlist-building for Dragon Ball Z for now. Do not create social-media posts or promotional content. Use existing YouTube uploads and links; do not download or re-upload other creators' videos. Work phone-first, $0 upfront, and give the user one small next step at a time.
@@ -17,15 +17,13 @@ Work only on YouTube curation and playlist-building for Dragon Ball Z for now. D
 - YouTube keyword search workflow exists: .github/workflows/youtube-keyword-search.yml. It is configured with a weekly schedule and manual dispatch. It requires YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, and YOUTUBE_REFRESH_TOKEN secrets.
 - YouTube playlist manager workflow exists: .github/workflows/youtube-playlist-manager.yml. It requires the same three YouTube OAuth secrets and selected video URLs.
 - README says Google Cloud project and YouTube Data API v3 are set up and an OAuth desktop client was created.
-- README still lists secure credential configuration, authorization/refresh-token acquisition, and Actions secret testing as incomplete.
+- Latest verified YouTube keyword-search run: [run #5](https://github.com/Astridrosexxx84/Astridrose-automation-/actions/runs/39162516868) succeeded on 2026-10-18 and uploaded the `dbz-video-candidates` artifact. This proves the OAuth secrets can refresh successfully and YouTube search works.
+- Important: that scheduled run used the OLD generic 1990s-cartoon fallback because it ran from an earlier commit. The current `main` version of `.github/workflows/youtube-keyword-search.yml` now defaults to `Dragon Ball Z official clips music trailers retrospectives`.
+- The current playlist-manager workflow/script have been inspected but no successful playlist-manager run is verified. Do not run it without user-selected video URLs and explicit approval.
 - No secret values are readable through this integration; never ask the user to paste keys or tokens into chat.
-- The recent workflow-run listing did not show a completed YouTube search or playlist-manager run. Treat those workflows as unverified until a run is checked.
 
-## Important mismatch to correct later
-The scheduled keyword workflow's fallback query is a general 1990s-cartoon query, while the user's current choice is Dragon Ball Z only. Do not change workflow files until the current OAuth blocker is resolved or the user explicitly asks to change it.
-
-## Next action
-Continue the YouTube OAuth setup, using text-only phone instructions if the user cannot send screenshots. First establish the exact current Google Cloud screen and which OAuth step is unfinished. Then finish the approved OAuth flow and store credentials only in GitHub Actions secrets. Do not enable paid billing. Once secrets are configured, manually run the YouTube keyword-search workflow with a Dragon Ball Z query, inspect its artifact, and only then test playlist changes with user-selected video URLs.
+## Current blocker / next action
+The search connection works. Next, launch the manual keyword-search workflow using the Dragon Ball Z default, review its artifact, then build the Yes/No approval step before sending selected URLs to the playlist manager. The GitHub connector available to ChatGPT can inspect and edit repository files but does not expose a workflow-dispatch action, so a manual run may require one user tap. Do not repeat OAuth setup unless a new run proves authentication has broken.
 
 ## Coordinator rules
 - Read this file first when resuming work.
