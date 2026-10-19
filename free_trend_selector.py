@@ -40,12 +40,12 @@ HIGH_VIDEO_POTENTIAL_TERMS = {
 }
 
 def clean(value):
-    return re.sub(r"\\s+", " ", (value or "").strip())
+    return re.sub(r"\s+", " ", (value or "").strip())
 
 def parse_traffic(value):
     """Convert approximate traffic strings such as '20K+' to a rough numeric proxy."""
     value = clean(value).upper().replace(",", "").replace("+", "")
-    match = re.search(r"(\\d+(?:\\.\\d+)?)\\s*([KMB]?)", value)
+    match = re.search(r"(\d+(?:\.\d+)?)\s*([KMB]?)", value)
     if not match:
         return 0
     amount = float(match.group(1))
@@ -143,25 +143,25 @@ def main():
     topic = chosen["topic"][:100]
     with open("topic-discovery-scorecard.txt", "w", encoding="utf-8") as report:
         report.write(
-            "English-market trend discovery report\\n"
-            f"Sources: free Google Trends RSS across {len(GEOS)} target markets\\n"
-            f"Markets queried: {', '.join(GEOS)}\\n"
-            f"Feeds read successfully: {len(GEOS) - len(failures)}\\n"
-            f"Unique topics collected: {len(by_key)}\\n"
-            "Ranking: cross-market recurrence + RSS traffic proxy + search position, with bonuses for sex appeal, male-audience relevance, and video-friendly hooks.\\n"
-            "Sex appeal is a bonus, not a hard filter; broad topic discovery remains enabled.\\n"
-            "Traffic values are approximate feed metadata, not YouTube views.\\n"
-            "This score is a heuristic, not a prediction or guarantee of virality.\\n"
-            "YouTube Search API calls for discovery: 0\\n\\n"
-            + "\\n".join(
+            "English-market trend discovery report\n"
+            f"Sources: free Google Trends RSS across {len(GEOS)} target markets\n"
+            f"Markets queried: {', '.join(GEOS)}\n"
+            f"Feeds read successfully: {len(GEOS) - len(failures)}\n"
+            f"Unique topics collected: {len(by_key)}\n"
+            "Ranking: cross-market recurrence + RSS traffic proxy + search position, with bonuses for sex appeal, male-audience relevance, and video-friendly hooks.\n"
+            "Sex appeal is a bonus, not a hard filter; broad topic discovery remains enabled.\n"
+            "Traffic values are approximate feed metadata, not YouTube views.\n"
+            "This score is a heuristic, not a prediction or guarantee of virality.\n"
+            "YouTube Search API calls for discovery: 0\n\n"
+            + "\n".join(
                 f"{i+1}. {x['topic']} | markets={','.join(sorted(set(x['regions'])))} | score={x['rank_score']} | final={x['final_score']} | traffic={x['traffic'] or 'n/a'} | sex_appeal={','.join(x['sex_appeal_hits']) or 'none'} | audience={','.join(x['audience_hits']) or 'none'} | hooks={','.join(x['video_potential_hits']) or 'none'}"
                 for i, x in enumerate(ranked[:50])
             )
-            + f"\\n\\nSelected topic: {topic}\\n"
-            + f"Final score: {chosen['final_score']} | traffic proxy: {chosen['traffic'] or 'not supplied'}\\n"
-            + f"Appeared in markets: {', '.join(sorted(set(chosen['regions'])))}\\n"
-            + f"Sex-appeal bonus: {chosen['sex_appeal_bonus']} | matches: {', '.join(chosen['sex_appeal_hits']) or 'none'}\\n"
-            + (("\\nFeed errors:\\n" + "\\n".join(failures) + "\\n") if failures else "")
+            + f"\n\nSelected topic: {topic}\n"
+            + f"Final score: {chosen['final_score']} | traffic proxy: {chosen['traffic'] or 'not supplied'}\n"
+            + f"Appeared in markets: {', '.join(sorted(set(chosen['regions'])))}\n"
+            + f"Sex-appeal bonus: {chosen['sex_appeal_bonus']} | matches: {', '.join(chosen['sex_appeal_hits']) or 'none'}\n"
+            + (("\nFeed errors:\n" + "\n".join(failures) + "\n") if failures else "")
         )
     print(
         f"English-market Google Trends: {len(GEOS) - len(failures)}/{len(GEOS)} feeds; "
