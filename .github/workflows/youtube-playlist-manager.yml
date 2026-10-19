@@ -10,6 +10,16 @@ on:
         description: "YouTube video URLs or IDs, separated by commas or new lines"
         required: true
         type: string
+      playlist_title:
+        description: "Playlist to add approved videos to"
+        required: true
+        default: "Dragon Ball Z Nostalgia"
+        type: string
+      playlist_description:
+        description: "Description used only if creating a new playlist"
+        required: false
+        default: "A fan-curated collection of publicly available YouTube videos. This playlist links to original YouTube uploads and does not claim ownership of the videos."
+        type: string
 
 permissions:
   contents: read
@@ -32,6 +42,8 @@ jobs:
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
           VIDEO_URLS: ${{ inputs.video_urls }}
+          PLAYLIST_TITLE: ${{ inputs.playlist_title || 'Dragon Ball Z Nostalgia' }}
+          PLAYLIST_DESCRIPTION: ${{ inputs.playlist_description || 'A fan-curated collection of publicly available YouTube videos. This playlist links to original YouTube uploads and does not claim ownership of the videos.' }}
         run: |
           if [ -n "$VIDEO_URLS" ]; then
             python youtube_playlist_manager.py
