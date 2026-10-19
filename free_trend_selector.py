@@ -25,7 +25,11 @@ SEX_APPEAL_TERMS = {
     "curves", "swimsuit", "swimwear", "fashion model", "onlyfans", "influencer",
     "influencers", "beauty", "hot", "sexy", "glamour", "glamorous", "miss universe",
     "victoria's secret", "fashion show", "fitness model", "cosplay", "cheerleader",
-    "cheerleaders", "actress", "celebrity", "dating", "romance", "reality tv"
+    "cheerleaders", "actress", "celebrity", "dating", "romance", "reality tv",
+    "boobs", "breasts", "busty", "big breasts", "large breasts", "bust", "pin-up",
+    "pinup", "thirst trap", "hot girl", "instagram model", "female influencer",
+    "bodycon", "playboy", "sensual", "bikini model", "lingerie model", "swimsuit model",
+    "fitness influencer", "curvy model", "adult creator", "women's fitness"
 }
 MALE_AUDIENCE_TERMS = {
     "gaming", "game", "football", "soccer", "basketball", "ufc", "mma", "boxing",
