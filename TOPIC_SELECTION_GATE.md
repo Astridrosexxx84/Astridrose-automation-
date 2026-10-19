@@ -53,3 +53,7 @@ The current scripts never automatically approve a topic for storyboarding. The s
 ## Current implementation status
 
 The first shortlist-audit version selected Helen Haines from the trend feed and surfaced weak research/media relevance. The single-topic audit now uses a MediaWiki API fallback and conservative scores. A shortlist comparator has been added to audit up to 10 unique trending candidates against research and topic-keyword-matched Wikimedia/NASA media leads before human review. Its keyword check is only a heuristic; stock-video coverage, actual asset usability, primary-source research and item-level rights still require manual verification. Run the workflow once with the topic field blank to test this updated comparison.
+
+
+## Additional free-media sources (2026-10-20)
+The audit now queries Openverse for openly licensed image leads, the Library of Congress catalog, and Internet Archive image/movie records, in addition to Wikimedia Commons and NASA. Candidate reports also link to Pexels and Pixabay stock-video searches. The Pexels/Pixabay API endpoints require keys, so they are not queried automatically. Openverse is image-only in this implementation; Internet Archive direct file resolution and real video playback checks are not yet implemented. Treat every returned record as a lead until the source page, licence, download/playback and commercial/adaptation terms have been reviewed.
