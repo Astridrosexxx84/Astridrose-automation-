@@ -126,3 +126,10 @@ Run `.github/workflows/topic-viability-audit.yml` once with the topic field blan
 - The AI coordinator now attempts a single fallback synthesis using the already-selected OpenRouter model only when Gemini's final synthesis fails. It uses OpenRouter only if the model was selected from the live listing as zero prompt/completion price and `:free`; if that fails too, it preserves all completed analyses and generates a deterministic fallback report.
 - The battery ledger records the fallback outcome. No new live provider call was made for this code change.
 - Updated the battery CI trigger to run syntax/tests when `ai_team_coordinator.py` changes. Next check is the resulting CI run; only after it passes should we consider a manual live run. Broader per-task dynamic routing across additional AI apps remains future work.
+
+## Battery CI verification and cooldown behaviour (2026-10-20)
+
+- Confirmed GitHub Actions run #3 passed: Python syntax compilation and all battery classification/routing/persistence tests succeeded. Run: https://github.com/Astridrosexxx84/Astridrose-automation-/actions/runs/39341838266
+- Updated the Gemini request retry policy: HTTP 429 is treated as a quota/cooldown signal and is no longer retried against the same provider. HTTP 503 and timeouts remain eligible for bounded retries. This avoids needlessly repeating requests when a provider explicitly says to slow down.
+- The latest retry-policy edit will trigger the battery CI workflow; its result must be checked before calling this change verified.
+- Next architecture milestone remains a general task-level router that can hand a task to another provider only when its route is confirmed zero-price and usable. The current coordinator still has fixed analysis roles and only one specific synthesis fallback; this is not yet universal dynamic switching. No live AI requests, paid actions, publishing, or account changes were performed for this edit.
