@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Discover broadly relevant topics by comparing free Google Trends RSS feeds across regions."""
+"""Discover English-market topics by comparing free Google Trends RSS feeds."""
 import os
 import re
 import sys
@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 from collections import defaultdict
 
 GEOS = [g.strip().upper() for g in os.getenv(
-    "TRENDS_GEOS", "US,GB,IN,BR,CA,AU,DE,JP,MX,KR,FR,ID,NG,ZA"
+    "TRENDS_GEOS", "US,GB,CA,AU,NZ,IE"
 ).split(",") if g.strip()]
 MAX_PER_GEO = int(os.getenv("TRENDS_MAX_PER_GEO", "20"))
 URL = "https://trends.google.com/trending/rss?geo={}"
@@ -69,7 +69,7 @@ def main():
             + (("\nFeed errors:\n" + "\n".join(failures) + "\n") if failures else "")
         )
     print(
-        f"Multi-region Google Trends: {len(GEOS) - len(failures)}/{len(GEOS)} feeds; "
+        f"English-market Google Trends: {len(GEOS) - len(failures)}/{len(GEOS)} feeds; 
         "YouTube Search calls: 0.",
         file=sys.stderr
     )
@@ -79,5 +79,5 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as exc:
-        print(f"ERROR: global trend discovery failed: {exc}", file=sys.stderr)
+        print(f"ERROR: English-market trend discovery failed: {exc}", file=sys.stderr)
         raise SystemExit(1)
