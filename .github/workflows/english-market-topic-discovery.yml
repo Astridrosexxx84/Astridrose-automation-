@@ -1,0 +1,33 @@
+name: English-market topic discovery (safe test)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Discover topics across English-speaking markets
+        env:
+          TRENDS_GEOS: "US,GB,CA,AU,NZ,IE"
+        run: |
+          set -euo pipefail
+          topic=$(python free_trend_selector.py)
+          echo "Selected English-market candidate: $topic"
+          echo "## English-market topic discovery" >> "$GITHUB_STEP_SUMMARY"
+          echo >> "$GITHUB_STEP_SUMMARY"
+          echo "Selected candidate: $topic" >> "$GITHUB_STEP_SUMMARY"
+          echo "Markets: US, GB, CA, AU, NZ, IE" >> "$GITHUB_STEP_SUMMARY"
+          echo "YouTube Search API calls: 0" >> "$GITHUB_STEP_SUMMARY"
+          echo "Public video uploads: 0 (discovery-only test)" >> "$GITHUB_STEP_SUMMARY"
+      - name: Save topic scorecard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: english-market-topic-discovery
+          path: topic-discovery-scorecard.txt
+          if-no-files-found: ignore
+          retention-days: 30
