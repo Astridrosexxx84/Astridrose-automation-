@@ -2,13 +2,9 @@
 
 Free-first tools for curating YouTube videos into themed playlists using the official YouTube Data API and GitHub Actions.
 
-## Current focus: Dragon Ball Z Nostalgia
+## Current focus: topic-agnostic discovery and original content
 
-The first channel theme is Dragon Ball Z nostalgia. Search ideas include:
-- official Dragon Ball Z clips and trailers
-- official music and opening themes where available
-- Dragon Ball Z retrospectives and character discussions
-- reputable fan analysis that adds commentary
+The trend detector chooses a candidate topic; Zelda and Apollo 11 have been examples, not permanent niches. The pipeline must research the subject and audit topic-specific media plus free stock media before choosing a story. Do not assume a popular topic is viable if its usable media supply is weak or rights are unclear.
 
 ## What this project does
 
@@ -34,8 +30,9 @@ This curation approach does not guarantee eligibility for YouTube monetization. 
 
 ## Workflows
 
-1. **YouTube keyword search** — enter a query such as `Dragon Ball Z opening themes`; results are saved as an artifact for review. It does not change YouTube.
-2. **YouTube playlist manager** — enter the URLs of selected videos. The script creates or reuses the channel's `Dragon Ball Z Nostalgia` playlist and adds the chosen videos.
+1. **Topic viability audit** — run `.github/workflows/topic-viability-audit.yml`. Enter a topic or leave it blank to use the free Google Trends RSS detector. The workflow researches the topic and inventories leads from Wikimedia Commons and NASA, records licence metadata and rights-review flags, and outputs a scorecard plus CSV/JSON/Markdown artifacts. It makes no YouTube Search API calls and does not publish or modify a channel.
+2. **YouTube keyword search** — discovery-only research using the YouTube Data API; results are saved as an artifact for review.
+3. **YouTube playlist manager** — a separate, manually triggered tool for adding user-selected URLs to a playlist. Use only with explicit approval.
 
 ## Setup status
 
@@ -49,3 +46,8 @@ This curation approach does not guarantee eligibility for YouTube monetization. 
 - [ ] Authorize the YouTube account and obtain a refresh token
 - [ ] Add and test GitHub Actions secrets and OAuth authorization
 
+
+
+## Required topic decision gate
+
+Before writing a script or storyboard, research the actual subject, audit relevant free media, check licences and rights, and compare audience opportunity with media coverage, production feasibility, and risk. Read [TOPIC_SELECTION_GATE.md](TOPIC_SELECTION_GATE.md). The audit is a first-pass triage aid, not legal clearance; every chosen asset still requires human review. A public video is not automatically reusable, attribution is not permission, and fair use/fair dealing are not blanket exceptions. Do not build the pipeline around superficial repackaging of other creators' videos.
