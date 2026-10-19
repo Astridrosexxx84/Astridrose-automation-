@@ -71,3 +71,5 @@ Update this file as the source of truth when account checks and pipeline tests c
 - Script: `topic_viability_audit.py`; outputs `topic-audit.md`, `topic-audit.json`, and `media-inventory.csv` as an artifact.
 - Research sources: Wikipedia REST summary, Wikimedia Commons API, NASA Image and Video Library API; Pexels/Pixabay search links are provided for additional manual sourcing.
 - This is a first-pass inventory and scoring gate, not automatic legal clearance. No media is counted as cleared automatically; every asset must be checked individually. First workflow run remains unverified.
+
+- Free-media discovery: Wikimedia Commons + NASA APIs; newly expanded with Openverse images, Library of Congress catalog, and Internet Archive image/movie catalog. Pexels/Pixabay stock video are linked for manual searches; their APIs require keys and are not automated yet. Added 2026-10-20; pending workflow validation.
