@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Discover and rank YouTube videos, then add the top results to a private playlist."""
+"""Discover and rank YouTube videos, then add the top results to an unlisted playlist."""
 import json, os, time, urllib.parse, urllib.request, urllib.error
 from datetime import datetime, timedelta, timezone
 
@@ -97,17 +97,17 @@ def discover(token, query, candidate_count, lookback_days):
 
 def main():
     query = os.getenv("SEARCH_QUERY", "popular music 2026").strip()
-    title = os.getenv("PLAYLIST_TITLE", "Automation Test - Private Playlist").strip()
+    title = os.getenv("PLAYLIST_TITLE", "Automation Test - Unlisted Playlist").strip()
     playlist_count = max(1, min(5, int(os.getenv("MAX_RESULTS", "5"))))
     candidate_count = max(5, min(50, int(os.getenv("SEARCH_CANDIDATES", "25"))))
     lookback = max(1, min(365, int(os.getenv("LOOKBACK_DAYS", "30"))))
     token = get_token()
     ranked = discover(token, query, candidate_count, lookback)
-    print(f"Ranked {len(ranked)} candidates; selecting up to {playlist_count} for the private playlist.")
+    print(f"Ranked {len(ranked)} candidates; selecting up to {playlist_count} for the unlisted playlist.")
     ranked = ranked[:playlist_count]
     playlist = request_json(API + "/playlists?part=snippet,status", token, "POST", {
-        "snippet":{"title":title, "description":"Private playlist created by automated YouTube discovery. Topic: " + query},
-        "status":{"privacyStatus":"private"}})
+        "snippet":{"title":title, "description":"Unlisted research playlist created by automated YouTube discovery. Topic: " + query},
+        "status":{"privacyStatus":"unlisted"}})
     added = []
     for video in ranked:
         try:
@@ -120,10 +120,10 @@ def main():
             print(f'Skipped {video["id"]} after retries: {exc}')
     url = "https://www.youtube.com/playlist?list=" + playlist["id"]
     with open("discovery-playlist-result.txt", "w", encoding="utf-8") as f:
-        f.write(f"Title: {title}\nPrivacy: private\nTopic: {query}\nPlaylist: {url}\nVideos added: {len(added)} of {len(ranked)}\n\n")
+        f.write(f"Title: {title}\nPrivacy: unlisted\nTopic: {query}\nPlaylist: {url}\nVideos added: {len(added)} of {len(ranked)}\n\n")
         for video in added:
             f.write(f'{video["title"]}\n{video["url"]}\nViews: {video["views"]} | estimated lifetime views/day: {video["views_per_day"]}\n\n')
-    print("Private playlist created:", url)
+    print("Unlisted playlist created:", url)
     print(f"Videos added: {len(added)} of {len(ranked)}")
 if __name__ == "__main__":
     try:
