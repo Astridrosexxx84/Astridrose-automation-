@@ -52,13 +52,13 @@ def main():
     topic = chosen["topic"][:100]
     with open("topic-discovery-scorecard.txt", "w", encoding="utf-8") as report:
         report.write(
-            "Multi-region global trend discovery report\n"
+            "English-market trend discovery report\n"
             f"Sources: Google Trends RSS across {len(GEOS)} target markets\n"
             f"Markets queried: {', '.join(GEOS)}\n"
             f"Feeds read successfully: {len(GEOS) - len(failures)}\n"
             f"Unique topics collected: {len(by_key)}\n"
             "Ranking: cross-market recurrence first, then combined feed position.\n"
-            "Note: this is a multi-region proxy for global interest, not a single official worldwide ranking.\n"
+            "Note: English-speaking target markets are a proxy for international English-language interest, not an official worldwide ranking.\n"
             "YouTube Search API calls for discovery: 0\n\n"
             + "\n".join(
                 f"{i+1}. {x['topic']} | markets={','.join(sorted(set(x['regions'])))} | score={x['rank_score']}"
