@@ -198,7 +198,7 @@ def main():
             first = "Gemini initial analysis unavailable: " + str(exc)
             print("Gemini unavailable; continuing with other providers: " + str(exc))
     else:
-        first = "Gemini skipped: no API key configured."
+        first = "Gemini skipped: no API key configured." if not gemini_key else "Gemini skipped: free-tier-only calls are not explicitly enabled."
 
     # A provider access error should not prevent the other free providers from contributing.
     # Keep the exact failure in the report so it can be diagnosed without exposing credentials.
@@ -221,7 +221,7 @@ def main():
             groq_answer = "Groq contribution unavailable. Diagnostic: " + str(exc)
             print("Groq unavailable; continuing with other providers: " + str(exc))
     else:
-        groq_answer = "Groq skipped: no API key configured."
+        groq_answer = "Groq skipped: no API key configured." if not groq_key else "Groq skipped: free-tier-only calls are not explicitly enabled."
 
     openrouter_model = "unavailable"
     if openrouter_key:
@@ -287,10 +287,10 @@ def main():
     report = f"""# Astrid Rose AI Team Report
 
 Generated: {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")}
-Coordinator/researcher: Google {GEMINI_MODEL}
-Independent challenger: Groq {groq_model}
+Coordinator/researcher: Gemini {GEMINI_MODEL} (only if free-tier opt-in enabled)
+Independent challenger: Groq {groq_model} (only if free-tier opt-in enabled)
 Independent challenger: OpenRouter {openrouter_model}
-Final synthesizer: Google {GEMINI_MODEL} ({synthesis_status})
+Final synthesizer: OpenRouter verified-zero-price route ({synthesis_status})
 Scope: analysis only; no posts, comments, account changes, or publishing.
 
 ## Task
@@ -316,8 +316,7 @@ Scope: analysis only; no posts, comments, account changes, or publishing.
 ## Cost and safety notes
 
 - OpenRouter is restricted to listed models whose IDs end in :free and whose prompt/completion prices are zero. If none is available, the run stops rather than trying a paid model.
-- Groq uses a model listed as available to this API account. Groq limits are account/model-specific; keep billing disabled and stop if the console indicates paid usage is required.
-- Gemini uses {GEMINI_MODEL}, listed in official pricing documentation as available on the free tier when this was prepared. Keep the project on the free tier and do not enable billing for this workflow.
+- Gemini and Groq API calls are disabled by default. Their `ALLOW_GEMINI_FREE_TIER_CALLS` / `ALLOW_GROQ_FREE_TIER_CALLS` flags must only be set to `true` after the account holder confirms the intended route is free and billing is disabled. These flags are an acknowledgement, not independent proof of zero cost.
 - Free limits and model availability can change; failed requests stop the run.
 - The task and intermediate analyses are sent to the providers. Do not include passwords, API keys, sensitive personal information, or confidential third-party data.
 - This script only writes a report. It does not publish, comment, schedule, or modify external accounts.
