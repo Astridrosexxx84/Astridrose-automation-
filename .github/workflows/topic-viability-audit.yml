@@ -1,6 +1,14 @@
 name: Topic viability audit — research and free media
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/topic-viability-audit.yml"
+      - "topic_viability_audit.py"
+      - "topic_shortlist_audit.py"
+      - "free_trend_selector.py"
   workflow_dispatch:
     inputs:
       topic:
