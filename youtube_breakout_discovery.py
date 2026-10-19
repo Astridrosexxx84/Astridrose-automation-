@@ -27,7 +27,7 @@ def parse_int(value):
 def parse_views(value):
     if not value:
         return 0
-    match = re.search(r'([0-9,.]+)\\s*([KMB]?)', value.upper())
+    match = re.search(r'([0-9,.]+)\s*([KMB]?)', value.upper())
     if not match:
         return 0
     number = float(match.group(1).replace(',', ''))
@@ -35,7 +35,7 @@ def parse_views(value):
     return int(number * scale)
 
 def age_in_days(value):
-    match = re.search(r'(\\d+)\\s*(second|minute|hour|day|week|month|year)', (value or '').casefold())
+    match = re.search(r'(\d+)\s*(second|minute|hour|day|week|month|year)', (value or '').casefold())
     if not match:
         return None
     n, unit = int(match.group(1)), match.group(2)
@@ -62,7 +62,7 @@ def search_topic(topic):
     })
     with urllib.request.urlopen(req, timeout=22) as response:
         page = response.read().decode('utf-8', errors='replace')
-    match = re.search(r'ytInitialData\\s*=\\s*', page)
+    match = re.search(r'ytInitialData\s*=\s*', page)
     if not match:
         raise RuntimeError('YouTube search page did not expose ytInitialData')
     data, _ = json.JSONDecoder().raw_decode(page[match.end():])
