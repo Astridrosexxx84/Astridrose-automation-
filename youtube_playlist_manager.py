@@ -11,6 +11,7 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+import time
 
 API = "https://www.googleapis.com/youtube/v3"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
@@ -137,12 +138,23 @@ def main():
     token = access_token()
     playlist_id = get_or_create_playlist(token)
     existing = set()
-    for item in all_pages(token, "playlistItems", {
-        "part": "contentDetails", "playlistId": playlist_id, "maxResults": 50,
-    }):
-        video = item.get("contentDetails", {}).get("videoId")
-        if video:
-            existing.add(video)
+    # YouTube may briefly take a moment to make a newly created playlist
+    # available to playlistItems.list. Retry only that transient not-found case.
+    for attempt in range(5):
+        try:
+            for item in all_pages(token, "playlistItems", {
+                "part": "contentDetails", "playlistId": playlist_id, "maxResults": 50,
+            }):
+                video = item.get("contentDetails", {}).get("videoId")
+                if video:
+                    existing.add(video)
+            break
+        except RuntimeError as exc:
+            if "playlistNotFound" not in str(exc) or attempt == 4:
+                raise
+            wait_seconds = 2 + attempt * 2
+            print(f"Playlist is not visible to the items API yet; retrying in {wait_seconds}s.")
+            time.sleep(wait_seconds)
 
     added = 0
     skipped = 0
