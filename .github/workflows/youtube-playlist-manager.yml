@@ -1,6 +1,9 @@
 name: Dragon Ball Z Nostalgia — playlist curator
 
 on:
+  push:
+    paths:
+      - 'approved-video-urls.txt'
   workflow_dispatch:
     inputs:
       video_urls:
@@ -29,4 +32,10 @@ jobs:
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
           VIDEO_URLS: ${{ inputs.video_urls }}
-        run: python youtube_playlist_manager.py
+        run: |
+          if [ -n "$VIDEO_URLS" ]; then
+            python youtube_playlist_manager.py
+          else
+            export VIDEO_URLS="$(cat approved-video-urls.txt)"
+            python youtube_playlist_manager.py
+          fi
