@@ -82,3 +82,11 @@ Run `.github/workflows/topic-viability-audit.yml` once with the topic field blan
 - Candidates are ranked for human review using trend signal, research availability, media leads and a rough keyword-overlap relevance hint. No automatic winner is selected and no topic is cleared for storyboarding.
 - Manual topic input still uses the single-topic audit.
 - Not yet verified end-to-end; next step is one blank-topic workflow run. No AI credits or publishing are involved.
+
+
+## Free-media source expansion (2026-10-20)
+- Added Openverse image search, Library of Congress catalog search, and Internet Archive image/movie catalogue search to both single-topic and shortlist audits.
+- Reports include source-specific result counts and retain each source's rights-review caveats. Internet Archive file URLs are not yet resolved automatically; LOC rights are item-specific; Openverse results point back to source pages.
+- Added direct search links for Openverse, LOC, Internet Archive, Pexels videos, and Pixabay videos. Pexels/Pixabay APIs need keys, so no new secrets or API keys were added.
+- Increased workflow timeout to 20 minutes to allow more free API checks across up to 10 candidates.
+- Not yet run after these code changes; syntax and API compatibility must be confirmed by the next workflow run. No media was downloaded, no AI credits used, and nothing published.
