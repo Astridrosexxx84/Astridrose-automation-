@@ -153,6 +153,10 @@ def main():
         "## Per-candidate files", ""]
     for r in results:
         lines.append(f"- candidates/{slugify(r['topic'])}/audit.json and media-inventory.csv — {r['topic']}")
+        links = r.get("search_links", {})
+        for label in ("Official and primary sources", "Openverse openly licensed images", "Library of Congress", "Internet Archive movies and images", "Pexels videos", "Pixabay videos"):
+            if label in links:
+                lines.append(f"  - [{label}]({links[label]})")
     (OUT / "shortlist-comparison.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"Shortlist complete: {len(results)} candidates. No automatic winner selected.")
     print("Saved shortlist-comparison.md, shortlist-comparison.json, and per-candidate inventories.")
