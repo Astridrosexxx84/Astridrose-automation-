@@ -1,0 +1,17 @@
+{
+  "topic": "Add your topic",
+  "narration": "Add original narration here. Leave empty to make a silent picture edit with a silent audio track.",
+  "clips": [
+    {
+      "direct_url": "https://example.com/reviewed-clip.mp4",
+      "source_url": "https://example.com/source-page",
+      "license": "Exact licence name",
+      "license_url": "https://example.com/licence-terms",
+      "creator": "Creator name",
+      "attribution": "Required attribution text",
+      "start_seconds": 0,
+      "duration_seconds": 5,
+      "approved_for_reuse": false
+    }
+  ]
+}
