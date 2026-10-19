@@ -15,7 +15,11 @@ import time
 
 API = "https://www.googleapis.com/youtube/v3"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
-PLAYLIST_TITLE = "Dragon Ball Z Nostalgia"
+PLAYLIST_TITLE = os.environ.get("PLAYLIST_TITLE", "Dragon Ball Z Nostalgia").strip() or "Dragon Ball Z Nostalgia"
+PLAYLIST_DESCRIPTION = os.environ.get(
+    "PLAYLIST_DESCRIPTION",
+    "A fan-curated collection of publicly available YouTube videos. This playlist links to original YouTube uploads and does not claim ownership of the videos.",
+).strip()
 
 
 def request_json(url, *, method="GET", headers=None, body=None):
@@ -112,7 +116,7 @@ def get_or_create_playlist(token):
     created = api(token, "playlists", {"part": "snippet,status"}, method="POST", body={
         "snippet": {
             "title": PLAYLIST_TITLE,
-            "description": "A fan-curated collection of publicly available YouTube videos about Dragon Ball Z, prioritising official uploads, licensed music, trailers, and thoughtful retrospectives. This playlist links to original YouTube uploads and does not claim ownership of the videos.",
+            "description": PLAYLIST_DESCRIPTION,
         },
         "status": {"privacyStatus": "public"},
     })
