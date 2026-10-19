@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from ai_battery import classify_error, empty_ledger, load_ledger, record_event, render_markdown, route_candidates, save_ledger
+from ai_battery import classify_error, empty_ledger, load_ledger, record_event, render_markdown, route_candidates, run_task_with_fallback, save_ledger
 
 
 class BatteryTests(unittest.TestCase):
@@ -33,6 +33,40 @@ class BatteryTests(unittest.TestCase):
             loaded = load_ledger(path)
         self.assertEqual(loaded["providers"]["groq"]["http_or_error_category"], "HTTP 429")
         self.assertNotIn("secret-provider-detail", str(loaded))
+
+
+    def test_generic_task_router_fails_over_after_quota_signal(self):
+        ledger = empty_ledger()
+        record_event(ledger, "gemini", "success", free_route="verified_zero_price", model="mock-gemini")
+        record_event(ledger, "openrouter", "success", free_route="verified_zero_price", model="mock-free-model")
+        calls = []
+
+        def limited():
+            calls.append("gemini")
+            raise RuntimeError("API returned HTTP 429: provider private detail")
+
+        def backup():
+            calls.append("openrouter")
+            return "backup result"
+
+        provider, result = run_task_with_fallback(
+            "unit test", ["gemini", "openrouter"],
+            {"gemini": limited, "openrouter": backup}, ledger,
+        )
+        self.assertEqual((provider, result), ("openrouter", "backup result"))
+        self.assertEqual(calls, ["gemini", "openrouter"])
+        self.assertEqual(ledger["providers"]["gemini"]["status"], "LOW_OR_COOLDOWN")
+        self.assertNotIn("provider private detail", str(ledger))
+
+    def test_generic_task_router_will_not_use_unverified_route(self):
+        ledger = empty_ledger()
+        record_event(ledger, "groq", "success", free_route="unknown")
+        called = []
+        with self.assertRaisesRegex(RuntimeError, "no eligible configured handlers"):
+            run_task_with_fallback(
+                "unit test", ["groq"], {"groq": lambda: called.append(True)}, ledger,
+            )
+        self.assertEqual(called, [])
 
     def test_unknown_provider_rejected(self):
         with self.assertRaises(ValueError):
