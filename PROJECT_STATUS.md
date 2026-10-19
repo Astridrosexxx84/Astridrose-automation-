@@ -145,3 +145,12 @@ Run `.github/workflows/topic-viability-audit.yml` once with the topic field blan
 - Confirmed AI battery logic tests run #6 passed after the generic fallback helper and mock-provider tests were committed. The run includes Python syntax compilation and the unit-test suite: https://github.com/Astridrosexxx84/Astridrose-automation-/actions/runs/39342236284
 - The mocked test verifies a 429 from the first eligible route records cooldown and hands the task to the next verified-zero-price route; another test verifies that an unverified-price route is not called in free-only mode.
 - Next: integrate this helper into the coordinator's actual task execution in a bounded way, then test provider selection with mocks. Do not call live services until free-price eligibility is clear for each route. Current coordinator still has fixed roles and is not yet fully dynamic.
+
+
+## Coordinator routing integration (2026-10-20)
+
+- Integrated `run_task_with_fallback()` into the real coordinator's final-synthesis step.
+- Final synthesis now only attempts OpenRouter after its model listing confirms a `:free` model with zero prompt and completion prices. Gemini is not used for synthesis unless its route is explicitly verified; no paid fallback is attempted.
+- If the verified route is unavailable or fails, the coordinator preserves the independent analyses and emits a deterministic review report.
+- Commit: `453ff3ba583850e955dadd9dcb85afe04591342b`. AI battery CI run #7 is pending verification: https://github.com/Astridrosexxx84/Astridrose-automation-/actions/runs/39342620323
+- This is a bounded integration, not yet full dynamic routing for every analysis task. The analysis calls and requirement for all three provider secrets remain to be simplified in the next pass.
