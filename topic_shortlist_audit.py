@@ -16,7 +16,7 @@ import topic_viability_audit as audit
 
 SCORECARD = Path("topic-discovery-scorecard.txt")
 OUT = Path("topic-audit")
-MAX_CANDIDATES = 10
+MAX_CANDIDATES = 3
 STOPWORDS = {"about", "after", "again", "against", "among", "because", "before", "being",
              "between", "could", "first", "from", "have", "into", "more", "most", "other",
              "over", "same", "some", "than", "that", "their", "there", "these", "they",
