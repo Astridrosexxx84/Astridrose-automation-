@@ -1,5 +1,11 @@
 name: Render a free video draft (no publishing)
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - "render_free_video_draft.py"
+      - ".github/workflows/render-free-video-draft.yml"
   workflow_dispatch:
     inputs:
       topic:
@@ -23,7 +29,7 @@ jobs:
           python -m pip install --upgrade pip pillow
       - name: Render draft video (no upload credentials)
         env:
-          DISCOVERY_TOPIC: ${{ inputs.topic }}
+          DISCOVERY_TOPIC: \${{ inputs.topic || 'A surprising internet rabbit hole' }}
         run: python render_free_video_draft.py
       - name: Save draft video and report
         uses: actions/upload-artifact@v4
