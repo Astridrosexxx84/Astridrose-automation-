@@ -1,0 +1,35 @@
+name: Render a free video draft (no publishing)
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "Topic for the basic draft video"
+        required: true
+        type: string
+        default: "A surprising internet rabbit hole"
+permissions:
+  contents: read
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install free rendering tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg espeak-ng
+          python -m pip install --upgrade pip pillow
+      - name: Render draft video (no upload credentials)
+        env:
+          DISCOVERY_TOPIC: ${{ inputs.topic }}
+        run: python render_free_video_draft.py
+      - name: Save draft video and report
+        uses: actions/upload-artifact@v4
+        with:
+          name: content-video-draft
+          path: |
+            output/content-draft.mp4
+            content-draft-result.txt
+          retention-days: 14
