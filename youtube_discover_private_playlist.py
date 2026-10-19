@@ -50,9 +50,9 @@ def get_token():
         raise RuntimeError("Google OAuth did not return an access token.")
     return payload["access_token"]
 
-def discover(token, query, count, lookback_days):
+def discover(token, query, candidate_count, lookback_days):
     after = (datetime.now(timezone.utc) - timedelta(days=lookback_days)).strftime("%Y-%m-%dT%H:%M:%SZ")
-    params = {"part":"snippet", "type":"video", "q":query, "maxResults":count,
+    params = {"part":"snippet", "type":"video", "q":query, "maxResults":candidate_count,
               "order":"viewCount", "safeSearch":"moderate", "publishedAfter":after}
     found = request_json(API + "/search?" + urllib.parse.urlencode(params), token).get("items", [])
     if not found:
@@ -83,10 +83,13 @@ def discover(token, query, count, lookback_days):
 def main():
     query = os.getenv("SEARCH_QUERY", "popular music 2026").strip()
     title = os.getenv("PLAYLIST_TITLE", "Automation Test - Private Playlist").strip()
-    count = max(1, min(5, int(os.getenv("MAX_RESULTS", "5"))))
+    playlist_count = max(1, min(5, int(os.getenv("MAX_RESULTS", "5"))))
+    candidate_count = max(5, min(50, int(os.getenv("SEARCH_CANDIDATES", "25"))))
     lookback = max(1, min(365, int(os.getenv("LOOKBACK_DAYS", "30"))))
     token = get_token()
-    ranked = discover(token, query, count, lookback)
+    ranked = discover(token, query, candidate_count, lookback)
+    print(f"Ranked {len(ranked)} candidates; selecting up to {playlist_count} for the private playlist.")
+    ranked = ranked[:playlist_count]
     playlist = request_json(API + "/playlists?part=snippet,status", token, "POST", {
         "snippet":{"title":title, "description":"Private playlist created by automated YouTube discovery. Topic: " + query},
         "status":{"privacyStatus":"private"}})
