@@ -139,3 +139,9 @@ Run `.github/workflows/topic-viability-audit.yml` once with the topic field blan
 - Added `run_task_with_fallback()` to `ai_battery.py`. It tries handlers in caller-specified order, skips routes that are not verified zero-price when free-only mode is enabled, stops retrying a provider after its handler fails, records a safe failure category, and tries the next eligible provider. It never invents quota percentages or stores raw exception bodies.
 - Added mocked tests for switching from a simulated HTTP 429 to a verified-free backup, and for refusing a route whose free-price status is unknown. No real provider is called by these tests.
 - These are reusable routing primitives; the existing production coordinator has not yet been refactored to use this helper for all task types. Live provider eligibility remains conservative: a configured key or model listing alone does not prove remaining quota or zero cost. Awaiting CI confirmation for this commit before the next integration step.
+
+## Generic router CI verification (2026-10-20)
+
+- Confirmed AI battery logic tests run #6 passed after the generic fallback helper and mock-provider tests were committed. The run includes Python syntax compilation and the unit-test suite: https://github.com/Astridrosexxx84/Astridrose-automation-/actions/runs/39342236284
+- The mocked test verifies a 429 from the first eligible route records cooldown and hands the task to the next verified-zero-price route; another test verifies that an unverified-price route is not called in free-only mode.
+- Next: integrate this helper into the coordinator's actual task execution in a bounded way, then test provider selection with mocks. Do not call live services until free-price eligibility is clear for each route. Current coordinator still has fixed roles and is not yet fully dynamic.
