@@ -1,0 +1,34 @@
+name: Create topic video draft (free, no publishing)
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "A topic from trend discovery or any topic to prototype"
+        required: true
+        type: string
+        default: "Alexandra Eala"
+permissions:
+  contents: read
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install free renderer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg espeak-ng
+          python -m pip install --upgrade pip pillow
+      - name: Build a topic-specific draft from relevant, explicitly licensed stills
+        env:
+          VIDEO_TOPIC: ${{ inputs.topic }}
+        run: python create_topic_video_draft.py
+      - name: Save video and review notes
+        uses: actions/upload-artifact@v4
+        with:
+          name: topic-video-draft
+          path: video-draft/
+          if-no-files-found: error
+          retention-days: 14
