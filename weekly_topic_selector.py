@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Choose a weekly topic by comparing recent YouTube view velocity across seed topics.
+"""Choose a weekly topic from a broad sample of the newest recent uploads.
 
-Each search.list request costs 100 YouTube API quota units. This script searches
-once per candidate topic, then uses videos.list (1 unit per request) for stats.
-It prints only the winning query to stdout so GitHub Actions can capture it.
+This script makes one search.list call per seed topic, then one videos.list call
+for the returned batch. It avoids extra searches: maxResults can be increased
+without adding another search.list request. It prints only the winning query to
+stdout so GitHub Actions can capture it.
 """
 import json
 import os
@@ -29,7 +30,7 @@ TOPICS = [
     "fitness and workout videos",
 ]
 LOOKBACK_DAYS = max(7, min(90, int(os.getenv("TOPIC_LOOKBACK_DAYS", "30"))))
-SAMPLE_SIZE = 5
+SAMPLE_SIZE = 25
 
 
 def get_token():
@@ -83,7 +84,7 @@ def score_topic(token, query, published_after):
         "part": "snippet",
         "type": "video",
         "q": query,
-        "order": "viewCount",
+        "order": "date",
         "publishedAfter": published_after,
         "maxResults": SAMPLE_SIZE,
         "safeSearch": "moderate",
@@ -113,7 +114,8 @@ def score_topic(token, query, published_after):
         velocities.append(views / age_days)
 
     velocities.sort(reverse=True)
-    # Median reduces the chance one exceptional viral upload dominates a whole topic.
+    # Use the newest 25 uploads rather than only the top 5 by lifetime views. The median
+    # reduces outlier impact and makes topic comparisons less biased toward established hits.
     median_velocity = int(statistics.median(velocities)) if velocities else 0
     top_velocity = int(velocities[0]) if velocities else 0
     return {
@@ -149,9 +151,13 @@ def main():
         report.write(
             "YouTube topic comparison (recent uploads only)\n"
             f"Lookback window: {LOOKBACK_DAYS} days\n"
-            "Metric: median estimated lifetime views per day among up to five recent, "
-            "high-view-count search results per topic. This is a proxy, not an official "
-            "YouTube trending ranking.\n\n"
+            "Metric: median estimated lifetime views per day among up to 25 of the newest "
+            "uploads per topic within the lookback window. One search call per topic; "
+            "video statistics are fetched in one batch. This is a proxy, not real-time "
+            "velocity or an official YouTube trending ranking.\n"
+            f"Estimated API requests: {len(TOPICS)} search.list + {len(TOPICS)} videos.list "
+            "for the scorecard; the playlist stage makes two more search.list calls, "
+            "one videos.list call, one playlist insert and up to five playlist-item inserts.\n\n"
         )
         for index, result in enumerate(results, 1):
             report.write(
