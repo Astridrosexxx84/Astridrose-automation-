@@ -35,6 +35,21 @@ jobs:
           MAX_RESULTS: "5"
           LOOKBACK_DAYS: "30"
         run: python youtube_discover_private_playlist.py
+      - name: Show report directly in the Actions run
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Weekly YouTube discovery"
+            echo
+            echo "Topic: ${{ steps.topic.outputs.query }}"
+            echo
+            if [ -f discovery-playlist-result.txt ]; then
+              cat discovery-playlist-result.txt
+            else
+              echo "No discovery report file was produced. Check the job logs above for the error."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Save discovery report
         if: always()
         uses: actions/upload-artifact@v4
