@@ -9,8 +9,8 @@ This registry is the coordination record for Astrid's production pipeline. Keep 
 ## Pipeline
 1. Discover multiple candidate topics using Google Trends RSS / other free trend sources; use YouTube/vidIQ research only when it is available without consuming scarce quota.
 2. Research the actual subject using credible primary and secondary sources; record verifiable claims and story angles.
-3. Audit media availability before story writing: find topic-specific images/video plus relevant free stock; record exact source links, creator, duration/format when available, licence metadata, attribution and intended scene.
-4. Assess rights and risk per asset. Public availability is not permission; fair use/fair dealing are context-specific, not blanket permissions. Never default to downloading and repackaging other creators' videos.
+3. Audit media availability before story writing: find topic-specific images/video, free stock/audio, and potentially useful clips from existing published content; record exact source links, creator, timestamps/duration, licence or permission basis, attribution and intended scene.
+4. Assess rights and risk per asset. Public availability is not permission; fair use/fair dealing are context-specific, not blanket permissions. Clipping is a sourcing route, not automatic clearance: review each excerpt and platform rules. Prefer native clip/remix features, licensed downloads, public-domain/permissively licensed material, or excerpts with a documented legal basis.
 5. Score and compare candidates on audience signal, research depth, media coverage, rights readiness and production feasibility. Record GO / CONDITIONAL / HOLD with reasons; change the topic/angle when usable media is insufficient.
 6. Only after the decision gate passes, write the original story, script, hook, storyboard, titles, description and captions against the verified inventory.
 7. Produce media: use the cheapest eligible generator only for genuine visual gaps; check licence and allowance first.
@@ -52,7 +52,7 @@ This registry is the coordination record for Astrid's production pipeline. Keep 
 - Track renewable credits separately from one-off welcome credits and free trials.
 - Record actual per-generation credit cost and output dimensions before batching.
 - Do not use a tool for monetizable publishing until its commercial-use terms are checked.
-- Prefer original scripts, commentary, licensed/owned media, and public-domain or permissively licensed assets. Do not build the channel around unaltered copyrighted reuploads.
+- Prefer original scripts/commentary and licensed/owned or public-domain/permissively licensed assets. Existing-content clips may be used only after clip-level review of the legal basis, excerpt amount/significance, purpose, transformation, market impact, third-party rights and platform rules. Copyright legality and YouTube monetization eligibility are separate checks.
 - Do not trigger paid usage, subscriptions, top-ups, or paid API calls without explicit approval.
 - Do not claim a video is published until the YouTube upload result confirms a public URL / video ID.
 
