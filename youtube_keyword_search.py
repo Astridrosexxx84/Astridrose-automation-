@@ -75,7 +75,7 @@ def search(token, query, max_results, lookback_days):
         if video_id and video_id not in found:
             found[video_id] = item.get("snippet", {})
     if not found:
-        return []
+        return [], scope
 
     details = api_get(token, "videos", {
         "part": "statistics,contentDetails,snippet",
@@ -110,9 +110,10 @@ def search(token, query, max_results, lookback_days):
 
 
 def main():
-    query = os.environ.get("SEARCH_QUERY", "").strip()
-    if not query:
-        raise RuntimeError("Enter a topic or keyword phrase in the workflow input.")
+    raw_queries = os.environ.get("SEARCH_QUERIES", os.environ.get("SEARCH_QUERY", "")).strip()
+    queries = list(dict.fromkeys(q.strip() for q in raw_queries.split(",") if q.strip()))
+    if not queries:
+        raise RuntimeError("Enter one or more comma-separated topic phrases in the workflow input.")
     try:
         max_results = max(1, min(25, int(os.environ.get("MAX_RESULTS", "10"))))
     except ValueError:
@@ -122,32 +123,47 @@ def main():
     except ValueError:
         lookback_days = 30
 
-    results, scope = search(get_access_token(), query, max_results, lookback_days)
-    lines = [
-        f"YouTube topic discovery: {query}",
-        f"Unique videos returned: {len(results)}",
-        f"Search scope: {scope}",
-        "",
-        "Ranked by estimated views per day, then total views. This is a rough signal, not proof of current trend growth.",
-        "Use these candidates for review; the workflow does not create playlists or change YouTube.",
+    token = get_access_token()
+    sections = []
+    total_unique = set()
+    for query in queries:
+        results, scope = search(token, query, max_results, lookback_days)
+        sections.extend([
+            f"TOPIC: {query}",
+            f"Unique videos returned: {len(results)}",
+            f"Search scope: {scope}",
+            "",
+            "Ranked by estimated lifetime views/day, then total views. This is a rough comparison signal, not proof of current trend growth.",
+            "",
+        ])
+        if not results:
+            sections.append("No results returned. Try a broader or more specific topic.")
+            sections.append("")
+            continue
+        for index, video in enumerate(results, start=1):
+            total_unique.add(video["id"])
+            line = (
+                f'{index}. {video["title"]}\n'
+                f'   Channel: {video["channel"]} | Published: {video["published"]}\n'
+                f'   Views: {video["views"]:,} | Approx. lifetime views/day: {video["views_per_day"]:,} '
+                f'| Likes: {video["likes"]:,} | Comments: {video["comments"]:,}\n'
+                f'   {video["url"]}'
+            )
+            print(f"[{query}] {line}")
+            sections.append(line)
+        sections.append("")
+
+    header = [
+        "YouTube multi-topic discovery report",
+        f"Topics searched: {len(queries)}",
+        f"Unique videos across all topics (duplicates may appear in separate topic sections): {len(total_unique)}",
+        f"Preferred publication window: last {lookback_days} days; each topic falls back to all-time results if no recent matches exist.",
+        "Discovery only: this workflow does not create playlists or change YouTube.",
         "",
     ]
-    if not results:
-        lines.append("No results returned. Try a more specific or broader topic.")
-    for index, video in enumerate(results, start=1):
-        line = (
-            f'{index}. {video["title"]}\n'
-            f'   Channel: {video["channel"]} | Published: {video["published"]}\n'
-            f'   Views: {video["views"]:,} | Approx. views/day: {video["views_per_day"]:,} '
-            f'| Likes: {video["likes"]:,} | Comments: {video["comments"]:,}\n'
-            f'   {video["url"]}'
-        )
-        print(line)
-        lines.append(line)
     with open("youtube-search-results.txt", "w", encoding="utf-8") as output:
-        output.write("\n".join(lines) + "\n")
-    print("\nSaved ranked candidates to youtube-search-results.txt (workflow artifact).")
-
+        output.write("\n".join(header + sections) + "\n")
+    print("\nSaved multi-topic candidates to youtube-search-results.txt (workflow artifact).")
 
 if __name__ == "__main__":
     try:
