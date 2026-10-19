@@ -26,10 +26,9 @@ def wrap(draw,text,font,width):
             if cur:lines.append(cur)
             cur=word
     if cur:lines.append(cur)
-    if cur:lines.append(cur)
     return lines
 def main():
-    topic=re.sub(r"\\s+"," ",os.getenv("VIDEO_TOPIC","").strip())[:100]
+    topic=re.sub(r"\s+"," ",os.getenv("VIDEO_TOPIC","").strip())[:100]
     if not topic: raise SystemExit("VIDEO_TOPIC is required")
     topic_words=tokens(topic)-{"the","and","for","with","from","into"}
     queries=[topic] + (topic.split() if " " in topic else [])
@@ -60,12 +59,15 @@ def main():
     # Use the encyclopedia intro as a research starting point, not as an automatically verified script.
     q="https://en.wikipedia.org/w/api.php?"+urllib.parse.urlencode({"action":"query","format":"json","prop":"extracts|info","exintro":"1","explaintext":"1","inprop":"url","redirects":"1","titles":topic})
     wd=json.loads(get(q)); pages=wd.get("query",{}).get("pages",{}); page=next((v for v in pages.values() if "missing" not in v),{})
-    research=re.sub(r"\\s+"," ",page.get("extract","")).strip()
+    research=re.sub(r"\s+"," ",page.get("extract","")).strip()
     if len(research)<120: raise SystemExit("Not enough encyclopedia research returned; refusing to invent narration.")
     research_url=page.get("fullurl","https://en.wikipedia.org/w/index.php?"+urllib.parse.urlencode({"search":topic}))
     # A short intro only; it is explicitly a review draft.
-    narration=(research[:650].rsplit(" ",1)[0]).strip()
-    if not narration.endswith((".", "!", "?")): narration += "."
+    narration=research[:900]
+    # End on a complete sentence so the synthetic voice never trails off mid-thought.
+    sentence_ends=[m.end() for m in re.finditer(r"[.!?](?:\s|$)",narration)]
+    if sentence_ends: narration=narration[:sentence_ends[-1]].strip()
+    else: narration=research[:650].rsplit(" ",1)[0].strip()+ "."
     narration += " This is a first research draft: check every detail and the image credits before use."
     (OUT/"narration.txt").write_text(narration+"\n",encoding="utf-8")
     (OUT/"source-and-rights.json").write_text(json.dumps({"topic":topic,"research_url":research_url,"research_status":"UNVERIFIED DRAFT","assets":candidates,"notice":"No asset is legally cleared by this script. Confirm source page, licence version, attribution, adaptation/share-alike requirements and third-party rights."},indent=2,ensure_ascii=False),encoding="utf-8")
@@ -75,7 +77,8 @@ def main():
         try:
             raw=get(a["url"],timeout=25)
             import io
-            im=Image.open(io.BytesIO(raw)).convert("RGB")
+            from PIL import ImageOps
+            im=ImageOps.exif_transpose(Image.open(io.BytesIO(raw))).convert("RGB")
             im.thumbnail((W,1100))
         except Exception as e:
             print("Skipping unavailable or unreadable image",a["title"],repr(e))
