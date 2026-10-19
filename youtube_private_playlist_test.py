@@ -1,18 +1,29 @@
 #!/usr/bin/env python3
 """Create a private test playlist from up to five YouTube search results."""
-import json, os, urllib.parse, urllib.request, urllib.error
+import json, os, time, urllib.parse, urllib.request, urllib.error
 from datetime import datetime, timedelta, timezone
 API="https://www.googleapis.com/youtube/v3"
+RETRYABLE={408,409,429,500,502,503,504}
 def call(url, token, method="GET", body=None):
     data=None if body is None else json.dumps(body).encode()
     headers={"Authorization":"Bearer "+token,"Accept":"application/json"}
     if data is not None: headers["Content-Type"]="application/json"
-    req=urllib.request.Request(url,data=data,method=method,headers=headers)
-    try:
-        with urllib.request.urlopen(req,timeout=30) as r: return json.loads(r.read().decode())
-    except urllib.error.HTTPError as e:
-        detail=e.read().decode("utf-8",errors="replace")
-        raise RuntimeError(f"API error {e.code}: {detail[:900]}") from None
+    last=None
+    for attempt in range(5):
+        req=urllib.request.Request(url,data=data,method=method,headers=headers)
+        try:
+            with urllib.request.urlopen(req,timeout=30) as r: return json.loads(r.read().decode())
+        except urllib.error.HTTPError as e:
+            detail=e.read().decode("utf-8",errors="replace")
+            last=RuntimeError(f"API error {e.code}: {detail[:900]}")
+            if e.code not in RETRYABLE or attempt==4: raise last from None
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
+            last=RuntimeError(f"Network error: {e}")
+            if attempt==4: raise last from None
+        delay=2**(attempt+1)
+        print(f"Temporary request failure; retrying in {delay}s (attempt {attempt+2}/5)")
+        time.sleep(delay)
+    raise last or RuntimeError("Request failed after retries")
 def main():
     missing=[k for k in ("YOUTUBE_CLIENT_ID","YOUTUBE_CLIENT_SECRET","YOUTUBE_REFRESH_TOKEN") if not os.getenv(k)]
     if missing: raise RuntimeError("Missing secrets: "+", ".join(missing))
