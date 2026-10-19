@@ -41,6 +41,11 @@ jobs:
           MAX_RESULTS: "5"
           LOOKBACK_DAYS: "30"
         run: python youtube_discover_private_playlist.py
+      - name: Build a free original-video production brief
+        if: always()
+        env:
+          DISCOVERY_TOPIC: ${{ steps.topic.outputs.query }}
+        run: python generate_original_content_brief.py
       - name: Show report directly in the Actions run
         if: always()
         shell: bash
@@ -61,6 +66,11 @@ jobs:
             else
               echo "No discovery playlist report was produced. Check the job logs above for the error."
             fi
+            echo
+            if [ -f original-content-brief.md ]; then
+              echo "### Original-video production brief"
+              cat original-content-brief.md
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Save topic comparison and playlist report
         if: always()
@@ -70,5 +80,6 @@ jobs:
           path: |
             topic-discovery-scorecard.txt
             discovery-playlist-result.txt
+            original-content-brief.md
           if-no-files-found: ignore
           retention-days: 30
