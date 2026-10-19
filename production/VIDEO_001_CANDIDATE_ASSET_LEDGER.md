@@ -52,3 +52,29 @@ This establishes a strong candidate pool across at least four visual categories:
 3. Capture page-specific rights/credit text verbatim and verify no relevant exceptions.
 4. If the selected set does not meet 12 distinct usable clips across four categories plus eight useful stills, expand the source search or revise the story before editing.
 5. Write final narration only after seeing which clips actually work.
+
+
+## Direct download URLs (verified from the source pages)
+These links were extracted from the NASA SVS page HTML on 2026-10-20. They are direct file URLs, not guesses. If a file does not open on mobile, use the source page above and tap the matching filename.
+
+- V01 Earth at Night 960×540 WebM (30.9 MB): https://svs.gsfc.nasa.gov/vis/a010000/a011100/a011157/G2012-129_Earth_At_Night-720x480.webmhd.webm
+- V02 Earth at Night 1280×720 MOV (75.5 MB): https://svs.gsfc.nasa.gov/vis/a010000/a011100/a011157/G2012-129_Earth_At_Night-youtube_hq.mov
+- V03 legacy Earth-at-night globe WebM (1.8 MB): https://svs.gsfc.nasa.gov/vis/a000000/a000500/a000556/a000556.webmhd.webm
+- V04 ISS city lights over Middle East WebM (2.8 MB): https://svs.gsfc.nasa.gov/vis/a010000/a012900/a012963/Airglow_citylightsmiddleeast_iss_20120323HD.webm
+- V05 ISS Africa and Mideast WebM (4.5 MB): https://svs.gsfc.nasa.gov/vis/a010000/a012900/a012963/Airglow_africa_iss_20111006HD_web.webm
+- V06 ISS Northern Africa and Mideast evening WebM (2.4 MB): https://svs.gsfc.nasa.gov/vis/a010000/a012900/a012963/Airglow_africamideast_iss_20111006HD_web.webm
+- V07 ISS Western Europe to India WebM (4.1 MB): https://svs.gsfc.nasa.gov/vis/a010000/a012900/a012963/Airglow_europeindia_iss_20111019.webm
+- V08 ISS Eastern Europe to Southeast Asia WebM (5.9 MB): https://svs.gsfc.nasa.gov/vis/a010000/a012900/a012963/Airglow_europetoasia_iss_20111029.webm
+- V09 ISS halfway around the world WebM (6.5 MB): https://svs.gsfc.nasa.gov/vis/a010000/a012900/a012963/Airglow_halfway_iss_20111008.webm
+- V10 ISS lightning over Asia WebM (3.7 MB): https://svs.gsfc.nasa.gov/vis/a010000/a012900/a012963/Airglow_lightning_iss_20150914HD.webm
+- V11 ISS near aurora WebM (1.1 MB): https://svs.gsfc.nasa.gov/vis/a010000/a012900/a012963/Airglow_issborealis_iss_20120423HD.webm
+- V12 Landsat montage 960×540 WebM (78.2 MB): https://svs.gsfc.nasa.gov/vis/a010000/a011600/a011615/Landsat_Global_Persp-MASTER_720x480.webmhd.webm
+- V14 spinning Earth 1080p MP4 (31.6 MB): https://svs.gsfc.nasa.gov/vis/a000000/a005500/a005570/Earth_wAtmos_spin_02_1080p60.mp4
+- S01 Earth at Night still: https://svs.gsfc.nasa.gov/vis/a010000/a011100/a011157/G2012-129_Earth_At_Night-youtube_hq00552_print.jpg
+- S03 Landsat still: https://svs.gsfc.nasa.gov/vis/a010000/a011600/a011615/Landsat_Global_Persp-1920_h26400027_print.jpg
+- S04 ISS Earth/airglow/aurora photo: https://svs.gsfc.nasa.gov/vis/a010000/a012900/a012963/AuroraCrater_ISS_4256_NASA.jpg
+- S06 ISS star trails with airglow: https://svs.gsfc.nasa.gov/vis/a010000/a012900/a012963/7197236836_5f45cca1c5_o.jpg
+- S07 spinning Earth 4K still: https://svs.gsfc.nasa.gov/vis/a000000/a005500/a005570/Earth_wAtmos_spin_02.01000.still.jpg
+
+## Practical note
+I attempted a direct download in this working environment, but it failed. That means the source links are verified, while local files are **not** yet present here and have not been visually inspected. Do not treat the download/visual QA stage as complete.
