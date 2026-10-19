@@ -47,7 +47,7 @@ Phone-first support: give one small next step at a time. Prefer free searches an
 - Keep user in control of public-facing changes and publishing.
 
 ## Next action
-Continue the Zelda content package by checking and collecting the selected stock clips and official source references into an asset manifest; then produce narration and assemble a rough cut using verified free tools. Do not spend AI credits unless a specific gap remains. Do not publish until the user approves the rendered video.
+Run `.github/workflows/topic-viability-audit.yml` once from GitHub Actions with the topic field blank to test free trend selection plus research/media inventory. Inspect the artifact for API errors, relevant assets and correct rights flags. Only after that gate is credible should we choose the next topic, confirm its media supply and write/continue a story. Keep all generation spending at zero and do not publish without approval.
 
 ## Latest production progress (2026-10-19)
 - Verified Pexels stock video pages and imported two actual MP4 assets into the connected Canva media library:
