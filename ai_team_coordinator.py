@@ -97,7 +97,8 @@ def openai_compatible_chat(url, api_key, model_id, prompt, title):
     return answer.strip()
 
 
-def choose_free_openrouter_model():
+def choose_free_openrouter_models(limit=3):
+    """Return distinct models only when the live catalogue lists zero prices."""
     result = request_json("https://openrouter.ai/api/v1/models")
     free_models = []
     for model in result.get("data", []):
@@ -119,12 +120,11 @@ def choose_free_openrouter_model():
         "qwen/qwen3-4b:free",
         "google/gemma-3-27b-it:free",
         "meta-llama/llama-3.3-70b-instruct:free",
+        "cohere/north-mini-code:free",
     ]
-    for model_id in preferred:
-        if model_id in free_models:
-            return model_id
-    return sorted(free_models)[0]
-
+    chosen = [model_id for model_id in preferred if model_id in free_models]
+    chosen.extend(model_id for model_id in sorted(free_models) if model_id not in chosen)
+    return chosen[:max(1, limit)]
 
 def choose_groq_model(api_key):
     result = request_json(
@@ -224,19 +224,31 @@ def main():
     else:
         groq_answer = "Groq skipped: no API key configured." if not groq_key else "Groq skipped: free-tier-only calls are not explicitly enabled."
 
+    openrouter_models = []
     openrouter_model = "unavailable"
+    openrouter_answers = []
     if openrouter_key:
         try:
-            openrouter_model = choose_free_openrouter_model()
-            openrouter_answer = openai_compatible_chat(
-                "https://openrouter.ai/api/v1/chat/completions",
-                openrouter_key,
-                openrouter_model,
-                "Independently analyze the task. Do not merely agree with other models. Offer another approach, challenge weak assumptions, and identify failure modes. Do not invent current facts or claim web research.\n\nTASK:\n" + task,
-                "Astrid Rose AI Team - OpenRouter",
-            )
-            record_event(battery, "openrouter", "success", model=openrouter_model, free_route="verified_zero_price", configured=True)
-            print(f"OpenRouter independent challenge complete: {openrouter_model}")
+            openrouter_models = choose_free_openrouter_models(limit=3)
+            for model_id in openrouter_models:
+                try:
+                    answer = openai_compatible_chat(
+                        "https://openrouter.ai/api/v1/chat/completions",
+                        openrouter_key,
+                        model_id,
+                        "Independently analyze the task. Do not merely agree with other models. Offer another approach, challenge weak assumptions, and identify failure modes. Do not invent current facts or claim web research.\\n\\nTASK:\\n" + task,
+                        "Astrid Rose AI Team - Independent model",
+                    )
+                    openrouter_answers.append((model_id, answer))
+                    record_event(battery, "openrouter", "success", model=model_id, free_route="verified_zero_price", configured=True)
+                    print(f"OpenRouter independent challenge complete: {model_id}")
+                except RuntimeError as exc:
+                    print(f"OpenRouter model unavailable; trying another verified free model: {model_id} ({str(exc)[:160]})")
+            if openrouter_answers:
+                openrouter_model = openrouter_answers[0][0]
+                openrouter_answer = "\\n\\n".join(f"### {model_id}\\n{answer}" for model_id, answer in openrouter_answers)
+            else:
+                raise RuntimeError("All listed zero-price OpenRouter models failed to respond.")
         except RuntimeError as exc:
             record_event(battery, "openrouter", "unknown_error", error=str(exc), free_route="unknown", configured=True)
             openrouter_model = "unavailable"
@@ -291,7 +303,7 @@ Generated: {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")}
 Coordinator/researcher: Gemini {GEMINI_MODEL} (only if free-tier opt-in enabled)
 Independent challenger: Groq {groq_model} (only if free-tier opt-in enabled)
 Independent challenger: OpenRouter {openrouter_model}
-Final synthesizer: OpenRouter verified-zero-price route ({synthesis_status})
+Independent free-model panel: {", ".join(model for model, _ in openrouter_answers) or "none available"}\nFinal synthesizer: OpenRouter verified-zero-price route ({synthesis_status})
 Scope: analysis only; no posts, comments, account changes, or publishing.
 
 ## Task
