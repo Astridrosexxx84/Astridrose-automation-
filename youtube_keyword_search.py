@@ -1,14 +1,28 @@
 #!/usr/bin/env python3
-"""Search YouTube for public videos by keyword; this script does not modify YouTube."""
+"""Find YouTube video candidates and rank them using public view statistics."""
 import json
 import os
 import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import datetime, timezone
 
 API = "https://www.googleapis.com/youtube/v3"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
+
+
+def api_get(token, endpoint, params):
+    url = f"{API}/{endpoint}?{urllib.parse.urlencode(params)}"
+    req = urllib.request.Request(
+        url, headers={"Authorization": f"Bearer {token}", "Accept": "application/json"}
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            return json.loads(response.read().decode())
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"YouTube API {endpoint} failed ({exc.code}): {detail[:1000]}") from None
 
 
 def get_access_token():
@@ -22,8 +36,10 @@ def get_access_token():
         "refresh_token": os.environ["YOUTUBE_REFRESH_TOKEN"],
         "grant_type": "refresh_token",
     }).encode()
-    req = urllib.request.Request(TOKEN_URL, data=form, method="POST",
-        headers={"Content-Type": "application/x-www-form-urlencoded"})
+    req = urllib.request.Request(
+        TOKEN_URL, data=form, method="POST",
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
     try:
         with urllib.request.urlopen(req, timeout=30) as response:
             payload = json.loads(response.read().decode())
@@ -36,60 +52,85 @@ def get_access_token():
 
 
 def search(token, query, max_results):
-    params = urllib.parse.urlencode({
-        "part": "snippet",
-        "type": "video",
-        "q": query,
-        "maxResults": max_results,
-        "order": "relevance",
-        "safeSearch": "moderate",
+    # Start with videos YouTube ranks highly by total views for this query.
+    data = api_get(token, "search", {
+        "part": "snippet", "type": "video", "q": query,
+        "maxResults": max_results, "order": "viewCount", "safeSearch": "moderate",
     })
-    req = urllib.request.Request(
-        f"{API}/search?{params}",
-        headers={"Authorization": f"Bearer {token}", "Accept": "application/json"})
-    try:
-        with urllib.request.urlopen(req, timeout=30) as response:
-            return json.loads(response.read().decode()).get("items", [])
-    except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"YouTube search failed ({exc.code}): {detail[:1200]}") from None
+    # De-duplicate IDs while preserving search order.
+    found = {}
+    for item in data.get("items", []):
+        video_id = item.get("id", {}).get("videoId")
+        if video_id and video_id not in found:
+            found[video_id] = item.get("snippet", {})
+    if not found:
+        return []
+
+    details = api_get(token, "videos", {
+        "part": "statistics,contentDetails,snippet",
+        "id": ",".join(found.keys()),
+        "maxResults": len(found),
+    }).get("items", [])
+    now = datetime.now(timezone.utc)
+    results = []
+    for video in details:
+        video_id = video.get("id")
+        snippet = video.get("snippet", found.get(video_id, {}))
+        stats = video.get("statistics", {})
+        published = snippet.get("publishedAt", "")
+        try:
+            age_days = max(1, (now - datetime.fromisoformat(published.replace("Z", "+00:00"))).days)
+        except (ValueError, TypeError):
+            age_days = 1
+        views = int(stats.get("viewCount", 0))
+        results.append({
+            "id": video_id,
+            "title": " ".join(snippet.get("title", "").split()),
+            "channel": " ".join(snippet.get("channelTitle", "").split()),
+            "published": published[:10],
+            "views": views,
+            "views_per_day": views // age_days,
+            "likes": int(stats.get("likeCount", 0)),
+            "comments": int(stats.get("commentCount", 0)),
+            "url": f"https://www.youtube.com/watch?v={video_id}",
+        })
+    # A rough discovery signal: recent view velocity, with total views as tie-breaker.
+    return sorted(results, key=lambda v: (v["views_per_day"], v["views"]), reverse=True)
 
 
 def main():
     query = os.environ.get("SEARCH_QUERY", "").strip()
     if not query:
-        raise RuntimeError("Enter a keyword or phrase in the workflow input.")
+        raise RuntimeError("Enter a topic or keyword phrase in the workflow input.")
     try:
         max_results = max(1, min(25, int(os.environ.get("MAX_RESULTS", "10"))))
     except ValueError:
         max_results = 10
 
-    items = search(get_access_token(), query, max_results)
+    results = search(get_access_token(), query, max_results)
     lines = [
-        f'YouTube search for: {query}',
-        f'Results returned: {len(items)}',
-        '',
-        'Review these results before adding them to your playlist:',
-        '',
+        f"YouTube topic discovery: {query}",
+        f"Unique videos returned: {len(results)}",
+        "",
+        "Ranked by estimated views per day, then total views. This is a rough signal, not proof of current trend growth.",
+        "Use these candidates for review; the workflow does not create playlists or change YouTube.",
+        "",
     ]
-    if not items:
-        lines.append("No results returned. Try a broader keyword.")
-    for index, item in enumerate(items, start=1):
-        video_id = item.get("id", {}).get("videoId")
-        snippet = item.get("snippet", {})
-        if not video_id:
-            continue
-        title = " ".join(snippet.get("title", "").split())
-        channel = " ".join(snippet.get("channelTitle", "").split())
-        published = snippet.get("publishedAt", "")[:10]
-        url = f"https://www.youtube.com/watch?v={video_id}"
-        line = f"{index}. {title}\n   Channel: {channel} | Published: {published}\n   {url}"
+    if not results:
+        lines.append("No results returned. Try a more specific or broader topic.")
+    for index, video in enumerate(results, start=1):
+        line = (
+            f'{index}. {video["title"]}\n'
+            f'   Channel: {video["channel"]} | Published: {video["published"]}\n'
+            f'   Views: {video["views"]:,} | Approx. views/day: {video["views_per_day"]:,} '
+            f'| Likes: {video["likes"]:,} | Comments: {video["comments"]:,}\n'
+            f'   {video["url"]}'
+        )
         print(line)
         lines.append(line)
     with open("youtube-search-results.txt", "w", encoding="utf-8") as output:
         output.write("\n".join(lines) + "\n")
-    print("\nSaved results to youtube-search-results.txt (workflow artifact).")
-    print("This search-only tool did not add videos or change any playlist.")
+    print("\nSaved ranked candidates to youtube-search-results.txt (workflow artifact).")
 
 
 if __name__ == "__main__":
