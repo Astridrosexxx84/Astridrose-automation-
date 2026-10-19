@@ -128,10 +128,15 @@ def main():
     scorecard = Path("topic-discovery-scorecard.txt")
     if not os.getenv("AUDIT_TOPIC", "").strip() and scorecard.exists():
         trend_text = scorecard.read_text(encoding="utf-8")
-        selected_line = next((line for line in trend_text.splitlines() if line.casefold().startswith(topic.casefold() + " |")), "")
+        selected_line = ""
+        for line in trend_text.splitlines():
+            match_topic = re.match(r"^\\d+\\.\\s*(.*?)\\s*\\|\\s*markets=", line)
+            if match_topic and match_topic.group(1).strip().casefold() == topic.casefold():
+                selected_line = line
+                break
         if selected_line:
             market_match = re.search(r"markets=([^|]+)", selected_line)
-            rank_match = re.search(r"^([0-9]+)\\.", selected_line)
+            rank_match = re.search(r"^(\\d+)\\.", selected_line)
             market_count = len([x for x in (market_match.group(1).split(",") if market_match else []) if x.strip()])
             rank = int(rank_match.group(1)) if rank_match else 50
             trend_score = 5 if market_count >= 4 and rank <= 5 else 4 if market_count >= 3 and rank <= 10 else 3 if market_count >= 2 else 2 if market_count >= 1 else 0
