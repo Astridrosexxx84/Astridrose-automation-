@@ -7,14 +7,18 @@ on:
     paths:
       - "topic_shortlist_audit.py"
       - "topic_viability_audit.py"
+      - "render_free_video_draft.py"
       - "tests/**"
       - ".github/workflows/topic-scoring-tests.yml"
+      - ".github/workflows/render-free-video-draft.yml"
   pull_request:
     paths:
       - "topic_shortlist_audit.py"
       - "topic_viability_audit.py"
+      - "render_free_video_draft.py"
       - "tests/**"
       - ".github/workflows/topic-scoring-tests.yml"
+      - ".github/workflows/render-free-video-draft.yml"
   workflow_dispatch:
 
 permissions:
@@ -32,6 +36,6 @@ jobs:
         with:
           python-version: "3.12"
       - name: Validate Python syntax
-        run: python -m py_compile topic_viability_audit.py topic_shortlist_audit.py tests/test_scoring_smoke.py
+        run: python -m py_compile topic_viability_audit.py topic_shortlist_audit.py render_free_video_draft.py tests/test_scoring_smoke.py
       - name: Run scoring regression tests without network calls
         run: python -m unittest discover -s tests -v
