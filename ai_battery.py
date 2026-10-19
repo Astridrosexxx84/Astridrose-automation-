@@ -128,6 +128,51 @@ def route_candidates(
     return allowed
 
 
+
+def run_task_with_fallback(
+    task_name: str,
+    candidates: list[str],
+    handlers: dict[str, Any],
+    ledger: dict[str, Any],
+    *,
+    free_only: bool = True,
+) -> tuple[str, Any]:
+    """Run one task on the first eligible provider; fail over once per candidate.
+
+    Handlers are callables that accept no arguments. Their provider/model configuration
+    must already be verified by the caller. Exceptions are reduced to safe categories
+    in the ledger; raw exception text is not persisted.
+    """
+    eligible = route_candidates(candidates, ledger, free_only=free_only)
+    failures: list[str] = []
+    for provider in eligible:
+        handler = handlers.get(provider)
+        if not callable(handler):
+            continue
+        try:
+            result = handler()
+            record_event(
+                ledger, provider, "success",
+                model=ledger.get("providers", {}).get(provider, {}).get("model"),
+                free_route=ledger.get("providers", {}).get(provider, {}).get("free_route", "unknown"),
+            )
+            return provider, result
+        except Exception as exc:
+            status, code = classify_error(str(exc))
+            outcome = {
+                "LOW_OR_COOLDOWN": "quota",
+                "DISCONNECTED": "auth_error",
+                "ERROR": "unknown_error",
+            }[status]
+            record_event(
+                ledger, provider, outcome, error=str(exc),
+                model=ledger.get("providers", {}).get(provider, {}).get("model"),
+                free_route=ledger.get("providers", {}).get(provider, {}).get("free_route", "unknown"),
+            )
+            failures.append(f"{provider}: {status}" + (f" (HTTP {code})" if code else ""))
+    detail = "; ".join(failures) if failures else "no eligible configured handlers"
+    raise RuntimeError(f"No eligible provider completed task '{task_name}': {detail}")
+
 def save_ledger(ledger: dict[str, Any], path: Path = LEDGER_PATH) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
