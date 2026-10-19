@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       topic:
-        description: "Topic to audit; leave blank to use the free trend detector"
+        description: "Optional single topic to audit; leave blank to compare a shortlist of free trends"
         required: false
         default: ""
         type: string
@@ -15,7 +15,7 @@ permissions:
 jobs:
   audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -26,18 +26,23 @@ jobs:
           python-version: "3.12"
 
       - name: Validate Python syntax
-        run: python -m py_compile topic_viability_audit.py free_trend_selector.py
+        run: python -m py_compile topic_viability_audit.py topic_shortlist_audit.py free_trend_selector.py
 
-      - name: Detect a topic from free Google Trends RSS when none was entered
+      - name: Detect candidates from free Google Trends RSS when no topic was entered
         if: ${{ inputs.topic == '' }}
         run: python free_trend_selector.py
 
-      - name: Research topic and audit media inventory
+      - name: Compare top trend shortlist against research and media leads
+        if: ${{ inputs.topic == '' }}
+        run: python topic_shortlist_audit.py
+
+      - name: Audit manually entered topic
+        if: ${{ inputs.topic != '' }}
         env:
           AUDIT_TOPIC: ${{ inputs.topic }}
         run: python topic_viability_audit.py
 
-      - name: Save decision report and media inventory
+      - name: Save decision reports and media inventories
         uses: actions/upload-artifact@v4
         with:
           name: topic-viability-audit
