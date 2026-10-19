@@ -1,6 +1,9 @@
 name: Astrid Rose — AI team (manual, review-only)
 
 on:
+  push:
+    paths:
+      - '.github/workflows/ai-team-coordinator.yml'
   workflow_dispatch:
     inputs:
       task:
@@ -14,6 +17,7 @@ permissions:
 
 jobs:
   ai-team:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[ai-team-smoke]')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
