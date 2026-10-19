@@ -15,19 +15,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg espeak-ng
           python -m pip install --upgrade pip pillow
-      - name: Discover a topic from recent YouTube performance
+      - name: Discover a topic from free Google Trends RSS
         id: topic
         env:
-          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
-          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
-          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
-          TOPIC_LOOKBACK_DAYS: "30"
+          TRENDS_GEO: "NZ"
         shell: bash
         run: |
           set -euo pipefail
-          topic=$(python weekly_topic_selector.py)
+          topic=$(python free_trend_selector.py)
           echo "topic=$topic" >> "$GITHUB_OUTPUT"
           echo "Selected topic: $topic"
+          echo "YouTube Search API calls used for discovery: 0"
       - name: Render and upload an original public Short
         env:
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
