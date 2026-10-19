@@ -48,7 +48,7 @@ def gemini(prompt, api_key):
             break
         except RuntimeError as exc:
             message = str(exc)
-            transient = "HTTP 503" in message or "HTTP 429" in message or "timed out" in message.lower()
+            # A 429 is a quota/cooldown signal: do not hammer the same provider.\n            # Let the coordinator preserve this failure and use an eligible fallback.\n            transient = "HTTP 503" in message or "timed out" in message.lower()
             if not transient or attempt == 2:
                 raise
             delay = 2 ** (attempt + 1)
