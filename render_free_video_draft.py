@@ -66,7 +66,7 @@ def make_slide(path, kicker, headline, subline, index):
     im.save(path, quality=95)
 
 def main():
-    topic = re.sub(r"\\s+", " ", os.getenv("DISCOVERY_TOPIC", "").strip())[:100]
+    topic = re.sub(r"\s+", " ", os.getenv("DISCOVERY_TOPIC", "").strip())[:100]
     if not topic:
         raise RuntimeError("DISCOVERY_TOPIC is empty; provide a topic in the workflow input.")
     slides = [
@@ -85,9 +85,9 @@ def main():
     concat = OUT / "draft-slides.txt"
     with concat.open("w", encoding="utf-8") as f:
         for p in frames:
-            f.write(f"file '{p.resolve()}'\\n")
-            f.write("duration 3.8\\n")
-        f.write(f"file '{frames[-1].resolve()}'\\n")
+            f.write(f"file '{p.resolve()}'\n")
+            f.write("duration 3.8\n")
+        f.write(f"file '{frames[-1].resolve()}'\n")
     narration = (
         f"Today's topic is {topic}. First, what do we actually know? "
         "Next, look for the unexpected detail that changes the obvious story. "
@@ -102,9 +102,9 @@ def main():
          "-crf", "24", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart",
          str(OUT/"content-draft.mp4")])
     Path("content-draft-result.txt").write_text(
-        f"Draft rendered successfully\\nTopic: {topic}\\nFile: output/content-draft.mp4\\n"
-        "Status: DRAFT ONLY — not uploaded or published.\\n"
-        "Important: placeholder structure only; research facts and replace generic slides before publishing.\\n",
+        f"Draft rendered successfully\nTopic: {topic}\nFile: output/content-draft.mp4\n"
+        "Status: DRAFT ONLY — not uploaded or published.\n"
+        "Important: placeholder structure only; research facts and replace generic slides before publishing.\n",
         encoding="utf-8",
     )
     print("Created output/content-draft.mp4 (draft only; no upload attempted).")
