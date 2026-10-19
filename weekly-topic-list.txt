@@ -1,10 +1,4 @@
-popular music new songs
-gaming highlights
-viral food videos
-sports highlights
-technology and AI
-movie trailers
-travel destinations
-comedy clips
-cute animals
-fitness workouts
+# Dynamic topic discovery is enabled in weekly_topic_selector.py.
+# This file is retained for compatibility only; it is not a fixed category list.
+# Each run discovers candidate phrases from recent high-view YouTube uploads,
+# scores them against the previous upload cohort, and selects the strongest topic.
