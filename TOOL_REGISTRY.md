@@ -27,7 +27,7 @@ This registry is the coordination record for Astrid's production pipeline. Keep 
 | HeyGen | Talking avatar, speech and video | Connected; account reports Free plan. Exact remaining video allowance was not exposed by account check. | Check usable free video limit before generation; use only when identity/avatar is needed. |
 | vidIQ | Trend research, channel analysis, scripts, thumbnails, voiceover/compose tools | Connected. Current credit response: 0 credits available; renewable bucket maximum 150, next reset reported 2026-11-16. | Use only tools confirmed free/no-credit; recheck balance after reset. |
 | Canva | Graphics, designs, image generation and assembly | Connected; free allowance not yet verified. | Check current limits before generation; use for layout and finishing where free. |
-| Metricool | Scheduling and analytics | Connected; account/brand and free-plan limits not yet audited. | Inspect connected brands, supported platforms and free scheduling limits. |
+| Metricool | Scheduling and analytics | Connected. Verified brand “Astrid Rose” has Instagram and YouTube connected; workspace timezone is Pacific/Auckland. Scheduling quota/plan and actual publishing permissions remain untested. | Check free scheduling limits and test a non-publishing read before scheduling anything. |
 | Automations | Scheduled reminders/workflows | Available through ChatGPT tools; not yet configured as pipeline scheduler. | Use after the workflow is reliable, not as a substitute for a tested publishing pipeline. |
 
 ## External candidates (not yet connected or account-verified)
