@@ -145,11 +145,14 @@ def main():
     gemini_key = os.environ.get("GEMINI_API_KEY", "").strip()
     openrouter_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
     groq_key = os.environ.get("GROQ_API_KEY", "").strip()
+    # Gemini/Groq stay disabled unless free-tier-only access is explicitly confirmed.
+    allow_gemini = os.environ.get("ALLOW_GEMINI_FREE_TIER_CALLS", "").strip().lower() == "true"
+    allow_groq = os.environ.get("ALLOW_GROQ_FREE_TIER_CALLS", "").strip().lower() == "true"
     task = os.environ.get("AI_TEAM_TASK", "").strip()
-    # Providers are optional workers. Missing one must not block the others.
-    configured_count = sum(bool(value) for value in (gemini_key, groq_key, openrouter_key))
-    if not configured_count:
-        raise SystemExit("No AI provider secrets are configured. Add at least one provider key in GitHub Actions Secrets; never paste keys into source code or chat.")
+    # OpenRouter is gated separately by a live zero-price :free model listing.
+    usable_count = sum((bool(openrouter_key), bool(gemini_key and allow_gemini), bool(groq_key and allow_groq)))
+    if not usable_count:
+        raise SystemExit("No provider route is enabled for this $0 run. OpenRouter needs a key and a listed zero-price :free model; Gemini/Groq need explicit free-tier opt-in flags. Never paste keys into source code or chat.")
     missing = [
         name for name, value in [
             ("GEMINI_API_KEY", gemini_key),
@@ -159,6 +162,10 @@ def main():
     ]
     if missing:
         print("Optional providers not configured; continuing without them: " + ", ".join(missing))
+    if gemini_key and not allow_gemini:
+        print("Gemini key detected but calls are disabled until free-tier-only access is confirmed.")
+    if groq_key and not allow_groq:
+        print("Groq key detected but calls are disabled until free-tier-only access is confirmed.")
     if not task:
         task = "Design one practical $0-upfront experiment for the Astrid Rose creator business. Focus on a repeatable workflow, measurable demand, and free tools. Do not create or publish actual content."
     task = task[:4000]
@@ -178,7 +185,7 @@ def main():
                 "note": "Credentials are configured; provider health and remaining quota have not yet been verified.",
             }
     battery["updated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    if gemini_key:
+    if gemini_key and allow_gemini:
         try:
             first = gemini(
                 "Analyze this $0-upfront creator automation task. Give the objective, assumptions, three options, best first experiment, risks, and measurable success criteria. Label facts needing current research. Do not publish anything.\n\nTASK:\n" + task,
@@ -196,7 +203,7 @@ def main():
     # A provider access error should not prevent the other free providers from contributing.
     # Keep the exact failure in the report so it can be diagnosed without exposing credentials.
     groq_model = "unavailable"
-    if groq_key:
+    if groq_key and allow_groq:
         try:
             groq_model = choose_groq_model(groq_key)
             groq_answer = openai_compatible_chat(
