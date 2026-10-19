@@ -26,28 +26,32 @@ def wrap(draw,text,font,width):
 def main():
     topic=re.sub(r"\\s+"," ",os.getenv("VIDEO_TOPIC","").strip())[:100]
     if not topic: raise SystemExit("VIDEO_TOPIC is required")
-    api="https://commons.wikimedia.org/w/api.php?"+urllib.parse.urlencode({
-      "action":"query","format":"json","generator":"search","gsrsearch":topic,
-      "gsrnamespace":"6","gsrlimit":"30","prop":"imageinfo","iiprop":"url|extmetadata"})
-    data=json.loads(get(api))
     topic_words=tokens(topic)-{"the","and","for","with","from","into"}
+    queries=[topic] + (topic.split() if " " in topic else [])
     candidates=[]; seen=set()
-    for p in data.get("query",{}).get("pages",{}).values():
-        info=(p.get("imageinfo") or [{}])[0]; meta=info.get("extmetadata",{})
-        title=p.get("title","")
-        overlap=topic_words & tokens(title)
-        def val(k): return re.sub(r"<[^>]*>","",str(meta.get(k,{}).get("value",""))).strip()
-        lic=val("LicenseShortName"); licurl=val("LicenseUrl")
-        if not overlap or not info.get("url") or not info.get("mime","").startswith("image/"): continue
-        # Only common reuse licences; still requires correct credit and terms.
-        if not (lic.casefold() in {"cc0","public domain","cc by 4.0","cc by 3.0","cc by 2.0","cc by-sa 4.0","cc by-sa 3.0","cc by-sa 2.0"} and licurl): continue
-        if info["url"] in seen: continue
-        seen.add(info["url"])
-        candidates.append({"title":title,"url":info["url"],"page_url":info.get("descriptionurl",""),
-          "creator":val("Artist") or val("Credit") or "Creator not stated",
-          "license":lic,"license_url":licurl,"overlap":sorted(overlap)})
+    for query in queries:
+        api="https://commons.wikimedia.org/w/api.php?"+urllib.parse.urlencode({
+          "action":"query","format":"json","generator":"search","gsrsearch":query,
+          "gsrnamespace":"6","gsrlimit":"50","prop":"imageinfo","iiprop":"url|extmetadata"})
+        data=json.loads(get(api))
+        for p in data.get("query",{}).get("pages",{}).values():
+            info=(p.get("imageinfo") or [{}])[0]; meta=info.get("extmetadata",{})
+            title=p.get("title",""); overlap=topic_words & tokens(title)
+            def val(k): return re.sub(r"<[^>]*>","",str(meta.get(k,{}).get("value",""))).strip()
+            lic=val("LicenseShortName"); licurl=val("LicenseUrl")
+            if not overlap or not info.get("url") or not info.get("mime","").startswith("image/"): continue
+            ll=lic.casefold().replace("creative commons","cc").replace("attribution-sharealike","by-sa").replace("attribution-share-alike","by-sa").replace("attribution","by")
+            allowed=(ll in {"cc0","public domain","pd","cc by","cc by 2.0","cc by 3.0","cc by 4.0","cc by-sa","cc by-sa 2.0","cc by-sa 3.0","cc by-sa 4.0"} or ll.startswith("cc by ") or ll.startswith("cc by-sa "))
+            if not allowed or not licurl: continue
+            if info["url"] in seen: continue
+            seen.add(info["url"])
+            candidates.append({"title":title,"url":info["url"],"page_url":info.get("descriptionurl",""),
+              "creator":val("Artist") or val("Credit") or "Creator not stated",
+              "license":lic,"license_url":licurl,"overlap":sorted(overlap)})
         if len(candidates)>=5: break
-    if not candidates: raise SystemExit("No sufficiently relevant Commons images with an explicit allowlisted licence. Refusing to fabricate footage; choose a different topic or review media manually.")
+    candidates.sort(key=lambda a:(-len(a["overlap"]),a["title"].casefold()))
+    candidates=candidates[:5]
+    if not candidates: raise SystemExit("No relevant Commons images with explicit reusable licence metadata. No video generated; inspect another topic or review media manually.")
     # Use the encyclopedia intro as a research starting point, not as an automatically verified script.
     q="https://en.wikipedia.org/w/api.php?"+urllib.parse.urlencode({"action":"query","format":"json","prop":"extracts|info","exintro":"1","explaintext":"1","inprop":"url","redirects":"1","titles":topic})
     wd=json.loads(get(q)); pages=wd.get("query",{}).get("pages",{}); page=next((v for v in pages.values() if "missing" not in v),{})
