@@ -11,6 +11,7 @@ on:
       - "free_trend_selector.py"
       - "build_storyboard.py"
       - "build_rights_review_queue.py"
+      - "build_footage_review_queue.py"
   workflow_dispatch:
     inputs:
       topic:
@@ -36,7 +37,7 @@ jobs:
           python-version: "3.12"
 
       - name: Validate Python syntax
-        run: python -m py_compile topic_viability_audit.py topic_shortlist_audit.py free_trend_selector.py build_storyboard.py build_rights_review_queue.py
+        run: python -m py_compile topic_viability_audit.py topic_shortlist_audit.py free_trend_selector.py build_storyboard.py build_rights_review_queue.py build_footage_review_queue.py
 
       - name: Detect candidates from free Google Trends RSS when no topic was entered
         if: ${{ inputs.topic == '' }}
@@ -57,6 +58,9 @@ jobs:
 
       - name: Build item-level rights review queue
         run: python build_rights_review_queue.py
+
+      - name: Build conservative video footage review queue
+        run: python build_footage_review_queue.py
 
       - name: Save decision reports, media inventories, storyboard drafts and rights queue
         uses: actions/upload-artifact@v4
