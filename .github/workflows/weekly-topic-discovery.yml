@@ -1,4 +1,4 @@
-name: Weekly automatic topic discovery (private playlists)
+name: Weekly automatic topic discovery (public playlist)
 on:
   schedule:
     - cron: "0 12 * * 1"
@@ -31,7 +31,7 @@ jobs:
           echo "query=$query" >> "$GITHUB_OUTPUT"
           echo "title=Discovery - $safe_topic - $date_tag" >> "$GITHUB_OUTPUT"
           echo "Selected evidence-based topic: $query"
-      - name: Discover and create a private playlist
+      - name: Discover and create a public playlist
         env:
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
