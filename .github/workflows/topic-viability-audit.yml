@@ -55,12 +55,15 @@ jobs:
       - name: Build preliminary storyboard drafts from audit evidence
         run: python build_storyboard.py
 
-      - name: Build item-level rights review queue\n        run: python build_rights_review_queue.py\n\n      - name: Save decision reports, media inventories, storyboard drafts and rights queue
+      - name: Build item-level rights review queue
+        run: python build_rights_review_queue.py
+
+      - name: Save decision reports, media inventories, storyboard drafts and rights queue
         uses: actions/upload-artifact@v4
         with:
           name: topic-viability-audit
           path: |
             topic-audit/
-            storyboard-drafts/\n            topic-audit/rights-review-queue.csv
+            storyboard-drafts/
           if-no-files-found: error
           retention-days: 14
