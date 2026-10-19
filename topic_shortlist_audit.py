@@ -55,7 +55,10 @@ def audit_candidate(candidate):
     research = audit.wikipedia_research(topic)
     commons, commons_error = audit.commons_media(topic, limit=10)
     nasa, nasa_error = audit.nasa_media(topic, limit=10)
-    assets = commons + nasa
+    openverse, openverse_error = audit.openverse_media(topic, limit=8)
+    loc, loc_error = audit.loc_media(topic, limit=8)
+    archive, archive_error = audit.internet_archive_media(topic, limit=8)
+    assets = commons + nasa + openverse + loc + archive
     topic_terms = tokens(topic)
     relevant = []
     for asset in assets:
@@ -87,12 +90,16 @@ def audit_candidate(candidate):
         "research": research,
         "media_counts": {"commons_search_results": len(commons),
             "commons_with_licence_metadata": sum(1 for x in commons if x.get("license") and x.get("license_url")),
-            "nasa_search_results": len(nasa), "keyword_matched_leads": len(relevant),
+            "nasa_search_results": len(nasa), "openverse_image_results": len(openverse),
+            "loc_results": len(loc), "internet_archive_results": len(archive), "keyword_matched_leads": len(relevant),
             "automatically_cleared_assets": 0},
-        "errors": {"commons": commons_error, "nasa": nasa_error},
+        "errors": {"commons": commons_error, "nasa": nasa_error, "openverse": openverse_error, "loc": loc_error, "internet_archive": archive_error},
         "assets": assets,
+        "search_links": audit.search_links(topic),
         "limitations": ["Keyword overlap is a weak relevance heuristic, not semantic verification.",
             "Search results are leads, not proof that assets are usable, downloadable or reusable.",
+            "Openverse adds image discovery only; it is not a video source in this pipeline.",
+            "Library of Congress and Internet Archive records may have unclear rights or downloadability; review each item.",
             "Stock-video libraries and playable/downloadable video coverage are not yet audited.",
             "Licence metadata is not legal clearance; every selected asset needs item-level review.",
             "No candidate is automatically approved for scripting or storyboarding."]
@@ -133,12 +140,12 @@ def main():
         "- **No automatic winner is selected.** Scores only prioritise human review.",
         "- All assets remain uncleared. Topic-specific and stock-video coverage and exact rights need human verification.", "",
         "## Comparison", "",
-        "| Review priority | Trend rank | Topic | Score / 100 | Decision | Markets | Research | Commons leads | NASA leads | Keyword-matched leads |",
-        "|---:|---:|---|---:|---|---|---|---:|---:|---:|"]
+        "| Review priority | Trend rank | Topic | Score / 100 | Decision | Markets | Research | Commons | NASA | Openverse | LOC | Internet Archive | Keyword-matched leads |",
+        "|---:|---:|---|---:|---|---|---|---:|---:|---:|---:|---:|---:|"]
     for priority, r in enumerate(results, 1):
         research_status = r.get("research", {}).get("status", "error")
         counts = r.get("media_counts", {})
-        lines.append(f"| {priority} | {r['trend_rank']} | {r['topic'].replace('|', '/')} | {r.get('score_out_of_100', 0)} | {r.get('decision', 'AUDIT_ERROR')} | {', '.join(r.get('markets', []))} | {research_status} | {counts.get('commons_search_results', 0)} | {counts.get('nasa_search_results', 0)} | {counts.get('keyword_matched_leads', 0)} |")
+        lines.append(f"| {priority} | {r['trend_rank']} | {r['topic'].replace('|', '/')} | {r.get('score_out_of_100', 0)} | {r.get('decision', 'AUDIT_ERROR')} | {', '.join(r.get('markets', []))} | {research_status} | {counts.get('commons_search_results', 0)} | {counts.get('nasa_search_results', 0)} | {counts.get('openverse_image_results', 0)} | {counts.get('loc_results', 0)} | {counts.get('internet_archive_results', 0)} | {counts.get('keyword_matched_leads', 0)} |")
     lines += ["", "## Interpretation and next gate", "",
         "A high trend rank does not automatically make a good video. The shortlist compares audience signal with a shallow research check and early media leads; keyword overlap is only a rough relevance hint.",
         "Before story writing, open each candidate's audit.json and media-inventory.csv, inspect the exact source pages, find credible primary sources, verify downloadable/playable footage and free stock coverage, and review item-level licences and third-party rights.",
