@@ -1,0 +1,29 @@
+name: AI battery logic tests
+
+on:
+  push:
+    paths:
+      - "ai_battery.py"
+      - "tests/test_ai_battery.py"
+      - ".github/workflows/ai-battery-tests.yml"
+  pull_request:
+    paths:
+      - "ai_battery.py"
+      - "tests/test_ai_battery.py"
+      - ".github/workflows/ai-battery-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Test battery classification, routing, and persistence
+        run: python -m unittest discover -s tests -p 'test_ai_battery.py' -v
