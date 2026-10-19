@@ -133,3 +133,9 @@ Run `.github/workflows/topic-viability-audit.yml` once with the topic field blan
 - Updated the Gemini request retry policy: HTTP 429 is treated as a quota/cooldown signal and is no longer retried against the same provider. HTTP 503 and timeouts remain eligible for bounded retries. This avoids needlessly repeating requests when a provider explicitly says to slow down.
 - The latest retry-policy edit will trigger the battery CI workflow; its result must be checked before calling this change verified.
 - Next architecture milestone remains a general task-level router that can hand a task to another provider only when its route is confirmed zero-price and usable. The current coordinator still has fixed analysis roles and only one specific synthesis fallback; this is not yet universal dynamic switching. No live AI requests, paid actions, publishing, or account changes were performed for this edit.
+
+## Generic task-level fallback primitive (2026-10-20)
+
+- Added `run_task_with_fallback()` to `ai_battery.py`. It tries handlers in caller-specified order, skips routes that are not verified zero-price when free-only mode is enabled, stops retrying a provider after its handler fails, records a safe failure category, and tries the next eligible provider. It never invents quota percentages or stores raw exception bodies.
+- Added mocked tests for switching from a simulated HTTP 429 to a verified-free backup, and for refusing a route whose free-price status is unknown. No real provider is called by these tests.
+- These are reusable routing primitives; the existing production coordinator has not yet been refactored to use this helper for all task types. Live provider eligibility remains conservative: a configured key or model listing alone does not prove remaining quota or zero cost. Awaiting CI confirmation for this commit before the next integration step.
