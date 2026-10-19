@@ -11,7 +11,6 @@ import re
 import time
 import urllib.parse
 import urllib.request
-import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -19,90 +18,71 @@ SCORECARD = Path("topic-discovery-scorecard.txt")
 OUT = Path("topic-audit")
 MAX_TOPICS = 12
 MAX_RESULTS_PER_TOPIC = 15
-NS = {
-    "atom": "http://www.w3.org/2005/Atom",
-    "yt": "http://www.youtube.com/xml/schemas/2015",
-    "media": "http://search.yahoo.com/mrss/",
-}
-
-def get_text(node, path):
-    found = node.find(path, NS)
-    return (found.text or "").strip() if found is not None else ""
-
 def parse_int(value):
     try:
         return int(value or 0)
     except (ValueError, TypeError):
         return 0
 
-def parse_date(value):
+def parse_views(value):
     if not value:
-        return None
-    try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc)
-    except ValueError:
-        return None
+        return 0
+    match = re.search(r'([0-9,.]+)\\s*([KMB]?)', value.upper())
+    if not match:
+        return 0
+    number = float(match.group(1).replace(',', ''))
+    scale = {'': 1, 'K': 1000, 'M': 1000000, 'B': 1000000000}.get(match.group(2), 1)
+    return int(number * scale)
 
-def topics_from_scorecard():
-    if not SCORECARD.exists():
-        return []
-    topics = []
-    for line in SCORECARD.read_text(encoding="utf-8").splitlines():
-        match = re.match(r"^\s*\d+\.\s*(.*?)\s*\|\s*markets=", line)
-        if match:
-            topic = match.group(1).strip()
-            if topic and topic.casefold() not in {x.casefold() for x in topics}:
-                topics.append(topic)
-        if len(topics) >= MAX_TOPICS:
-            break
-    return topics
+def age_in_days(value):
+    match = re.search(r'(\\d+)\\s*(second|minute|hour|day|week|month|year)', (value or '').casefold())
+    if not match:
+        return None
+    n, unit = int(match.group(1)), match.group(2)
+    factor = {'second': 1/86400, 'minute': 1/1440, 'hour': 1/24, 'day': 1, 'week': 7, 'month': 30, 'year': 365}
+    return max(1/24, n * factor[unit])
+
+def walk_video_renderers(node):
+    if isinstance(node, dict):
+        renderer = node.get('videoRenderer')
+        if isinstance(renderer, dict) and renderer.get('videoId'):
+            yield renderer
+        for value in node.values():
+            yield from walk_video_renderers(value)
+    elif isinstance(node, list):
+        for value in node:
+            yield from walk_video_renderers(value)
 
 def search_topic(topic):
-    url = "https://www.youtube.com/feeds/videos.xml?search_query=" + urllib.parse.quote_plus(topic)
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (compatible; TopicScout/1.0)"})
-    with urllib.request.urlopen(req, timeout=18) as response:
-        root = ET.fromstring(response.read())
-    entries = root.findall("atom:entry", NS)
-    results = []
-    now = datetime.now(timezone.utc)
-    for entry in entries[:MAX_RESULTS_PER_TOPIC]:
-        video_id = get_text(entry, "yt:videoId")
-        title = get_text(entry, "atom:title")
-        published = parse_date(get_text(entry, "atom:published"))
-        link_node = entry.find("atom:link[@rel='alternate']", NS)
-        link = link_node.attrib.get("href", "") if link_node is not None else (
-            "https://www.youtube.com/watch?v=" + video_id if video_id else ""
-        )
-        channel = get_text(entry, "atom:author/atom:name")
-        group = entry.find("media:group", NS)
-        views = likes = 0
-        thumbnail = ""
-        if group is not None:
-            community = group.find("media:community", NS)
-            if community is not None:
-                stats = community.find("media:statistics", NS)
-                stars = community.find("media:starRating", NS)
-                if stats is not None:
-                    views = parse_int(stats.attrib.get("views"))
-                if stars is not None:
-                    likes = parse_int(stars.attrib.get("count"))
-            thumb = group.find("media:thumbnail", NS)
-            if thumb is not None:
-                thumbnail = thumb.attrib.get("url", "")
-        age_hours = max(1.0, (now - published).total_seconds() / 3600) if published else None
-        views_per_day = round(views / max(age_hours / 24, 1 / 24), 2) if views else 0
-        like_rate = round(likes / views, 5) if views else 0
-        # Transparent heuristic: current view total + age-adjusted pace + like rate.
-        # It is not true historical velocity because only one snapshot is available.
-        score = round(math.log10(views + 1) * 10 + math.log10(views_per_day + 1) * 12
-                      + min(10, like_rate * 1000), 2)
-        results.append({
-            "query_topic": topic, "title": title, "video_id": video_id, "url": link,
-            "channel": channel, "published_utc": published.isoformat() if published else "",
-            "views_snapshot": views, "likes_snapshot": likes, "views_per_day_proxy": views_per_day,
-            "like_rate_proxy": like_rate, "breakout_score_proxy": score, "thumbnail_url": thumbnail,
-            "measurement_note": "Single RSS snapshot; views/day is not measured growth velocity."
-        })
+    # The old search feed endpoint returns HTTP 400; use YouTube's public search page.
+    url = 'https://www.youtube.com/results?' + urllib.parse.urlencode({'search_query': topic, 'sp': 'CAISAhAB'})
+    req = urllib.request.Request(url, headers={
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+    })
+    with urllib.request.urlopen(req, timeout=22) as response:
+        page = response.read().decode('utf-8', errors='replace')
+    match = re.search(r'ytInitialData\\s*=\\s*', page)
+    if not match:
+        raise RuntimeError('YouTube search page did not expose ytInitialData')
+    data, _ = json.JSONDecoder().raw_decode(page[match.end():])
+    results, seen = [], set()
+    for renderer in walk_video_renderers(data):
+        video_id = renderer.get('videoId', '')
+        if not video_id or video_id in seen:
+            continue
+        seen.add(video_id)
+        title = ''.join(x.get('text', '') for x in renderer.get('title', {}).get('runs', []))
+        channel = ''.join(x.get('text', '') for x in renderer.get('ownerText', {}).get('runs', []))
+        published = renderer.get('publishedTimeText', {}).get('simpleText', '')
+        view_text = renderer.get('viewCountText', {}).get('simpleText', '') or renderer.get('shortViewCountText', {}).get('simpleText', '')
+        views = parse_views(view_text)
+        age_days = age_in_days(published)
+        views_per_day = round(views / age_days, 2) if views and age_days else 0
+        score = round(math.log10(views + 1) * 10 + math.log10(views_per_day + 1) * 12, 2)
+        results.append({'query_topic': topic, 'title': title, 'video_id': video_id, 'url': 'https://www.youtube.com/watch?v=' + video_id, 'channel': channel, 'published_utc': published, 'views_snapshot': views, 'likes_snapshot': 0, 'views_per_day_proxy': views_per_day, 'like_rate_proxy': 0, 'breakout_score_proxy': score, 'thumbnail_url': '', 'measurement_note': 'Public search-page snapshot; views and age are approximate; not measured growth velocity.'})
+        if len(results) >= MAX_RESULTS_PER_TOPIC:
+            break
     return results
 
 def main():
@@ -121,15 +101,15 @@ def main():
     all_rows.sort(key=lambda x: (x["breakout_score_proxy"], x["views_snapshot"]), reverse=True)
     payload = {
         "status": "results_found" if all_rows else "no_results_or_search_feed_unavailable",
-        "method": "Public YouTube search Atom feed; no API key or paid credits",
+        "method": "Public YouTube search page; no API key or paid credits",
         "topics_checked": topics,
         "video_results_count": len(all_rows),
         "results": all_rows[:100],
         "feed_errors": failures,
         "limitations": [
-            "Search-feed support may change or be blocked.",
+            "YouTube may block automated public-page searches or change its page structure.",
             "Only returned search results are evaluated; this is not an exhaustive YouTube crawl.",
-            "Views and likes are one-time snapshots. Views/day is only a rough age-adjusted proxy, not measured view velocity.",
+            "Displayed view counts and rounded upload ages are one-time snapshots. Views/day is only a rough age-adjusted proxy, not measured view velocity; likes are not reliably exposed.",
             "This is an additional discovery signal, not a claim of guaranteed virality."
         ]
     }
