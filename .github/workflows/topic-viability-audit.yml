@@ -81,3 +81,5 @@ jobs:
             footage-edit-plan.json
           if-no-files-found: error
           retention-days: 14
+
+# Triggered by a workflow-only comment change from the connected GitHub integration; no publishing occurs.
