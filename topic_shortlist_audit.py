@@ -16,7 +16,7 @@ import topic_viability_audit as audit
 
 SCORECARD = Path("topic-discovery-scorecard.txt")
 OUT = Path("topic-audit")
-MAX_CANDIDATES = 3
+MAX_CANDIDATES = 8
 STOPWORDS = {"about", "after", "again", "against", "among", "because", "before", "being",
              "between", "could", "first", "from", "have", "into", "more", "most", "other",
              "over", "same", "some", "than", "that", "their", "there", "these", "they",
@@ -32,14 +32,18 @@ def read_candidates():
         raise RuntimeError("Trend scorecard missing; run free_trend_selector.py first.")
     candidates = []
     for line in SCORECARD.read_text(encoding="utf-8").splitlines():
-        match = re.match(r"^(\d+)\.\s*(.*?)\s*\|\s*markets=([^|]+)\s*\|\s*score=(\d+)", line)
+        match = re.match(r"^(\d+)\.\s*(.*?)\s*\|\s*markets=([^|]+)\s*\|\s*score=(\d+)(.*)$", line)
         if not match:
             continue
-        rank, topic, markets, raw_score = match.groups()
+        rank, topic, markets, raw_score, extra = match.groups()
+        sex_match = re.search(r"\bsex_appeal=([^|]+)", extra)
+        sex_hits = [] if not sex_match or sex_match.group(1).strip().casefold() == "none" else [
+            x.strip() for x in sex_match.group(1).split(",") if x.strip()
+        ]
         if topic and all(c["topic"].casefold() != topic.casefold() for c in candidates):
             candidates.append({"trend_rank": int(rank), "topic": topic,
                                "markets": [m.strip() for m in markets.split(",") if m.strip()],
-                               "trend_raw_score": int(raw_score)})
+                               "trend_raw_score": int(raw_score), "sex_appeal_hits": sex_hits})
         if len(candidates) >= MAX_CANDIDATES:
             break
     if not candidates:
@@ -50,7 +54,32 @@ def slugify(value):
     slug = re.sub(r"[^a-z0-9]+", "-", unicodedata.normalize("NFKD", value.casefold())).strip("-")
     return slug[:70] or "topic"
 
-def audit_candidate(candidate):
+def load_youtube_scores():
+    path = OUT / "youtube-breakout-discovery.json"
+    if not path.exists():
+        return {}, "not_run"
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}, "unreadable"
+    scores = {}
+    for row in payload.get("results", []):
+        key = str(row.get("query_topic", "")).casefold()
+        if not key:
+            continue
+        scores.setdefault(key, []).append(row)
+    best = {key: max(rows, key=lambda x: x.get("breakout_score_proxy", 0))
+            for key, rows in scores.items()}
+    max_score = max((row.get("breakout_score_proxy", 0) for row in best.values()), default=0)
+    normalized = {}
+    for key, row in best.items():
+        raw = float(row.get("breakout_score_proxy", 0) or 0)
+        score = round(min(5, raw / max_score * 5), 2) if max_score > 0 else 0
+        normalized[key] = {"score_0_to_5": score, "best_video": row,
+                           "result_count": len(scores[key])}
+    return normalized, payload.get("status", "unknown")
+
+def audit_candidate(candidate, youtube_scores, youtube_status):
     topic = candidate["topic"]
     research = audit.wikipedia_research(topic)
     commons, commons_error = audit.commons_media(topic, limit=10)
@@ -90,7 +119,11 @@ def audit_candidate(candidate):
     market_count = len(candidate["markets"])
     rank = candidate["trend_rank"]
     trend_score = 5 if market_count >= 4 and rank <= 5 else 4 if market_count >= 3 and rank <= 10 else 3 if market_count >= 2 else 2 if market_count >= 1 else 0
-    weighted = round((trend_score * 25 + research_score * 20 + media_score * 30 + rights_score * 15 + feasibility_score * 10) / 5)
+    sex_hits = candidate.get("sex_appeal_hits", [])
+    sex_appeal_score = min(5, len(sex_hits) * 1.5) if sex_hits else 0
+    video_signal = youtube_scores.get(topic.casefold(), {})
+    youtube_score = float(video_signal.get("score_0_to_5", 0))
+    weighted = round((trend_score * 30 + youtube_score * 25 + media_score * 20 + sex_appeal_score * 15 + research_score * 5 + feasibility_score * 5) / 5)
     decision = "CONDITIONAL_REVIEW" if relevant and research_chars >= 250 else "HOLD_OR_RESELECT"
     reason = ("Research and keyword-matched media leads exist, but relevance, usable video coverage, stock-media supply and item-level rights still require human review."
               if decision == "CONDITIONAL_REVIEW" else
@@ -98,8 +131,12 @@ def audit_candidate(candidate):
     record = {
         **candidate, "audited_at_utc": datetime.now(timezone.utc).isoformat(),
         "decision": decision, "decision_reason": reason, "score_out_of_100": weighted,
-        "score_components_0_to_5": {"audience_signal": trend_score, "research_depth": research_score,
-            "media_inventory": media_score, "rights_readiness": rights_score, "production_feasibility": feasibility_score},
+        "score_components_0_to_5": {"trend_and_cross_market_signal": trend_score,
+            "youtube_video_demand_proxy": youtube_score, "media_inventory": media_score,
+            "sex_appeal": sex_appeal_score, "research_depth": research_score,
+            "production_feasibility": feasibility_score, "rights_readiness_recorded_but_not_rank_weighted": rights_score},
+        "youtube_discovery": {"status": youtube_status, "score_0_to_5": youtube_score,
+            "result_count": video_signal.get("result_count", 0), "best_video": video_signal.get("best_video")},
         "research": research,
         "media_counts": {"commons_search_results": len(commons),
             "commons_with_licence_metadata": sum(1 for x in commons if x.get("license") and x.get("license_url")),
@@ -118,6 +155,8 @@ def audit_candidate(candidate):
             "Library of Congress and Internet Archive records may have unclear rights or downloadability; review each item.",
             "Stock-video libraries and playable/downloadable video coverage are not yet audited.",
             "Licence metadata is not legal clearance; every selected asset needs item-level review.",
+            "YouTube view/like fields may be absent from the public feed; a missing signal is not evidence of no demand.",
+            "Sex-appeal keyword scoring is a rough bonus, not a fixed niche requirement.",
             "No candidate is automatically approved for scripting or storyboarding."]
     }
     folder = OUT / "candidates" / slugify(topic)
@@ -134,11 +173,12 @@ def audit_candidate(candidate):
 
 def main():
     candidates = read_candidates()
+    youtube_scores, youtube_status = load_youtube_scores()
     results = []
     for i, candidate in enumerate(candidates, 1):
         print(f"[{i}/{len(candidates)}] Auditing: {candidate['topic']}", flush=True)
         try:
-            results.append(audit_candidate(candidate))
+            results.append(audit_candidate(candidate, youtube_scores, youtube_status))
         except Exception as exc:
             results.append({**candidate, "decision": "AUDIT_ERROR", "score_out_of_100": 0,
                             "decision_reason": f"{type(exc).__name__}: {exc}",
@@ -153,17 +193,18 @@ def main():
     lines = ["# Trend shortlist: research and free-media viability", "",
         f"- Audited at (UTC): {payload['audited_at_utc']}",
         f"- Candidates audited: {len(results)}",
-        "- **No automatic winner is selected.** Scores only prioritise human review.",
-        "- All assets remain uncleared. Topic-specific and stock-video coverage and exact rights need human verification.", "",
+        "- **No automatic winner is selected.** Scores prioritise review using trend recurrence, a free YouTube video-demand proxy, media supply, and a sex-appeal bonus.",
+        "- Rights readiness is recorded but deliberately does not dominate topic ranking.",
+        "- YouTube public-feed metrics may be missing; treat the signal as a clue, not a measured velocity guarantee.", "",
         "## Comparison", "",
-        "| Review priority | Trend rank | Topic | Score / 100 | Decision | Markets | Research | Commons | NASA | Openverse | LOC | Internet Archive | Keyword-matched leads |",
+        "| Review priority | Trend rank | Topic | Score / 100 | Trend markets | Sex-appeal signals | YouTube proxy | Research | Commons | NASA | Openverse | LOC | Internet Archive | Keyword leads |",
         "|---:|---:|---|---:|---|---|---|---:|---:|---:|---:|---:|---:|"]
     for priority, r in enumerate(results, 1):
         research_status = r.get("research", {}).get("status", "error")
         counts = r.get("media_counts", {})
         lines.append(f"| {priority} | {r['trend_rank']} | {r['topic'].replace('|', '/')} | {r.get('score_out_of_100', 0)} | {r.get('decision', 'AUDIT_ERROR')} | {', '.join(r.get('markets', []))} | {research_status} | {counts.get('commons_search_results', 0)} | {counts.get('nasa_search_results', 0)} | {counts.get('openverse_image_results', 0)} | {counts.get('loc_results', 0)} | {counts.get('internet_archive_results', 0)} | {counts.get('keyword_matched_leads', 0)} |")
     lines += ["", "## Interpretation and next gate", "",
-        "A high trend rank does not automatically make a good video. The shortlist compares audience signal with a shallow research check and early media leads; keyword overlap is only a rough relevance hint. Media scoring now considers distinct source types, and rights readiness stays at zero unless matched leads expose licence metadata.",
+        "The shortlist scores cross-market trend signal (30%), free YouTube video-demand proxy (25%), media inventory (20%), sex appeal (15%), research depth (5%) and production feasibility (5%). Rights readiness is recorded but does not dominate ranking. Keyword overlap is a rough relevance hint; the public-feed score is a snapshot proxy, not measured historical velocity.",
         "Before story writing, open each candidate's audit.json and media-inventory.csv, inspect the exact source pages, find credible primary sources, verify downloadable/playable footage and free stock coverage, and review item-level licences and third-party rights.",
         "If a candidate has weak or irrelevant media, reject it or change the angle. Do not spend AI credits or storyboard from search-result counts alone.", "",
         "## Per-candidate files", ""]
