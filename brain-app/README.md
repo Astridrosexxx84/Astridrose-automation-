@@ -42,10 +42,14 @@ This repository is public. The file-triggered request at `brain-app/relay-reques
 ## Security and next milestone
 GitHub Pages is a static client, so it must never contain provider API keys or a privileged GitHub token. A true direct bridge still requires a trusted write path from the browser and a private way to store/read task content. GitHub Pages cannot safely hold a privileged GitHub token, and this public repository cannot safely store plaintext task packets or full responses. Do not solve the sync gap by committing results or embedding a token in the page. The safe current route is assistant-driven queueing of generic, non-sensitive tasks plus artifact retrieval by the assistant; dashboard task records remain browser-local. A private bridge must first establish a free hosting/authentication design and a privacy boundary before implementation.
 
-## Backend foundation prepared (not yet deployed)
-- Added `brain-app/supabase/migrations/0001_brain_app_core.sql` with tables for projects, tasks, worker runs, and task events, indexes, update timestamps, and row-level security policies scoped to the authenticated owner.
-- This is a migration file only. It has **not** been applied to Supabase, and the static dashboard is **not** connected to it.
-- The Supabase organisation `Astrid` is confirmed on the Free plan and currently has no projects listed. Project creation is paused until the user confirms the intended organisation and the live quote is checked; no paid resources are to be created without explicit approval.
-- Notion now contains a private draft page named “Brain App — System Architecture and Build Plan” documenting the tool roles, privacy boundaries, current verified baseline and build sequence.
+## Supabase backend — free-tier foundation deployed
+- Supabase organisation: `Astrid` (Free plan).
+- Project: `brain-app`, region `ap-southeast-2` (Sydney), project ref `cjqgdqcbtcwsgbbqrqcf`.
+- Live Supabase project quote was **$0/month** at creation. Project status verified as `ACTIVE_HEALTHY`.
+- Applied migration `brain_app_core` from `brain-app/supabase/migrations/0001_brain_app_core.sql`.
+- Verified the four database tables exist: `brain_projects`, `brain_tasks`, `brain_worker_runs`, and `brain_task_events`. Row-level security is enabled on all four tables; the schema contains owner-scoped policies and relevant indexes.
+- The static dashboard is **not yet connected** to this database. No authenticated dashboard sync or trusted server-side AI dispatcher has been implemented yet.
+- Notion contains a private page named “Brain App — System Architecture and Build Plan” documenting the tool roles, privacy boundaries, current verified baseline and build sequence.
 - Target division of responsibility: Brain App coordinates; Supabase stores operational state; Notion stores readable architecture/decisions; GitHub stores source and tests; GitHub Actions is the current transitional relay; Groq/Gemini/OpenRouter are replaceable workers.
-- Next required implementation: create the Supabase project only after the cost/organisation gate, apply the migration, implement a trusted server-side dispatcher, and connect authenticated dashboard reads/writes. Do not put service-role credentials in the browser or public repository.
+- **Hard $0 policy:** use free resources only. Never create, enable, upgrade, or continue any resource that has a nonzero cost or could incur an unapproved charge. If a required capability is paid or the cost cannot be verified as zero, skip it and find a free alternative. Do not ask the user to approve nonzero costs.
+- Next implementation: wire authenticated dashboard reads/writes to Supabase, then implement a trusted dispatcher using only verified $0 infrastructure. Never put service-role credentials in browser code or the public repository.
