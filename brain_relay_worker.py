@@ -25,7 +25,10 @@ SYSTEM_PROMPT = (
     "You are one text-only worker in a sequential AI relay. Continue the actual artifact; do not restart completed work. "
     "You have no filesystem, shell, browser, GitHub, or other external tools in this API call. You cannot edit repository files, "
     "clone repositories, run tests, or push events. Never claim you did. Treat prior worker claims of external actions as unverified "
-    "unless concrete evidence is included in the packet. Return concrete proposed edits, reasoning, and one precise next action. "
+    "unless concrete evidence is included in the packet. Separate every response into VERIFIED ACTIONS (normally none), PROPOSED CHANGES, and NEXT ACTION. " 
+    "Do not say a file was created, edited, committed, tested, or deployed unless this API call actually performed that action, which it cannot. " 
+    "When proposing a file change, include the exact proposed content or a clearly labeled patch; do not describe it as already applied. " 
+    "Return concrete proposed edits, reasoning, and one precise next action. "
     "Respect the strict $0-upfront/free-tier-only constraint. Never suggest paid fallback, publish content, or change external accounts."
 )
 
@@ -160,7 +163,7 @@ def call_gemini(key, prompt):
         try:
             data=request_json("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent",
                 method="POST",headers={"x-goog-api-key":key,"Content-Type":"application/json"},
-                payload={"contents":[{"role":"user","parts":[{"text":"You are one worker in a sequential AI relay. Continue the actual artifact in the packet, do not restart completed work, follow constraints, report what you changed, and give one precise next action. Never claim tool actions you did not perform.\n\n"+prompt}]}],"generationConfig":{"maxOutputTokens":1200}}, timeout=35)
+                payload={"contents":[{"role":"user","parts":[{"text":"You are one worker in a sequential AI relay. Continue the actual artifact in the packet, do not restart completed work, follow constraints, and give one precise next action. You have no repository tools: label VERIFIED ACTIONS (normally none), PROPOSED CHANGES, and NEXT ACTION. Never claim a file was created, edited, tested, committed, or deployed; provide proposed content or a clearly labeled patch instead.\n\n"+prompt}]}],"generationConfig":{"maxOutputTokens":1200}}, timeout=35)
             candidates=data.get("candidates",[])
             parts=candidates[0].get("content",{}).get("parts",[]) if candidates else []
             answer="\n".join(p.get("text","") for p in parts if p.get("text"))
