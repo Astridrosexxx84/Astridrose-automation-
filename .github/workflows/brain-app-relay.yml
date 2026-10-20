@@ -1,0 +1,75 @@
+name: Brain App — One Worker Relay Turn
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "Goal / definition of done (do not include secrets)"
+        required: true
+        type: string
+      provider:
+        description: "One worker for this turn"
+        required: true
+        type: choice
+        options:
+          - openrouter
+          - gemini
+          - groq
+        default: openrouter
+      role:
+        description: "What this worker should do"
+        required: true
+        type: choice
+        options:
+          - create
+          - continue
+          - review
+        default: create
+      prior_packet:
+        description: "Paste the previous worker's packet here to continue the same work"
+        required: false
+        type: string
+      next_worker:
+        description: "Suggested next worker (manual handoff for now)"
+        required: false
+        type: string
+        default: openrouter
+
+permissions:
+  contents: read
+
+jobs:
+  relay-turn:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run exactly one worker turn
+        env:
+          AI_RELAY_TASK: ${{ inputs.task }}
+          AI_RELAY_PROVIDER: ${{ inputs.provider }}
+          AI_RELAY_ROLE: ${{ inputs.role }}
+          AI_RELAY_PRIOR_PACKET: ${{ inputs.prior_packet }}
+          AI_RELAY_NEXT_WORKER: ${{ inputs.next_worker }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          ALLOW_GEMINI_FREE_TIER_CALLS: "true"
+          ALLOW_GROQ_FREE_TIER_CALLS: "true"
+        run: python brain_relay_worker.py
+      - name: Upload portable handoff packet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: brain-app-relay-packet
+          path: |
+            brain-relay-packet.md
+            brain-relay-packet.json
+            brain-relay-status.json
+          if-no-files-found: warn
+          retention-days: 14
