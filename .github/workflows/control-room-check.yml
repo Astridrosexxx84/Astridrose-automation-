@@ -1,0 +1,40 @@
+name: AI Control Room checks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "control-room/**"
+      - ".github/workflows/control-room-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Validate manifest JSON
+        run: python -m json.tool control-room/manifest.webmanifest >/dev/null
+      - name: Check inline JavaScript syntax
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path("control-room/index.html").read_text(encoding="utf-8")
+          scripts = re.findall(r"<script>(.*?)</script>", html, re.S)
+          if len(scripts) != 1:
+              raise SystemExit(f"Expected one inline script, found {len(scripts)}")
+          Path("/tmp/control-room.js").write_text(scripts[0], encoding="utf-8")
+          required = ["prepareTask", "handover", "exportAll", "importFile", "autosaveDraft"]
+          missing = [item for item in required if item not in html]
+          if missing:
+              raise SystemExit("Missing required app features: " + ", ".join(missing))
+          print("HTML feature checks passed.")
+          PY
+          node --check /tmp/control-room.js
+      - name: Check service worker exists
+        run: test -s control-room/sw.js
