@@ -151,7 +151,7 @@ def call_gemini(key, prompt):
         try:
             data=request_json("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent",
                 method="POST",headers={"x-goog-api-key":key,"Content-Type":"application/json"},
-                payload={"contents":[{"role":"user","parts":[{"text":"You are one worker in a sequential AI relay. Continue the actual artifact in the packet, do not restart completed work, follow constraints, report what you changed, and give one precise next action. Never claim tool actions you did not perform.\\n\\n"+prompt}]}],"generationConfig":{"maxOutputTokens":1800}})
+                payload={"contents":[{"role":"user","parts":[{"text":"You are one worker in a sequential AI relay. Continue the actual artifact in the packet, do not restart completed work, follow constraints, report what you changed, and give one precise next action. Never claim tool actions you did not perform.\\n\\n"+prompt}]}],"generationConfig":{"maxOutputTokens":1200}}, timeout=35)
             candidates=data.get("candidates",[])
             parts=candidates[0].get("content",{}).get("parts",[]) if candidates else []
             answer="\\n".join(p.get("text","") for p in parts if p.get("text"))
@@ -161,7 +161,11 @@ def call_gemini(key, prompt):
         except RuntimeError as exc:
             last_error=exc
             # Model availability can vary by key/API tier; try another listed model only.
-            if str(exc).startswith("Provider HTTP 404") or str(exc).startswith("Provider HTTP 400"):
+            if (str(exc).startswith("Provider HTTP 404")
+                    or str(exc).startswith("Provider HTTP 400")
+                    or str(exc).startswith("Provider network/timeout error")
+                    or str(exc).startswith("Provider HTTP 429")
+                    or str(exc).startswith("Provider HTTP 503")):
                 continue
             raise
     raise RuntimeError("All attempted listed Gemini models failed: "+str(last_error or "unknown failure"))
