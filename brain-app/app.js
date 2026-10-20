@@ -42,6 +42,9 @@
   function currentTask() { return state.tasks.find(t => t.id === selectedTaskId && t.projectId === selectedProjectId); }
   function render() {
     if (!state.projects.some(p => p.id === selectedProjectId)) selectedProjectId = state.projects[0]?.id || null;
+    if (!state.tasks.some(t => t.id === selectedTaskId && t.projectId === selectedProjectId)) {
+      selectedTaskId = state.tasks.find(t => t.projectId === selectedProjectId)?.id || null;
+    }
     const allOpen = state.tasks.filter(t => t.status !== "complete");
     $("projectCount").textContent = state.projects.length;
     $("openCount").textContent = allOpen.length;
