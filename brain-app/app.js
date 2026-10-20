@@ -7,7 +7,7 @@
   const statuses = {waiting:"Waiting",working:"Working",handed_off:"Handed off",blocked:"Blocked",complete:"Complete"};
   let state = loadState();
   let selectedProjectId = state.projects[0]?.id || null;
-  let selectedTaskId = null;
+  let selectedTaskId = state.tasks.find(t => t.projectId === selectedProjectId)?.id || null;
   let toastTimer;
   let relayDispatchedAt = null;
 
