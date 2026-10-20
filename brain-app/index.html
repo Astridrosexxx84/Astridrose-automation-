@@ -73,12 +73,12 @@
       <p class="footnote"><a id="relayRunLink" href="https://github.com/Astridrosexxx84/Astridrose-automation-/actions/workflows/brain-app-relay.yml" target="_blank" rel="noopener">Open workflow history ↗</a> · Status metadata only; task prompts and AI responses are not published here.</p>
     </section>
     <details class="panel providers-panel compact-details"><summary>Provider connections</summary>
-      <div class="section-heading"><div><p class="eyebrow">WORKER SWITCHBOARD</p><h2>Provider connections</h2></div><span class="tag">3 workers live-tested</span></div>
-      <p class="muted">The relay now supports an automatic GitHub file-triggered request, and the latest live run confirmed Groq, Gemini, and OpenRouter using a verified zero-price route. This browser dashboard still stores its own projects/tasks locally and does not automatically sync its queue with relay packets.</p>
+      <div class="section-heading"><div><p class="eyebrow">WORKER SWITCHBOARD</p><h2>Provider connections</h2></div><span class="tag">2 of 3 workers confirmed</span></div>
+      <p class="muted">The relay can run from the app through the secure dispatcher. The latest recorded run had mixed results: Groq and Gemini succeeded; OpenRouter returned HTTP 429 (rate limited), so that free route is not currently reliable. This browser dashboard still stores its own projects/tasks locally and does not automatically sync its queue with relay packets.</p>
       <div class="provider-grid">
         <div class="provider"><strong>Gemini</strong><span class="state manual">Live relay call succeeded</span></div>
         <div class="provider"><strong>Groq</strong><span class="state manual">Live relay call succeeded</span></div>
-        <div class="provider"><strong>OpenRouter free models</strong><span class="state unknown">Live relay call succeeded</span></div>
+        <div class="provider"><strong>OpenRouter free models</strong><span class="state unknown">Rate limited · HTTP 429 on latest run</span></div>
         <div class="provider"><strong>ChatGPT</strong><span class="state manual">Manual worker only</span></div>
       </div>
       <p class="footnote">No invented battery percentages. No paid routes without approval. No provider keys in this page.</p>
@@ -101,6 +101,6 @@
   </dialog>
   <div id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js?v=mobile-qol-1"></script>
+  <script src="app.js?v=relay-status-2"></script>
 </body>
 </html>
