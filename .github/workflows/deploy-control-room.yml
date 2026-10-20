@@ -1,4 +1,4 @@
-name: Deploy AI Control Room
+name: Deploy AI Control Room and Brain App
 
 on:
   workflow_dispatch:
@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - "control-room/**"
+      - "brain-app/**"
       - ".github/workflows/deploy-control-room.yml"
 
 permissions:
@@ -27,10 +28,19 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
-      - name: Upload Control Room site
+      - name: Assemble Pages site
+        run: |
+          set -euo pipefail
+          mkdir -p site/brain-app
+          cp -a control-room/. site/
+          cp -a brain-app/. site/brain-app/
+          test -f site/index.html
+          test -f site/brain-app/index.html
+          echo "Pages site contains the control room at / and Brain App at /brain-app/."
+      - name: Upload combined Pages site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: control-room
+          path: site
   deploy:
     environment:
       name: github-pages
