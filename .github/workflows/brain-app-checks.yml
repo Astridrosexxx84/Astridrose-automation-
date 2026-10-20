@@ -1,0 +1,49 @@
+name: Brain App — Fast Checks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "brain-app/**"
+      - ".github/workflows/brain-app-checks.yml"
+  pull_request:
+    paths:
+      - "brain-app/**"
+      - ".github/workflows/brain-app-checks.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Check JavaScript syntax
+        run: node --check brain-app/app.js
+      - name: Check app wiring and database contract
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          app = Path("brain-app/app.js").read_text(encoding="utf-8")
+          html = Path("brain-app/index.html").read_text(encoding="utf-8")
+          schema = Path("brain-app/supabase/migrations/0001_brain_app_core.sql").read_text(encoding="utf-8")
+          html_ids = set(re.findall(r'\bid=["\\']([^"\\']+)["\\']', html))
+          app_ids = set(re.findall(r'\$\(["\\']([^"\\']+)["\\']\)', app))
+          missing = sorted(app_ids - html_ids)
+          if missing:
+              raise SystemExit("App references missing HTML IDs: " + ", ".join(missing))
+          for table in ("brain_projects", "brain_tasks", "brain_worker_runs", "brain_task_events"):
+              if f"public.{table}" not in schema:
+                  raise SystemExit(f"Core table missing from migration: {table}")
+          if "enable row level security" not in schema.lower():
+              raise SystemExit("Core migration does not enable row-level security")
+          for status in ("queued", "running", "review", "blocked", "completed"):
+              if status not in schema:
+                  raise SystemExit(f"Expected task status missing from database schema: {status}")
+          print(f"Smoke checks passed: JavaScript syntax; {len(app_ids)} referenced UI IDs; four core tables; RLS declaration.")
+          PY
