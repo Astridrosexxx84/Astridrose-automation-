@@ -52,12 +52,12 @@
       </form>
     </section>
     <section class="panel providers-panel">
-      <div class="section-heading"><div><p class="eyebrow">WORKER SWITCHBOARD</p><h2>Provider connections</h2></div><span class="tag">Not connected yet</span></div>
-      <p class="muted">The GitHub Actions relay can call configured providers sequentially. This dashboard does not yet launch runs automatically or sync their results; the button above opens the relay workflow. Provider health is only confirmed by a successful live call.</p>
+      <div class="section-heading"><div><p class="eyebrow">WORKER SWITCHBOARD</p><h2>Provider connections</h2></div><span class="tag">2 workers live-tested</span></div>
+      <p class="muted">The relay now supports an automatic GitHub file-triggered request, and a live run confirmed Groq and Gemini. This browser dashboard still stores its own projects/tasks locally and does not automatically sync its queue with relay packets.</p>
       <div class="provider-grid">
-        <div class="provider"><strong>Gemini</strong><span class="state unknown">Not tested by this app</span></div>
-        <div class="provider"><strong>Groq</strong><span class="state unknown">Not tested by this app</span></div>
-        <div class="provider"><strong>OpenRouter free models</strong><span class="state unknown">Not tested by this app</span></div>
+        <div class="provider"><strong>Gemini</strong><span class="state manual">Live relay call succeeded</span></div>
+        <div class="provider"><strong>Groq</strong><span class="state manual">Live relay call succeeded</span></div>
+        <div class="provider"><strong>OpenRouter free models</strong><span class="state unknown">HTTP 429 rate limit</span></div>
         <div class="provider"><strong>ChatGPT</strong><span class="state manual">Manual worker only</span></div>
       </div>
       <p class="footnote">No invented battery percentages. No paid routes without approval. No provider keys in this page.</p>
