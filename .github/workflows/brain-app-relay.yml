@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       task:
-        description: "Goal / definition of done (do not include secrets)"
+        description: "PUBLIC REPO: use non-sensitive task text only; do not include secrets or private data"
         required: true
         type: string
         default: "Build the first working version of the Brain App multi-AI handoff system. Produce a clear first-turn plan and identify the next concrete implementation step."
@@ -28,7 +28,7 @@ on:
           - review
         default: continue
       prior_packet:
-        description: "Paste the previous worker's packet here to continue the same work"
+        description: "PUBLIC REPO: prior packet may be exposed; paste only non-sensitive content"
         required: false
         type: string
         default: ""
