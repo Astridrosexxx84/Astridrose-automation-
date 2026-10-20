@@ -12,7 +12,7 @@ from pathlib import Path
 PACKET_MD = Path("brain-relay-packet.md")
 PACKET_JSON = Path("brain-relay-packet.json")
 STATUS_JSON = Path("brain-relay-status.json")
-PROVIDERS = ("openrouter", "groq", "gemini")
+PROVIDERS = ("groq", "gemini", "openrouter")
 
 
 def read_json(path):
