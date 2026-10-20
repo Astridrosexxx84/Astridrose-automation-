@@ -59,7 +59,7 @@ class RelayChainTests(unittest.TestCase):
         }, clear=False), patch.object(chain.subprocess, "run", side_effect=fake_run):
             chain.main()
 
-        self.assertEqual([x[0] for x in observed], ["openrouter", "groq", "gemini"])
+        self.assertEqual([x[0] for x in observed], ["groq", "gemini", "openrouter"])
         self.assertEqual(observed[0][1], "seed packet")
         self.assertEqual(observed[1][1], "artifact from openrouter")
         self.assertEqual(observed[2][1], "artifact from groq")
@@ -74,7 +74,7 @@ class RelayChainTests(unittest.TestCase):
         def fake_run(command, env, check):
             provider = env["AI_RELAY_PROVIDER"]
             observed.append((provider, env.get("AI_RELAY_PRIOR_PACKET", "")))
-            if provider == "openrouter":
+            if provider == "groq":
                 record = {
                     "provider": provider, "model": "mock", "outcome": "success",
                     "worker_output": "first artifact", "next_action": "next",
@@ -82,7 +82,7 @@ class RelayChainTests(unittest.TestCase):
                 chain.PACKET_JSON.write_text(json.dumps(record), encoding="utf-8")
                 chain.PACKET_MD.write_text("first artifact", encoding="utf-8")
                 return SimpleNamespace(returncode=0)
-            if provider == "groq":
+            if provider == "gemini":
                 # Simulate a worker exiting before it can write its own packet.
                 return SimpleNamespace(returncode=1)
             record = {
