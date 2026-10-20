@@ -7,7 +7,7 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 
-from ai_battery import empty_ledger, record_event, save_ledger, run_task_with_fallback
+from ai_battery import empty_ledger, record_event, save_ledger
 
 GEMINI_MODEL = "gemini-3.8-flash"
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent"
@@ -271,26 +271,35 @@ def main():
     )
     final = None
     synthesis_status = "AI synthesis unavailable; deterministic fallback report generated"
-    try:
-        provider, final = run_task_with_fallback(
-            "final synthesis",
-            ["openrouter"],
-            {
-                "openrouter": lambda: openai_compatible_chat(
-                    "https://openrouter.ai/api/v1/chat/completions",
-                    openrouter_key,
-                    openrouter_model,
-                    synthesis_prompt,
-                    "Astrid Rose AI Team - OpenRouter synthesis",
-                )
-            },
-            battery,
-            free_only=True,
-        )
-        synthesis_status = "OpenRouter verified zero-price route"
-        print(f"Final synthesis complete via {provider} ({openrouter_model}).")
-    except RuntimeError as exc:
-        print("No verified zero-price synthesis route completed; preserving partial work: " + str(exc))
+    # Try every model from the live zero-price catalogue, starting with the model
+    # that already contributed successfully. A quota error on one model must not
+    # prevent a different verified-free model from completing synthesis.
+    synthesis_models = ([openrouter_model] if openrouter_model in openrouter_models else [])
+    synthesis_models.extend(model for model in openrouter_models if model not in synthesis_models)
+    last_synthesis_error = None
+    for model_id in synthesis_models:
+        try:
+            final = openai_compatible_chat(
+                "https://openrouter.ai/api/v1/chat/completions",
+                openrouter_key,
+                model_id,
+                synthesis_prompt,
+                "Astrid Rose AI Team - OpenRouter synthesis",
+            )
+            openrouter_model = model_id
+            record_event(battery, "openrouter", "success", model=model_id, free_route="verified_zero_price", configured=True)
+            synthesis_status = "OpenRouter verified zero-price route"
+            print(f"Final synthesis complete via OpenRouter ({model_id}).")
+            break
+        except RuntimeError as exc:
+            last_synthesis_error = str(exc)
+            record_event(
+                battery, "openrouter", "unknown_error", error=last_synthesis_error,
+                model=model_id, free_route="verified_zero_price", configured=True,
+            )
+            print(f"Synthesis model unavailable; trying the next verified-free model: {model_id} ({last_synthesis_error[:160]})")
+    if final is None and last_synthesis_error:
+        print("No verified zero-price synthesis route completed; preserving partial work: " + last_synthesis_error)
     if final is None:
         final = (
             "No verified zero-price synthesis route completed. This deterministic fallback preserves the "
