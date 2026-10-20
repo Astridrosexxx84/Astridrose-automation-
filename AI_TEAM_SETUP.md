@@ -2,7 +2,7 @@
 
 ## What it does
 
-A manually triggered GitHub Actions job asks whichever configured AI providers are available to contribute. Gemini and Groq can provide independent analysis; OpenRouter can provide independent analysis and final synthesis using a listed zero-price free model. If no eligible synthesis route is available, the coordinator preserves partial work in a deterministic report.
+A GitHub Actions job asks configured AI providers to contribute independently. Gemini and Groq provide analysis when their explicit free-tier opt-in flags are enabled; OpenRouter provides independent analysis and final synthesis using a model whose live catalogue entry has a `:free` ID and zero prompt/completion prices. If one provider fails, the others continue. If no eligible synthesis route is available, the coordinator preserves partial work in a deterministic report.
 
 The report is saved as a downloadable workflow artifact. This is analysis-only: it does not publish posts, comment, schedule content, or change social accounts.
 
@@ -17,7 +17,7 @@ Add provider secrets under Settings → Secrets and variables → Actions only i
 
 ## How to run
 
-After a provider route is configured and safely enabled, open Actions → Astrid Rose — AI team (manual, review-only) → Run workflow, enter a task, and run it manually. Open the completed run and download the astrid-rose-ai-team-report artifact.
+Open Actions → Astrid Rose — AI team (manual, review-only) → Run workflow, enter a task, and run it manually. Open the completed run and download the `astrid-rose-ai-team-report` artifact. A successful multi-provider run was verified on 20 October 2026; it recorded contributions from Gemini, Groq, and OpenRouter and completed synthesis with a runtime-verified zero-price OpenRouter model. The current fallback task is aligned with the existing trend-led video/content pipeline.
 
 ## Free-tier and privacy safeguards
 
@@ -29,4 +29,4 @@ After a provider route is configured and safely enabled, open Actions → Astrid
 
 ## Expected behavior
 
-With at least one enabled route and available free quota, the run creates `ai-team-report.md`. Missing keys skip that provider. If no route is enabled, the run stops. If no free OpenRouter model is available, it does not try a paid model.
+With at least one enabled route and available free quota, the run creates `ai-team-report.md`. Missing keys skip that provider. If no provider route is usable, the coordinator can still write a deterministic report without external AI calls. If no free OpenRouter model is available, it does not try a paid model.
