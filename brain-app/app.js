@@ -9,6 +9,7 @@
   let selectedProjectId = state.projects[0]?.id || null;
   let selectedTaskId = null;
   let toastTimer;
+  let relayDispatchedAt = null;
 
   // Free Supabase backend: browser uses only the public publishable key;
   // row-level security limits database access to the signed-in owner.
@@ -369,15 +370,29 @@
         }
       });
       if (error) throw error;
+      relayDispatchedAt = Date.now();
       t.status = "handed_off";
       t.worker = t.worker || "Brain App relay";
-      t.next = "AI relay dispatched at " + now() + ". Refresh worker status to check completion; then import the relay artifact.";
+      t.next = "Relay dispatch accepted at " + now() + ". Waiting for the workflow result; then import its relay artifact.";
       t.updatedAt = now();
       persist(); render();
-      toast("AI relay started. Check Latest relay run for status.");
-      // Keep the user in Brain App; GitHub workflow links are for diagnostics only.
-      // Poll the published relay status after dispatch instead of opening the manual form.
-      setTimeout(() => { refreshRelayStatus(); }, 8000);
+      toast("Dispatch accepted. Waiting for the AI workers to finish.");
+      // Keep the user in Brain App and make the next state visible immediately.
+      const statusPanel = document.querySelector(".relay-status-panel");
+      if (statusPanel) statusPanel.scrollIntoView({behavior:"smooth",block:"start"});
+      refreshRelayStatus();
+      // The published status file updates only after the workflow finishes. Check
+      // briefly in the background so the user doesn't mistake the previous run
+      // for the result of the request they just sent.
+      let checksRemaining = 18;
+      const poll = async () => {
+        await refreshRelayStatus();
+        checksRemaining -= 1;
+        if (checksRemaining > 0 && relayDispatchedAt && Date.now() - relayDispatchedAt < 180000) {
+          setTimeout(poll, 10000);
+        }
+      };
+      setTimeout(poll, 10000);
     } catch (err) {
       // Supabase FunctionsHttpError often hides the server's useful JSON
       // message in err.context; surface the real blocker instead of a generic toast.
@@ -515,11 +530,18 @@
       const total = Number(data.total_turns || 0);
       const updatedMs = Date.parse(data.updated_at || "");
       const stale = !Number.isFinite(updatedMs) || Date.now() - updatedMs > 24 * 60 * 60 * 1000;
+      const waitingForThisDispatch = !!relayDispatchedAt && (!Number.isFinite(updatedMs) || updatedMs < relayDispatchedAt);
       const partial = successes > 0 && successes < total;
       const outcome = data.outcome === "success" ? "Completed successfully" : partial ? "Partially completed" : "Run did not complete successfully";
       const updated = Number.isFinite(updatedMs) ? new Date(updatedMs).toLocaleString() : "time unavailable";
-      summary.className = "muted " + (stale || (successes === 0 && total > 0) ? "status-blocked" : partial ? "status-working" : "status-complete");
-      summary.textContent = (stale ? "LAST RUN IS STALE (over 24h). " : "") + outcome + " · " + successes + "/" + total + " workers succeeded · Updated " + updated;
+      if (waitingForThisDispatch) {
+        summary.className = "muted status-working";
+        summary.textContent = "Your request was sent to GitHub Actions. Waiting for this run to finish; the result below is from an earlier run (" + updated + ").";
+      } else {
+        summary.className = "muted " + (stale || (successes === 0 && total > 0) ? "status-blocked" : partial ? "status-working" : "status-complete");
+        summary.textContent = (stale ? "LAST RUN IS STALE (over 24h). " : "") + outcome + " · " + successes + "/" + total + " workers succeeded · Updated " + updated;
+        if (relayDispatchedAt && Number.isFinite(updatedMs) && updatedMs >= relayDispatchedAt) relayDispatchedAt = null;
+      }
       const runId = String(data.run_id || "");
       if (/^\d+$/.test(runId)) { link.href = "https://github.com/Astridrosexxx84/Astridrose-automation-/actions/runs/" + encodeURIComponent(runId); link.textContent = "Open this run ↗"; }
       for (const turn of (Array.isArray(data.turns) ? data.turns : [])) {
