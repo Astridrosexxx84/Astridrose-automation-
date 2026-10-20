@@ -136,18 +136,35 @@ def call_gemini(key, prompt):
         name=item.get("name","")
         methods=item.get("supportedGenerationMethods",[])
         if name.startswith("models/") and "generateContent" in methods:
-            models.append(name.removeprefix("models/"))
-    prefs=["gemini-2.5-flash","gemini-2.0-flash"]
-    model=next((x for x in prefs if x in models),next((x for x in models if "flash" in x.lower() and "preview" not in x.lower()),None))
-    if not model: raise RuntimeError("No suitable Gemini generateContent model was listed.")
-    data=request_json("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent",
-        method="POST",headers={"x-goog-api-key":key,"Content-Type":"application/json"},
-        payload={"contents":[{"role":"user","parts":[{"text":"You are one worker in a sequential AI relay. Continue the actual artifact in the packet, do not restart completed work, follow constraints, report what you changed, and give one precise next action. Never claim tool actions you did not perform.\n\n"+prompt}]}],"generationConfig":{"maxOutputTokens":1800}})
-    candidates=data.get("candidates",[])
-    parts=candidates[0].get("content",{}).get("parts",[]) if candidates else []
-    answer="\n".join(p.get("text","") for p in parts if p.get("text"))
-    if not answer.strip(): raise RuntimeError("Gemini returned an empty answer.")
-    return model,answer.strip()
+            model=name.removeprefix("models/")
+            # Prefer stable Flash models; avoid preview/experimental variants.
+            if "preview" not in model.lower() and "experimental" not in model.lower():
+                models.append(model)
+    if not models:
+        raise RuntimeError("No Gemini generateContent model was listed.")
+    prefs=["gemini-2.5-flash","gemini-2.0-flash","gemini-2.5-flash-lite","gemini-2.0-flash-lite"]
+    ordered=[m for m in prefs if m in models] + [m for m in models if m not in prefs and "flash" in m.lower()]
+    if not ordered:
+        ordered=models
+    last_error=None
+    for model in ordered[:4]:
+        try:
+            data=request_json("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent",
+                method="POST",headers={"x-goog-api-key":key,"Content-Type":"application/json"},
+                payload={"contents":[{"role":"user","parts":[{"text":"You are one worker in a sequential AI relay. Continue the actual artifact in the packet, do not restart completed work, follow constraints, report what you changed, and give one precise next action. Never claim tool actions you did not perform.\\n\\n"+prompt}]}],"generationConfig":{"maxOutputTokens":1800}})
+            candidates=data.get("candidates",[])
+            parts=candidates[0].get("content",{}).get("parts",[]) if candidates else []
+            answer="\\n".join(p.get("text","") for p in parts if p.get("text"))
+            if not answer.strip():
+                raise RuntimeError("Gemini returned an empty answer.")
+            return model,answer.strip()
+        except RuntimeError as exc:
+            last_error=exc
+            # Model availability can vary by key/API tier; try another listed model only.
+            if str(exc).startswith("Provider HTTP 404") or str(exc).startswith("Provider HTTP 400"):
+                continue
+            raise
+    raise RuntimeError("All attempted listed Gemini models failed: "+str(last_error or "unknown failure"))
 
 
 def main():
