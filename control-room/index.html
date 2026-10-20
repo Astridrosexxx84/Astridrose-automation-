@@ -8,6 +8,9 @@
 <section class="card"><h2>Team selection</h2><label for="coordinator">Coordinator AI</label><select id="coordinator"><option>OpenRouter (free models)</option><option>Google Gemini (free tier)</option><option>Groq (free tier)</option><option>Choose later</option></select><div class="grid"><div><label for="worker1">Worker 1</label><select id="worker1"><option>Google Gemini (free tier)</option><option>Groq (free tier)</option><option>OpenRouter (free models)</option><option>Deterministic tools (no AI call)</option></select></div><div><label for="worker2">Worker 2</label><select id="worker2"><option>Groq (free tier)</option><option>OpenRouter (free models)</option><option>Google Gemini (free tier)</option><option>Deterministic tools (no AI call)</option></select></div></div><button id="saveTeam">Save team to project</button><p class="notice">Selection is a saved preference, not proof a provider is connected. The backend must verify access before making calls.</p></section>
 <section class="card"><h2>Project memory & handover checkpoint</h2><label for="goal">Project goal / brief</label><textarea id="goal" placeholder="What are we trying to achieve?"></textarea><label for="done">Completed work</label><textarea id="done" placeholder="What is already done?"></textarea><label for="next">Exact next action</label><textarea id="next" placeholder="What should the next AI do first?"></textarea><label for="decisions">Important decisions / constraints</label><textarea id="decisions" placeholder="$0 budget, chosen approach, things not to redo…"></textarea><button id="saveMemory">Save checkpoint</button><button id="export" class="secondary">Export project backup (.json)</button><div id="status" class="status" role="status">Ready. Your browser stores this prototype's project data on this device.</div></section>
 <section class="card"><h2>Provider connection status</h2><div class="status">UI prototype only — no provider API calls have been made.</div><p class="notice">Next engineering step: connect this interface to the existing GitHub Actions coordinator and persist checkpoints as versioned project data. Never enter API keys here; they belong in secure provider/GitHub secret settings.</p><button id="addProvider" class="secondary">＋ Add provider (setup checklist)</button><div id="providerHelp" hidden><p>1. Choose a provider with a genuinely free route.<br>2. Create an API key with billing disabled, if supported.<br>3. Add it only in GitHub repository Settings → Secrets and variables → Actions.<br>4. Enable the provider route and run a test. Never paste keys into this app or commit them.</p></div></section>
+
+<section class="card"><h2>Portable project tools</h2><p class="notice">Move your project memory between devices or AI providers without starting from scratch.</p><button id="handover" class="secondary">Create handover packet</button><button id="exportAll" class="secondary">Export all projects</button><label for="importFile">Restore a project or full backup</label><input id="importFile" type="file" accept="application/json,.json"><button id="deleteProject" class="secondary">Delete current project</button><textarea id="handoverText" placeholder="Your handover packet will appear here. Copy it into another AI when needed." readonly></textarea><button id="copyHandover" class="secondary">Copy handover packet</button></section>
+<section class="card"><h2>What works today</h2><div class="status">Local project memory · team preferences · handover packet · JSON backups</div><p class="notice">This version saves data on this browser/device. AI calls, cross-device sync, secure login, and automatic quota switching are not connected yet. Never put API keys into project notes.</p><button id="installHelp" class="secondary">Install on Android</button><p id="installText" class="notice" hidden>In Chrome, open the browser menu (⋮) and choose “Add to Home screen” or “Install app”, if offered.</p></section>
 </main>
 <script>
 const $=id=>document.getElementById(id);const KEY='ai-control-room-v1';let db;try{db=JSON.parse(localStorage.getItem(KEY)||'{"projects":[],"active":null}')}catch{db={projects:[],active:null}}
@@ -23,4 +26,37 @@ $('saveMemory').onclick=()=>{const p=active();if(!p)return status('Create a proj
 $('export').onclick=()=>{const p=active();if(!p)return status('Create a project first.');const blob=new Blob([JSON.stringify(p,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=p.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-checkpoint.json';a.click();URL.revokeObjectURL(a.href);status('Project backup exported.')};
 $('addProvider').onclick=()=>{$('providerHelp').hidden=!$('providerHelp').hidden};
 renderProjects();if(!db.projects.length){const p=blank('AI Control Room setup');db.projects.push(p);db.active=p.id;persist()}if(!active())db.active=db.projects[0].id;load();
+
+function makeHandover(p){return [
+"AI CONTROL ROOM — PROJECT HANDOVER",
+"Project: "+p.name,
+"Updated: "+p.updated,
+"",
+"GOAL / BRIEF",
+p.memory.goal||"(not set)",
+"",
+"COMPLETED WORK",
+p.memory.done||"(not set)",
+"",
+"DECISIONS AND CONSTRAINTS",
+p.memory.decisions||"(not set)",
+"",
+"NEXT ACTION — START HERE",
+p.memory.next||"(not set)",
+"",
+"TEAM PREFERENCE (not proof of connection)",
+"Coordinator: "+p.team.coordinator,
+"Worker 1: "+p.team.worker1,
+"Worker 2: "+p.team.worker2,
+"",
+"INSTRUCTIONS FOR THE NEXT AI",
+"Continue from this checkpoint. Do not redo completed work. Respect all constraints. First report what you understand, then perform the exact next action. If blocked, record the blocker and update the next action."
+].join("\n")}
+$("handover").onclick=()=>{const p=active();if(!p)return status("Create a project first.");$("handoverText").value=makeHandover(p);status("Handover packet created. Copy it or export a backup.")};
+$("copyHandover").onclick=async()=>{const value=$("handoverText").value;if(!value)return status("Create the handover packet first.");try{await navigator.clipboard.writeText(value);status("Handover packet copied.")}catch{ $("handoverText").focus();$("handoverText").select();status("Clipboard access was blocked. Text selected so you can copy it manually.")}};
+$("exportAll").onclick=()=>{const blob=new Blob([JSON.stringify({format:"ai-control-room-backup",version:1,exported:new Date().toISOString(),projects:db.projects,active:db.active},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="ai-control-room-backup.json";a.click();URL.revokeObjectURL(a.href);status("All projects exported.")};
+$("importFile").onchange=async event=>{const file=event.target.files&&event.target.files[0];if(!file)return;try{const value=JSON.parse(await file.text());let incoming=Array.isArray(value.projects)?value.projects:[value];incoming=incoming.filter(p=>p&&typeof p.name==="string"&&p.memory&&p.team);if(!incoming.length)throw new Error("No valid project found.");for(const p of incoming){if(!p.id)p.id=Date.now().toString(36)+Math.random().toString(36).slice(2,7);p.memory={goal:"",done:"",next:"",decisions:"",...(p.memory||{})};p.team={coordinator:"Choose later",worker1:"Choose later",worker2:"Choose later",...(p.team||{})};if(!db.projects.some(old=>old.id===p.id))db.projects.push(p)}db.active=incoming[0].id;persist();load();status("Backup imported. Check the project list and save a fresh backup.")}catch(err){status("Import failed: "+err.message)}finally{$("importFile").value=""}};
+$("deleteProject").onclick=()=>{const p=active();if(!p)return status("No active project.");if(!confirm("Delete the local project '"+p.name+"'? Export a backup first if you may need it."))return;db.projects=db.projects.filter(x=>x.id!==p.id);if(!db.projects.length){const replacement=blank("New project");db.projects.push(replacement)}db.active=db.projects[0].id;persist();load();$("handoverText").value="";status("Project deleted from this browser.")};
+$("installHelp").onclick=()=>{$("installText").hidden=!$("installText").hidden};
+if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js").catch(()=>{});
 </script></body></html>
