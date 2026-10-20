@@ -1,0 +1,9 @@
+{
+  "name": "AI Control Room",
+  "short_name": "AI Room",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0d1320",
+  "theme_color": "#172033",
+  "description": "Private personal multi-AI project manager"
+}
