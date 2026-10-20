@@ -19,8 +19,10 @@
       <div><h2>The app coordinates. The AIs take turns.</h2><p>Each worker picks up the same saved packet, does one piece of work, and hands it on. Projects stay separate.</p></div>
       <div class="actions"><button class="primary" id="runRelayTopBtn" type="button">Run AI relay</button><button id="newProjectBtn" class="primary">＋ New project</button><button id="exportBtn" class="secondary">Export backup</button><label class="button secondary" for="importFile">Import backup</label><input id="importFile" type="file" accept="application/json" hidden></div>
     </section>
-    <section class="panel" aria-label="Privacy notice"><p class="footnote"><strong>Privacy notice:</strong> this is a public GitHub Pages app and public repository. Browser task data stays in this browser, but any task text sent through the repository-triggered relay is committed to public Git history, and relay artifacts contain task text and AI responses that may be accessible to repository readers. Use only non-sensitive work descriptions; never include passwords, API keys, personal details or confidential material.</p></section>
-    <section class="panel cloud-panel" aria-label="Private cloud sync">
+    <details class="panel compact-details"><summary>Privacy & safety</summary><p class="footnote"><strong>Privacy notice:</strong> this is a public GitHub Pages app and public repository. Browser task data stays in this browser, but any task text sent through the repository-triggered relay is committed to public Git history, and relay artifacts contain task text and AI responses that may be accessible to repository readers. Use only non-sensitive work descriptions; never include passwords, API keys, personal details or confidential material.</p>    </details>
+    <details class="panel cloud-panel compact-details">
+      <summary>Cloud sync <span class="tag">Optional account</span></summary>
+
       <div class="section-heading"><div><p class="eyebrow">PRIVATE WORKSPACE</p><h2>Cloud sync</h2></div><span class="tag">Free backend</span></div>
       <p id="authIdentity" class="muted">Sign in or create a free account</p>
       <form id="authForm" class="actions">
@@ -32,7 +34,7 @@
       </form>
       <p id="cloudStatus" class="muted">Checking cloud sync…</p>
       <p class="footnote">The browser uses a public key protected by database row-level security. Sign in to sync your projects and tasks across devices. Use a unique password; never reuse a sensitive password.</p>
-    </section>
+        </details>
     <section class="stats" aria-label="Workspace summary">
       <div class="stat panel"><span>Projects</span><strong id="projectCount">0</strong></div>
       <div class="stat panel"><span>Open tasks</span><strong id="openCount">0</strong></div>
@@ -71,7 +73,7 @@
       <div id="relayStatusProviders" class="provider-grid"></div>
       <p class="footnote"><a id="relayRunLink" href="https://github.com/Astridrosexxx84/Astridrose-automation-/actions/workflows/brain-app-relay.yml" target="_blank" rel="noopener">Open workflow history ↗</a> · Status metadata only; task prompts and AI responses are not published here.</p>
     </section>
-    <section class="panel providers-panel">
+    <details class="panel providers-panel compact-details"><summary>Provider connections</summary>
       <div class="section-heading"><div><p class="eyebrow">WORKER SWITCHBOARD</p><h2>Provider connections</h2></div><span class="tag">3 workers live-tested</span></div>
       <p class="muted">The relay now supports an automatic GitHub file-triggered request, and the latest live run confirmed Groq, Gemini, and OpenRouter using a verified zero-price route. This browser dashboard still stores its own projects/tasks locally and does not automatically sync its queue with relay packets.</p>
       <div class="provider-grid">
@@ -81,7 +83,7 @@
         <div class="provider"><strong>ChatGPT</strong><span class="state manual">Manual worker only</span></div>
       </div>
       <p class="footnote">No invented battery percentages. No paid routes without approval. No provider keys in this page.</p>
-    </section>
+        </details>
     <footer>Brain App MVP · Your browser is the current storage location. Export backups regularly.</footer>
   </main>
   <dialog id="projectDialog">
@@ -100,6 +102,6 @@
   </dialog>
   <div id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js?v=419c7c0b6a9ff254b95bf06cb11e0d479311a8a5"></script>
+  <script src="app.js?v=mobile-qol-1"></script>
 </body>
 </html>
