@@ -31,33 +31,16 @@ on:
         description: "Paste the previous worker's packet here to continue the same work"
         required: false
         type: string
-        default: |
-          PREVIOUS WORKER PACKET — OpenRouter free model cohere/north-mini-code:free — status success.
-
-          Goal: Build the first working version of the Brain App multi-AI handoff system. Produce a clear first-turn plan and identify the next concrete implementation step.
-
-          First-turn architecture proposed:
-          - Dispatcher receives a request and routes it to a selected AI worker.
-          - Shared AI interface defines process(prompt) -> response.
-          - Registry stores available adapters and provider metadata.
-          - Result merger combines outputs.
-          - Thin CLI/API entrypoint demonstrates handoffs.
-          - Keep components self-contained with Python standard library where practical.
-
-          Suggested implementation phases:
-          A. Core skeleton: ai_interface.py, dispatcher.py, registry.py, merger.py, main.py.
-          B. Mock adapter for safe offline proof-of-concept.
-          C. unittest checks that a registered mock worker returns a response.
-          D. README explaining extension to real adapters.
-
-          Example adapter design: abstract AI class with process(prompt); MockAI returns an echo response. Registry maps names to adapter classes. Dispatcher instantiates a registered adapter and returns its response through a merger.
-
-          Important correction for this project: the actual product goal is a coordinator/control room with separate projects, task queues, checkpoints, portable handoff packets and sequential replaceable AI workers. Do not redesign it as a parallel multi-AI answer aggregator unless needed. Preserve the strict $0-upfront/free-tier-only constraint, avoid metered routes, and do not claim providers are connected until a real call succeeds. The next worker should continue from this packet, review the existing Brain App dashboard and relay runner, and recommend/implement the next concrete integration step rather than merely repeating this plan.
+        default: ""
       next_worker:
         description: "Informational next-worker hint"
         required: false
         type: string
         default: openrouter
+  push:
+    branches: [main]
+    paths:
+      - "brain-app/relay-request.json"
 
 permissions:
   contents: read
@@ -73,13 +56,48 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Prepare relay request
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TASK: ${{ inputs.task }}
+          INPUT_PROVIDER: ${{ inputs.provider }}
+          INPUT_ROLE: ${{ inputs.role }}
+          INPUT_PRIOR_PACKET: ${{ inputs.prior_packet }}
+          INPUT_NEXT_WORKER: ${{ inputs.next_worker }}
+        run: |
+          python - <<'PY'
+          import json, os, uuid
+          from pathlib import Path
+
+          if os.environ["EVENT_NAME"] == "push":
+              request = json.loads(Path("brain-app/relay-request.json").read_text(encoding="utf-8"))
+          else:
+              request = {
+                  "task": os.environ.get("INPUT_TASK", ""),
+                  "provider": os.environ.get("INPUT_PROVIDER", "auto"),
+                  "role": os.environ.get("INPUT_ROLE", "continue"),
+                  "prior_packet": os.environ.get("INPUT_PRIOR_PACKET", ""),
+                  "next_worker": os.environ.get("INPUT_NEXT_WORKER", "openrouter"),
+              }
+          request.setdefault("provider", "auto")
+          request.setdefault("role", "continue")
+          request.setdefault("prior_packet", "")
+          request.setdefault("next_worker", "review the complete relay packet")
+          if not str(request.get("task", "")).strip():
+              raise SystemExit("Relay request must include a non-empty task.")
+          if request["provider"] not in ("auto", "openrouter", "gemini", "groq"):
+              raise SystemExit("Provider must be auto, openrouter, gemini, or groq.")
+          if request["role"] not in ("create", "continue", "review"):
+              raise SystemExit("Role must be create, continue, or review.")
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env:
+              for key in ("task", "provider", "role", "prior_packet", "next_worker"):
+                  value = str(request[key])
+                  delimiter = "BRAINAPP_" + uuid.uuid4().hex
+                  env.write(f"AI_RELAY_{key.upper()}<<{delimiter}\n{value}\n{delimiter}\n")
+          print("Relay request validated; task content is not printed.")
+          PY
       - name: Run sequential provider chain
         env:
-          AI_RELAY_TASK: ${{ inputs.task }}
-          AI_RELAY_PROVIDER: ${{ inputs.provider }}
-          AI_RELAY_ROLE: ${{ inputs.role }}
-          AI_RELAY_PRIOR_PACKET: ${{ inputs.prior_packet }}
-          AI_RELAY_NEXT_WORKER: ${{ inputs.next_worker }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
