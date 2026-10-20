@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 
 from ai_battery import empty_ledger, record_event, save_ledger, run_task_with_fallback
 
-GEMINI_MODEL = "gemini-3.8-flash"
+GEMINI_MODEL = "gemini-2.5-flash"
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent"
 
 
@@ -236,7 +236,7 @@ def main():
                         "https://openrouter.ai/api/v1/chat/completions",
                         openrouter_key,
                         model_id,
-                        "Independently analyze the task. Do not merely agree with other models. Offer another approach, challenge weak assumptions, and identify failure modes. Do not invent current facts or claim web research.\\n\\nTASK:\\n" + task,
+                        "Independently analyze the task. Do not merely agree with other models. Offer another approach, challenge weak assumptions, and identify failure modes. Do not invent current facts or claim web research.\n\\nTASK:\\n" + task,
                         "Astrid Rose AI Team - Independent model",
                     )
                     openrouter_answers.append((model_id, answer))
