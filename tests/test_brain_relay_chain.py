@@ -61,8 +61,8 @@ class RelayChainTests(unittest.TestCase):
 
         self.assertEqual([x[0] for x in observed], ["groq", "gemini", "openrouter"])
         self.assertEqual(observed[0][1], "seed packet")
-        self.assertEqual(observed[1][1], "artifact from openrouter")
-        self.assertEqual(observed[2][1], "artifact from groq")
+        self.assertEqual(observed[1][1], "artifact from groq")
+        self.assertEqual(observed[2][1], "artifact from gemini")
         final = json.loads(self.paths["PACKET_JSON"].read_text(encoding="utf-8"))
         self.assertEqual(final["overall_outcome"], "success")
         self.assertEqual(final["successful_turns"], 3)
