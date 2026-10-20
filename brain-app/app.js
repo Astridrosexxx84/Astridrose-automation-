@@ -171,6 +171,37 @@
     } catch(err) { alert("Import failed: "+err.message); }
     finally { e.target.value=""; }
   });
+  async function refreshRelayStatus() {
+    const summary = $("relayStatusSummary");
+    const list = $("relayStatusProviders");
+    const link = $("relayRunLink");
+    summary.textContent = "Checking the latest relay run…";
+    list.replaceChildren();
+    try {
+      const response = await fetch("./relay-status.json?t=" + Date.now(), {cache:"no-store"});
+      if (!response.ok) throw new Error(response.status === 404 ? "No relay status has been published yet." : "Status unavailable (HTTP " + response.status + ").");
+      const data = await response.json();
+      const outcome = data.outcome === "success" ? "Completed successfully" : data.outcome === "partial_success" ? "Partially completed" : "Run did not complete successfully";
+      const updated = data.updated_at ? new Date(data.updated_at).toLocaleString() : "time unavailable";
+      summary.textContent = outcome + " · " + Number(data.successful_turns || 0) + "/" + Number(data.total_turns || 0) + " workers succeeded · Updated " + updated;
+      const runId = String(data.run_id || "");
+      if (/^\\d+$/.test(runId)) { link.href = "https://github.com/Astridrosexxx84/Astridrose-automation-/actions/runs/" + encodeURIComponent(runId); link.textContent = "Open this run ↗"; }
+      for (const turn of (Array.isArray(data.turns) ? data.turns : [])) {
+        const card = document.createElement("div"); card.className = "provider";
+        const name = document.createElement("strong"); name.textContent = String(turn.provider || "Worker");
+        const state = document.createElement("span"); state.className = "state " + (turn.outcome === "success" ? "manual" : "unknown");
+        state.textContent = turn.outcome === "success" ? "Succeeded" : "Failed" + (turn.error_category ? " · " + turn.error_category : "");
+        card.append(name, state);
+        if (turn.model) { const model = document.createElement("span"); model.className = "footnote"; model.textContent = String(turn.model); card.append(model); }
+        list.append(card);
+      }
+    } catch (error) {
+      summary.textContent = error.message || "Could not load relay status.";
+      link.href = "https://github.com/Astridrosexxx84/Astridrose-automation-/actions/workflows/brain-app-relay.yml"; link.textContent = "Open workflow history ↗";
+    }
+  }
+  $("refreshRelayStatus").addEventListener("click", refreshRelayStatus);
+  refreshRelayStatus();
   if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("./service-worker.js").catch(() => {});
   render();
 })();
