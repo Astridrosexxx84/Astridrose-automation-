@@ -6,6 +6,8 @@ on:
     paths:
       - "brain_relay_worker.py"
       - "brain_relay_chain.py"
+      - "tests/test_brain_relay*.py"
+      - ".github/workflows/brain-app-relay.yml"
       - "brain-app/**"
       - ".github/workflows/brain-app-relay-check.yml"
   workflow_dispatch:
@@ -42,6 +44,7 @@ jobs:
               'provider.upper()',
               '_FREE_TIER_CALLS',
               "No currently listed zero-price OpenRouter model",
+              '"brain-app/relay-request.json"',
           ]
           missing = [item for item in required_worker if item not in worker]
           if missing:
