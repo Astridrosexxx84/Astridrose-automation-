@@ -7,6 +7,7 @@ on:
         description: "Goal / definition of done (do not include secrets)"
         required: true
         type: string
+        default: "Build the first working version of the Brain App multi-AI handoff system. Produce a clear first-turn plan and identify the next concrete implementation step."
       provider:
         description: "One worker for this turn"
         required: true
@@ -33,7 +34,7 @@ on:
         description: "Suggested next worker (manual handoff for now)"
         required: false
         type: string
-        default: openrouter
+        default: gemini
 
 permissions:
   contents: read
