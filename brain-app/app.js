@@ -256,7 +256,7 @@
       summary.className = "muted " + (stale || (successes === 0 && total > 0) ? "status-blocked" : partial ? "status-working" : "status-complete");
       summary.textContent = (stale ? "LAST RUN IS STALE (over 24h). " : "") + outcome + " · " + successes + "/" + total + " workers succeeded · Updated " + updated;
       const runId = String(data.run_id || "");
-      if (/^\\d+$/.test(runId)) { link.href = "https://github.com/Astridrosexxx84/Astridrose-automation-/actions/runs/" + encodeURIComponent(runId); link.textContent = "Open this run ↗"; }
+      if (/^\d+$/.test(runId)) { link.href = "https://github.com/Astridrosexxx84/Astridrose-automation-/actions/runs/" + encodeURIComponent(runId); link.textContent = "Open this run ↗"; }
       for (const turn of (Array.isArray(data.turns) ? data.turns : [])) {
         const card = document.createElement("div"); card.className = "provider";
         const name = document.createElement("strong"); name.textContent = String(turn.provider || "Worker");
