@@ -1,0 +1,9 @@
+{
+  "name": "Brain App — AI Relay Control Room",
+  "short_name": "Brain App",
+  "description": "A project control room for sequential AI workers and persistent task handoffs.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b1020",
+  "theme_color": "#111827"
+}
