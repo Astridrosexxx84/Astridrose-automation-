@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-10-20T10:10:25+00:00",
+  "run_id": "39405951736",
+  "run_url": "https://github.com/Astridrosexxx84/Astridrose-automation-/actions/runs/39405951736",
+  "outcome": "success",
+  "successful_turns": 3,
+  "total_turns": 3,
+  "turns": [
+    {
+      "provider": "groq",
+      "model": "allam-2-7b",
+      "outcome": "success",
+      "error_category": ""
+    },
+    {
+      "provider": "gemini",
+      "model": "gemini-flash-lite-latest",
+      "outcome": "success",
+      "error_category": ""
+    },
+    {
+      "provider": "openrouter",
+      "model": "cohere/north-mini-code:free",
+      "outcome": "success",
+      "error_category": ""
+    }
+  ],
+  "note": "Metadata only. Prompts, task text, model responses and API keys are not published here."
+}
