@@ -122,6 +122,8 @@
   });
   $("projectList").addEventListener("click", e => {
     const btn = e.target.closest("[data-project]"); if (!btn) return;
+    // Save the current editor before changing projects, just as task switching does.
+    savePacket(false);
     selectedProjectId = btn.dataset.project; selectedTaskId = null; render();
   });
   $("taskList").addEventListener("click", e => {
