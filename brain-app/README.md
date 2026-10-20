@@ -41,3 +41,11 @@ This repository is public. The file-triggered request at `brain-app/relay-reques
 
 ## Security and next milestone
 GitHub Pages is a static client, so it must never contain provider API keys or a privileged GitHub token. A true direct bridge still requires a trusted write path from the browser and a private way to store/read task content. GitHub Pages cannot safely hold a privileged GitHub token, and this public repository cannot safely store plaintext task packets or full responses. Do not solve the sync gap by committing results or embedding a token in the page. The safe current route is assistant-driven queueing of generic, non-sensitive tasks plus artifact retrieval by the assistant; dashboard task records remain browser-local. A private bridge must first establish a free hosting/authentication design and a privacy boundary before implementation.
+
+## Backend foundation prepared (not yet deployed)
+- Added `brain-app/supabase/migrations/0001_brain_app_core.sql` with tables for projects, tasks, worker runs, and task events, indexes, update timestamps, and row-level security policies scoped to the authenticated owner.
+- This is a migration file only. It has **not** been applied to Supabase, and the static dashboard is **not** connected to it.
+- The Supabase organisation `Astrid` is confirmed on the Free plan and currently has no projects listed. Project creation is paused until the user confirms the intended organisation and the live quote is checked; no paid resources are to be created without explicit approval.
+- Notion now contains a private draft page named “Brain App — System Architecture and Build Plan” documenting the tool roles, privacy boundaries, current verified baseline and build sequence.
+- Target division of responsibility: Brain App coordinates; Supabase stores operational state; Notion stores readable architecture/decisions; GitHub stores source and tests; GitHub Actions is the current transitional relay; Groq/Gemini/OpenRouter are replaceable workers.
+- Next required implementation: create the Supabase project only after the cost/organisation gate, apply the migration, implement a trusted server-side dispatcher, and connect authenticated dashboard reads/writes. Do not put service-role credentials in the browser or public repository.
