@@ -21,6 +21,15 @@ def now():
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
+SYSTEM_PROMPT = (
+    "You are one text-only worker in a sequential AI relay. Continue the actual artifact; do not restart completed work. "
+    "You have no filesystem, shell, browser, GitHub, or other external tools in this API call. You cannot edit repository files, "
+    "clone repositories, run tests, or push events. Never claim you did. Treat prior worker claims of external actions as unverified "
+    "unless concrete evidence is included in the packet. Return concrete proposed edits, reasoning, and one precise next action. "
+    "Respect the strict $0-upfront/free-tier-only constraint. Never suggest paid fallback, publish content, or change external accounts."
+)
+
+
 def request_json(url, *, method="GET", payload=None, headers=None, timeout=90):
     data = None if payload is None else json.dumps(payload).encode("utf-8")
     req_headers = {"User-Agent": "BrainApp-Relay/0.1"}
@@ -90,7 +99,7 @@ def call_openrouter(key, prompt):
                 method="POST",
                 headers={"Authorization": "Bearer " + key, "Content-Type": "application/json", "X-Title": "Brain App Relay"},
                 payload={"model": model, "messages": [
-                    {"role": "system", "content": "You are one worker in a sequential AI relay. Continue the actual artifact in the packet, do not restart completed work, follow constraints, report what you changed, and give one precise next action. Never claim tool actions you did not perform. Never publish or change external accounts."},
+                    {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": prompt},
                 ], "temperature": 0.3, "max_tokens": 1800},
             )
@@ -121,7 +130,7 @@ def call_groq(key, prompt):
     data = request_json("https://api.groq.com/openai/v1/chat/completions", method="POST",
         headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"},
         payload={"model": model, "messages":[
-            {"role":"system","content":"You are one worker in a sequential AI relay. Continue the actual artifact in the packet, do not restart completed work, follow constraints, report what you changed, and give one precise next action. Never claim tool actions you did not perform."},
+            {"role":"system","content":SYSTEM_PROMPT},
             {"role":"user","content":prompt}], "max_tokens":1800, "temperature":0.3})
     choices=data.get("choices", [])
     answer=choices[0].get("message",{}).get("content","") if choices else ""
