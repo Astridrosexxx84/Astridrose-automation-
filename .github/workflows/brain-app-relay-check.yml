@@ -1,0 +1,51 @@
+name: Brain App relay checks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "brain_relay_worker.py"
+      - "brain_relay_chain.py"
+      - "brain-app/**"
+      - ".github/workflows/brain-app-relay-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile relay Python files
+        run: python -m py_compile brain_relay_worker.py brain_relay_chain.py
+      - name: Validate app manifest
+        run: python -m json.tool brain-app/manifest.webmanifest >/dev/null
+      - name: Check dashboard JavaScript syntax
+        run: node --check brain-app/app.js
+      - name: Check required relay safeguards
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          worker = Path("brain_relay_worker.py").read_text(encoding="utf-8")
+          chain = Path("brain_relay_chain.py").read_text(encoding="utf-8")
+          required_worker = [
+              "No paid fallback",
+              "ALLOW_GEMINI_FREE_TIER_CALLS",
+              "ALLOW_GROQ_FREE_TIER_CALLS",
+              "No currently listed zero-price OpenRouter model",
+          ]
+          missing = [item for item in required_worker if item not in worker]
+          if missing:
+              raise SystemExit("Missing worker safeguards: " + ", ".join(missing))
+          for item in ("successful_turns", "overall_outcome", "Worker exited without producing its own readable packet"):
+              if item not in chain:
+                  raise SystemExit("Missing chain reliability feature: " + item)
+          print("Relay safeguard checks passed.")
+          PY
