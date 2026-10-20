@@ -52,7 +52,7 @@ jobs:
               raise SystemExit("Task packet must have a shared form-to-state sync function.")
           if '$("packetForm").addEventListener("input"' not in app:
               raise SystemExit("Task packet fields must autosave while being edited.")
-          autosave = app.split('$("packetForm").addEventListener("input"', 1)[1].split('$("packetForm").addEventListener("submit"', 1)[0]
+          autosave = app.split('$("packetForm").addEventListener("input"', 1)[1].split('$("newProjectBtn").addEventListener("click"', 1)[0]
           if "persist()" not in autosave or "render()" in autosave:
               raise SystemExit("Autosave must persist edits without re-rendering the form.")
           print("Relay run links, project switching, and task autosave checks passed.")
