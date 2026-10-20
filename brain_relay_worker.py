@@ -151,10 +151,10 @@ def call_gemini(key, prompt):
         try:
             data=request_json("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent",
                 method="POST",headers={"x-goog-api-key":key,"Content-Type":"application/json"},
-                payload={"contents":[{"role":"user","parts":[{"text":"You are one worker in a sequential AI relay. Continue the actual artifact in the packet, do not restart completed work, follow constraints, report what you changed, and give one precise next action. Never claim tool actions you did not perform.\\n\\n"+prompt}]}],"generationConfig":{"maxOutputTokens":1200}}, timeout=35)
+                payload={"contents":[{"role":"user","parts":[{"text":"You are one worker in a sequential AI relay. Continue the actual artifact in the packet, do not restart completed work, follow constraints, report what you changed, and give one precise next action. Never claim tool actions you did not perform.\n\n"+prompt}]}],"generationConfig":{"maxOutputTokens":1200}}, timeout=35)
             candidates=data.get("candidates",[])
             parts=candidates[0].get("content",{}).get("parts",[]) if candidates else []
-            answer="\\n".join(p.get("text","") for p in parts if p.get("text"))
+            answer="\n".join(p.get("text","") for p in parts if p.get("text"))
             if not answer.strip():
                 raise RuntimeError("Gemini returned an empty answer.")
             return model,answer.strip()
