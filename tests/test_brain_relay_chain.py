@@ -24,14 +24,11 @@ class RelayChainTests(unittest.TestCase):
         ]
         for item in self.path_patches:
             item.start()
-        self.cwd_patch = patch("os.getcwd", return_value=str(self.root))
-        self.cwd_patch.start()
         self.old_cwd = os.getcwd()
         os.chdir(self.root)
 
     def tearDown(self):
         os.chdir(self.old_cwd)
-        self.cwd_patch.stop()
         for item in reversed(self.path_patches):
             item.stop()
         self.temp.cleanup()
