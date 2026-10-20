@@ -44,7 +44,6 @@ jobs:
               'provider.upper()',
               '_FREE_TIER_CALLS',
               "No currently listed zero-price OpenRouter model",
-              '"brain-app/relay-request.json"',
           ]
           missing = [item for item in required_worker if item not in worker]
           if missing:
@@ -52,5 +51,8 @@ jobs:
           for item in ("successful_turns", "overall_outcome", "Worker exited without producing its own readable packet"):
               if item not in chain:
                   raise SystemExit("Missing chain reliability feature: " + item)
+          workflow = Path(".github/workflows/brain-app-relay.yml").read_text(encoding="utf-8")
+          if '"brain-app/relay-request.json"' not in workflow:
+              raise SystemExit("Missing file-triggered relay request path.")
           print("Relay safeguard checks passed.")
           PY
