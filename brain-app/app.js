@@ -464,13 +464,15 @@
       const imported = lines.join("\n");
       t.output = [t.output, imported].filter(Boolean).join("\n\n--- Imported relay result ---\n\n");
       t.worker = incoming.turns.slice(0, 10).map(turn => String(turn.provider || "worker")).join(" → ");
-      t.status = incoming.overall_outcome === "error" ? "blocked" : "working";
+      const relayOutcome = String(incoming.overall_outcome || incoming.outcome || "unknown").toLowerCase();
+      // A completed relay is no longer "working": successful/partial results await human review.
+      t.status = relayOutcome === "error" ? "blocked" : "handed_off";
       if (incoming.next_action) t.next = String(incoming.next_action);
       t.context = [t.context, "Relay result imported locally at " + now() + ". API keys and provider credentials are not part of the result packet."].filter(Boolean).join("\n\n");
       t.updatedAt = now();
       persist();
       render();
-      toast("Relay result added to the selected task.");
+      toast(relayOutcome === "success" ? "Relay result imported · ready for your review." : relayOutcome === "partial" ? "Partial relay result imported · review worker errors." : "Relay result imported · check the blocker.");
     } catch (error) {
       alert("Import failed: " + (error.message || "Invalid relay result."));
     } finally {
