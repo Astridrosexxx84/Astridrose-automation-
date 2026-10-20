@@ -191,7 +191,7 @@ def main():
     if gemini_key and allow_gemini:
         try:
             first = gemini(
-                "Analyze this $0-upfront creator automation task. Give the objective, assumptions, three options, best first experiment, risks, and measurable success criteria. Label facts needing current research. Do not publish anything.\n\nTASK:\n" + task,
+                "Analyze the whole creator-content pipeline. Identify what is working, what remains disconnected, the three highest-value implementation milestones, risks, and measurable early audience goals. Stay focused on trend-led video production and audience growth; do not recommend unrelated businesses. Do not claim current research or publish anything.\n\nTASK:\n" + task,
                 gemini_key,
             )
             record_event(battery, "gemini", "success", model=GEMINI_MODEL, free_route="unknown", configured=True)
@@ -213,7 +213,7 @@ def main():
                 "https://api.groq.com/openai/v1/chat/completions",
                 groq_key,
                 groq_model,
-                "Independently analyze the task. Challenge assumptions, find failure modes, and suggest a different high-value $0 experiment. Do not invent current facts or claim web research.\n\nTASK:\n" + task,
+                "Independently challenge the proposed creator-content pipeline. Find the biggest practical blockers, dependencies, mobile workflow risks, and ways to simplify the next implementation milestone. Stay focused on our existing project and $0 constraint. Do not invent current facts or claim web research.\n\nTASK:\n" + task,
                 "Astrid Rose AI Team - Groq",
             )
             record_event(battery, "groq", "success", model=groq_model, free_route="unknown", configured=True)
@@ -238,7 +238,7 @@ def main():
                         "https://openrouter.ai/api/v1/chat/completions",
                         openrouter_key,
                         model_id,
-                        "Independently analyze the task. Do not merely agree with other models. Offer another approach, challenge weak assumptions, and identify failure modes. Do not invent current facts or claim web research.\n\\nTASK:\\n" + task,
+                        "Independently analyze the creator-content pipeline. Do not merely agree with other models. Challenge weak assumptions, identify missing integrations, and recommend a simpler practical next step. Stay focused on trend-led videos and audience growth under a $0 budget. Do not invent current facts or claim web research.\n\\nTASK:\\n" + task,
                         "Astrid Rose AI Team - Independent model",
                     )
                     openrouter_answers.append((model_id, answer))
@@ -248,7 +248,7 @@ def main():
                     print(f"OpenRouter model unavailable; trying another verified free model: {model_id} ({str(exc)[:160]})")
             if openrouter_answers:
                 openrouter_model = openrouter_answers[0][0]
-                openrouter_answer = "\\n\\n".join(f"### {model_id}\\n{answer}" for model_id, answer in openrouter_answers)
+                openrouter_answer = "\n\n".join(f"### {model_id}\n{answer}" for model_id, answer in openrouter_answers)
             else:
                 raise RuntimeError("All listed zero-price OpenRouter models failed to respond.")
         except RuntimeError as exc:
