@@ -1,33 +1,27 @@
 # Brain App — MVP
 
-The Brain App is the coordinator. AI providers are replaceable workers that take turns using a shared handoff packet.
+The Brain App is intended to be the coordinator/control room. AI providers are replaceable workers that take turns using a shared handoff packet.
 
-## What exists
+## Current capabilities
 - Mobile-friendly project dashboard with separate projects and task queues.
 - Browser-local storage and JSON backup/import.
-- Work packets containing goal, context, current output and next action.
-- GitHub Actions workflow that runs one AI worker per turn and saves a packet artifact.
+- Portable work packets containing goal, context, current output and next action.
+- GitHub Actions relay that attempts configured providers in sequence and records the combined result.
 
 ## Open the dashboard
 https://astridrosexxx84.github.io/Astridrose-automation-/brain-app/
 
-## Run one AI worker turn
-1. Open the repository's Actions tab.
-2. Choose **Brain App — One Worker Relay Turn**, then **Run workflow**.
-3. Enter the task, choose a provider, and select create, continue or review.
-4. Download the `brain-app-relay-packet` artifact after the run.
-5. For the next turn, run the workflow again and paste the previous packet into `prior_packet`.
+## Run the sequential relay
+Open the [Brain App relay workflow](https://github.com/Astridrosexxx84/Astridrose-automation-/actions/workflows/brain-app-relay.yml), choose **Run workflow**, leave provider set to **auto**, and enter the goal. The chain attempts OpenRouter, Groq, and Gemini in sequence, passing the last successful packet forward and recording failures without treating them as successful work.
 
-This first relay uses manual handoff between runs. Automatic chaining and shared cloud storage are future milestones.
+The relay creates a downloadable `brain-app-relay-packet` artifact. The dashboard is **not yet directly connected** to this workflow: project/task data currently lives in the browser, and the user must launch the workflow and retrieve its artifact separately. Do not claim that the dashboard automatically dispatches jobs or syncs packets.
 
-## Free-first and security rules
-- OpenRouter is only attempted when its live catalogue lists a model ending in `:free` with zero prompt and completion prices.
-- Gemini and Groq require explicit free-tier opt-in; their free quotas are limited and remaining quota is not guessed.
-- No paid fallback, account rotation, public posting or external account changes.
+## Provider and quota rules
+- OpenRouter is attempted only when its live model catalogue lists a model ending in `:free` with zero prompt and completion prices.
+- Gemini and Groq require explicit free-tier opt-in. Their remaining quotas are not exposed by this app and must not be guessed.
+- No paid fallback, account rotation, public posting, or external account changes.
 - API keys stay in GitHub Actions secrets, never browser files or handoff packets.
-- ChatGPT consumer sessions are not automatically connected as API workers. For now, copy the packet into ChatGPT manually, have it continue the artifact, and paste its output into the next worker turn.
+- A configured key is not proof that a provider is healthy; only a successful live call counts as verified.
 
-## Next
-1. Run and verify one worker turn with a configured provider.
-2. Improve durable packet storage and automate safe handoffs.
-3. Connect the dashboard to a secure backend without exposing secrets in browser code.
+## Security and next milestone
+GitHub Pages is a static client, so it must never contain provider API keys or a privileged GitHub token. The next architectural milestone is a secure, free-first bridge between task records and the Actions relay, with explicit permissions, durable packet storage, and honest run status. Until that exists, use the dashboard for planning and portable packets, and GitHub Actions for the provider relay.
