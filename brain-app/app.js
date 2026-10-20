@@ -327,10 +327,30 @@
   $("runRelayBtn").addEventListener("click", async () => {
     const t = currentTask();
     if (!t) { toast("Select a task first."); return; }
-    if (!cloudClient || !cloudUser) {
-      toast("Sign in to the Brain App first. The secure relay dispatcher requires an account.");
-      $("authEmail")?.focus();
+    if (!cloudClient) {
+      toast("Cloud relay is unavailable because the secure connection did not load.");
       return;
+    }
+    if (!cloudUser) {
+      // Try a free anonymous Supabase session so a first-time user can run the
+      // relay without creating an email/password account. The server still
+      // verifies the resulting Supabase JWT before dispatching GitHub Actions.
+      try {
+        const { data, error } = await cloudClient.auth.signInAnonymously();
+        if (error) throw error;
+        cloudUser = data.user || data.session?.user || null;
+        if (!cloudUser) throw new Error("No anonymous session was returned.");
+        setAuthUI();
+        await mergeCloudWorkspace();
+      } catch (err) {
+        const detail = String(err?.message || "");
+        if (/anonymous|disabled|not enabled|signups not allowed/i.test(detail)) {
+          toast("No account needed, but anonymous sign-in must be enabled once in Supabase Auth settings. I’m keeping the relay protected.");
+        } else {
+          toast("Could not start a temporary free session: " + (detail || "please retry."));
+        }
+        return;
+      }
     }
     if (!confirm("Run the AI worker chain for this task? The repository is public, so do not send private or sensitive task content. This sends the task packet to GitHub Actions and the configured free AI providers.")) return;
     const button = $("runRelayBtn");
