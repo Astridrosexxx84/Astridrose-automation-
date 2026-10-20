@@ -44,7 +44,7 @@ jobs:
               version = 0
           if version < 3:
               raise SystemExit("Service worker cache must be bumped so installed phones receive current app code.")
-          if '"./app.js"' not in worker or '"./index.html"' not in worker:
+          if not any(item in worker for item in ('"./app.js"', '"./app.js?v=')) or '"./index.html"' not in worker:
               raise SystemExit("Service worker must cache the app shell.")
           print("Service worker cache version and app shell checks passed.")
           PY
