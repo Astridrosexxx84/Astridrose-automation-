@@ -10,6 +10,7 @@ The Brain App is the coordinator/control room. AI providers are replaceable work
 - GitHub Actions relay that attempts configured providers in sequence and records the combined result.
 - A file-triggered relay request: updating `brain-app/relay-request.json` on `main` automatically starts the relay. ChatGPT can queue work by committing this request file through the connected GitHub integration, without a user click.
 - A live dashboard status panel reads a metadata-only status file updated by the relay workflow. It shows each provider result and links to the run, without publishing prompts, task content, model responses or API keys.
+- Relay workers are text-only API calls with no repository tools. Their outputs are proposals, not applied changes; any claim that a file was created, edited, tested or deployed must be independently verified by the coordinator before it is treated as fact.
 - Latest live relay reviewed: Groq and Gemini succeeded; OpenRouter returned HTTP 429 (2/3). The chain now labels this `partial` rather than `success`; the dashboard also presents partial completion separately. Earlier 3/3 runs are historical, not proof that every current run succeeds.
 
 ## Open the dashboard
