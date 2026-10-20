@@ -16,7 +16,7 @@ on:
           - openrouter
           - gemini
           - groq
-        default: openrouter
+        default: gemini
       role:
         description: "What this worker should do"
         required: true
@@ -25,16 +25,38 @@ on:
           - create
           - continue
           - review
-        default: create
+        default: continue
       prior_packet:
         description: "Paste the previous worker's packet here to continue the same work"
         required: false
         type: string
+        default: |
+          PREVIOUS WORKER PACKET — OpenRouter free model cohere/north-mini-code:free — status success.
+
+          Goal: Build the first working version of the Brain App multi-AI handoff system. Produce a clear first-turn plan and identify the next concrete implementation step.
+
+          First-turn architecture proposed:
+          - Dispatcher receives a request and routes it to a selected AI worker.
+          - Shared AI interface defines process(prompt) -> response.
+          - Registry stores available adapters and provider metadata.
+          - Result merger combines outputs.
+          - Thin CLI/API entrypoint demonstrates handoffs.
+          - Keep components self-contained with Python standard library where practical.
+
+          Suggested implementation phases:
+          A. Core skeleton: ai_interface.py, dispatcher.py, registry.py, merger.py, main.py.
+          B. Mock adapter for safe offline proof-of-concept.
+          C. unittest checks that a registered mock worker returns a response.
+          D. README explaining extension to real adapters.
+
+          Example adapter design: abstract AI class with process(prompt); MockAI returns an echo response. Registry maps names to adapter classes. Dispatcher instantiates a registered adapter and returns its response through a merger.
+
+          Important correction for this project: the actual product goal is a coordinator/control room with separate projects, task queues, checkpoints, portable handoff packets and sequential replaceable AI workers. Do not redesign it as a parallel multi-AI answer aggregator unless needed. Preserve the strict $0-upfront/free-tier-only constraint, avoid metered routes, and do not claim providers are connected until a real call succeeds. The next worker should continue from this packet, review the existing Brain App dashboard and relay runner, and recommend/implement the next concrete integration step rather than merely repeating this plan.
       next_worker:
         description: "Suggested next worker (manual handoff for now)"
         required: false
         type: string
-        default: gemini
+        default: openrouter
 
 permissions:
   contents: read
