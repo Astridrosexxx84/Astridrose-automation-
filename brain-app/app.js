@@ -355,6 +355,7 @@
       t.updatedAt = now();
       persist(); render();
       toast("AI relay started. Check Latest relay run for status.");
+      if (data?.workflow_url) window.open(data.workflow_url, "_blank", "noopener");
       if (data?.run_url) window.open(data.run_url, "_blank", "noopener");
     } catch (err) {
       // Supabase FunctionsHttpError often hides the server's useful JSON
