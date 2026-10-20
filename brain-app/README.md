@@ -6,6 +6,7 @@ The Brain App is the coordinator/control room. AI providers are replaceable work
 - Mobile-friendly project dashboard with separate projects and task queues.
 - Browser-local storage and JSON backup/import.
 - Portable work packets containing goal, context, current output and next action.
+- Import relay result: load `brain-relay-packet.json` from a downloaded relay artifact to append provider outputs and the next action to the selected local task.
 - GitHub Actions relay that attempts configured providers in sequence and records the combined result.
 - A file-triggered relay request: updating `brain-app/relay-request.json` on `main` automatically starts the relay. ChatGPT can queue work by committing this request file through the connected GitHub integration, without a user click.
 - A live dashboard status panel reads a metadata-only status file updated by the relay workflow. It shows each provider result and links to the run, without publishing prompts, task content, model responses or API keys.
