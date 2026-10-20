@@ -37,6 +37,16 @@ on:
         required: false
         type: string
         default: openrouter
+      task_id:
+        description: "Brain App task ID used to match the result to its task"
+        required: false
+        type: string
+        default: ""
+      project_id:
+        description: "Brain App project ID used to match the result to its project"
+        required: false
+        type: string
+        default: ""
   push:
     branches: [main]
     paths:
@@ -68,6 +78,8 @@ jobs:
           INPUT_ROLE: ${{ inputs.role }}
           INPUT_PRIOR_PACKET: ${{ inputs.prior_packet }}
           INPUT_NEXT_WORKER: ${{ inputs.next_worker }}
+          INPUT_TASK_ID: ${{ inputs.task_id }}
+          INPUT_PROJECT_ID: ${{ inputs.project_id }}
         run: |
           python - <<'PY'
           import json, os, uuid
@@ -82,8 +94,8 @@ jobs:
                   "role": os.environ.get("INPUT_ROLE", "continue"),
                   "prior_packet": os.environ.get("INPUT_PRIOR_PACKET", ""),
                   "next_worker": os.environ.get("INPUT_NEXT_WORKER", "openrouter"),
-                  "task_id": "",
-                  "project_id": "",
+                  "task_id": os.environ.get("INPUT_TASK_ID", ""),
+                  "project_id": os.environ.get("INPUT_PROJECT_ID", ""),
               }
           request.setdefault("provider", "auto")
           request.setdefault("role", "continue")
