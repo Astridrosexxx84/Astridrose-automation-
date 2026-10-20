@@ -199,12 +199,16 @@ def main():
         "- Rights readiness is recorded but deliberately does not dominate topic ranking.",
         "- YouTube public-feed metrics may be missing; treat the signal as a clue, not a measured velocity guarantee.", "",
         "## Comparison", "",
-        "| Review priority | Trend rank | Topic | Score / 100 | Trend markets | Sex-appeal signals | YouTube proxy | Research | Commons | NASA | Openverse | LOC | Internet Archive | Keyword leads |",
-        "|---:|---:|---|---:|---|---|---|---:|---:|---:|---:|---:|---:|"]
+        "| Review priority | Trend rank | Topic | Score / 100 | Decision | Trend markets | Sex-appeal signals | YouTube proxy | Research | Commons | NASA | Openverse | LOC | Internet Archive | Keyword leads |",
+        "|---:|---:|---|---:|---|---|---|---:|---|---:|---:|---:|---:|---:|---:|"]
     for priority, r in enumerate(results, 1):
         research_status = r.get("research", {}).get("status", "error")
         counts = r.get("media_counts", {})
-        lines.append(f"| {priority} | {r['trend_rank']} | {r['topic'].replace('|', '/')} | {r.get('score_out_of_100', 0)} | {r.get('decision', 'AUDIT_ERROR')} | {', '.join(r.get('markets', []))} | {research_status} | {counts.get('commons_search_results', 0)} | {counts.get('nasa_search_results', 0)} | {counts.get('openverse_image_results', 0)} | {counts.get('loc_results', 0)} | {counts.get('internet_archive_results', 0)} | {counts.get('keyword_matched_leads', 0)} |")
+        sex_hits = ", ".join(r.get("sex_appeal_hits", [])) or "—"
+        youtube = r.get("youtube_discovery", {})
+        youtube_proxy = youtube.get("score_0_to_5", 0)
+        youtube_label = f"{youtube_proxy}/5 ({youtube.get('result_count', 0)} samples)" if youtube.get("result_count", 0) else f"{youtube_proxy}/5 (no sample)"
+        lines.append(f"| {priority} | {r['trend_rank']} | {r['topic'].replace('|', '/')} | {r.get('score_out_of_100', 0)} | {r.get('decision', 'AUDIT_ERROR')} | {', '.join(r.get('markets', []))} | {sex_hits} | {youtube_label} | {research_status} | {counts.get('commons_search_results', 0)} | {counts.get('nasa_search_results', 0)} | {counts.get('openverse_image_results', 0)} | {counts.get('loc_results', 0)} | {counts.get('internet_archive_results', 0)} | {counts.get('keyword_matched_leads', 0)} |")
     lines += ["", "## Interpretation and next gate", "",
         "The shortlist scores cross-market trend signal (30%), free YouTube video-demand proxy (25%), media inventory (20%), sex appeal (15%), research depth (5%) and production feasibility (5%). Rights readiness is recorded but does not dominate ranking. Keyword overlap is a rough relevance hint; the public-feed score is a snapshot proxy, not measured historical velocity.",
         "Before story writing, open each candidate's audit.json and media-inventory.csv, inspect the exact source pages, find credible primary sources, verify downloadable/playable footage and free stock coverage, and review item-level licences and third-party rights.",
