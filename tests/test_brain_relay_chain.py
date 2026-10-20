@@ -104,6 +104,8 @@ class RelayChainTests(unittest.TestCase):
         self.assertEqual(observed[2][1], "first artifact")
         final = json.loads(self.paths["PACKET_JSON"].read_text(encoding="utf-8"))
         self.assertEqual(final["successful_turns"], 2)
+        self.assertEqual(final["total_turns"], 3)
+        self.assertEqual(final["overall_outcome"], "partial")
         self.assertEqual(final["turns"][1]["outcome"], "error")
         self.assertIn("without producing its own readable packet", final["turns"][1]["error_category"])
 
