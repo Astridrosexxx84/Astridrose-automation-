@@ -74,11 +74,11 @@
     </section>
     <details class="panel providers-panel compact-details"><summary>Provider connections</summary>
       <div class="section-heading"><div><p class="eyebrow">WORKER SWITCHBOARD</p><h2>Provider connections</h2></div><span class="tag">2 of 3 workers confirmed</span></div>
-      <p class="muted">The relay can run from the app through the secure dispatcher. The latest recorded run had mixed results: Groq and Gemini succeeded; OpenRouter returned HTTP 429 (rate limited), so that free route is not currently reliable. This browser dashboard still stores its own projects/tasks locally and does not automatically sync its queue with relay packets.</p>
+      <p class="muted">The relay can run from the app through the secure dispatcher. Provider availability changes from run to run; use Live Worker Status above for the latest recorded outcome. The free-provider chain continues when a worker fails. Your task queue and the returned relay packet are still separate, so import the result after a run to attach the workers’ output to the selected task.</p>
       <div class="provider-grid">
-        <div class="provider"><strong>Gemini</strong><span class="state manual">Live relay call succeeded</span></div>
-        <div class="provider"><strong>Groq</strong><span class="state manual">Live relay call succeeded</span></div>
-        <div class="provider"><strong>OpenRouter free models</strong><span class="state unknown">Rate limited · HTTP 429 on latest run</span></div>
+        <div class="provider"><strong>Gemini</strong><span class="state manual">Free relay worker · see latest status above</span></div>
+        <div class="provider"><strong>Groq</strong><span class="state manual">Free relay worker · see latest status above</span></div>
+        <div class="provider"><strong>OpenRouter free models</strong><span class="state unknown">Free route · availability varies by run</span></div>
         <div class="provider"><strong>ChatGPT</strong><span class="state manual">Manual worker only</span></div>
       </div>
       <p class="footnote">No invented battery percentages. No paid routes without approval. No provider keys in this page.</p>
@@ -101,6 +101,6 @@
   </dialog>
   <div id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js?v=relay-status-3"></script>
+  <script src="app.js?v=relay-status-4"></script>
 </body>
 </html>
