@@ -17,7 +17,7 @@
   <main>
     <section class="intro panel">
       <div><h2>The app coordinates. The AIs take turns.</h2><p>Each worker picks up the same saved packet, does one piece of work, and hands it on. Projects stay separate.</p></div>
-      <div class="actions"><button id="newProjectBtn" class="primary">＋ New project</button><button id="exportBtn" class="secondary">Export backup</button><label class="button secondary" for="importFile">Import backup</label><input id="importFile" type="file" accept="application/json" hidden></div>
+      <div class="actions"><a class="button primary" href="https://github.com/Astridrosexxx84/Astridrose-automation-/actions/workflows/brain-app-relay.yml" target="_blank" rel="noopener">Run AI relay ↗</a><button id="newProjectBtn" class="primary">＋ New project</button><button id="exportBtn" class="secondary">Export backup</button><label class="button secondary" for="importFile">Import backup</label><input id="importFile" type="file" accept="application/json" hidden></div>
     </section>
     <section class="stats" aria-label="Workspace summary">
       <div class="stat panel"><span>Projects</span><strong id="projectCount">0</strong></div>
@@ -53,7 +53,7 @@
     </section>
     <section class="panel providers-panel">
       <div class="section-heading"><div><p class="eyebrow">WORKER SWITCHBOARD</p><h2>Provider connections</h2></div><span class="tag">Not connected yet</span></div>
-      <p class="muted">This screen records the intended routes without pretending they are live. API calls and real quota/error observations are the next engineering layer.</p>
+      <p class="muted">The GitHub Actions relay can call configured providers sequentially. This dashboard does not yet launch runs automatically or sync their results; the button above opens the relay workflow. Provider health is only confirmed by a successful live call.</p>
       <div class="provider-grid">
         <div class="provider"><strong>Gemini</strong><span class="state unknown">Not tested by this app</span></div>
         <div class="provider"><strong>Groq</strong><span class="state unknown">Not tested by this app</span></div>
