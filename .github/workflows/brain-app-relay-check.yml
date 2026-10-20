@@ -78,6 +78,16 @@ jobs:
               raise SystemExit("Autosave must persist edits without re-rendering the form.")
           if "setInterval(() =>" not in app or "if (!document.hidden) refreshRelayStatus();" not in app or "}, 60000);" not in app:
               raise SystemExit("Relay status must refresh automatically while the dashboard is visible.")
+          if "task_id: t.id" not in app or "project_id: t.projectId" not in app:
+              raise SystemExit("Generated relay requests must include their originating task and project IDs.")
+          if "if (incoming.task_id)" not in app or "task ID that is not in this browser workspace" not in app:
+              raise SystemExit("Relay import must match the originating task and refuse unknown IDs.")
+          chain = Path("brain_relay_chain.py").read_text(encoding="utf-8")
+          if '"task_id": task_id' not in chain or '"project_id": project_id' not in chain:
+              raise SystemExit("Relay result packets must preserve task and project IDs.")
+          relay_workflow = Path(".github/workflows/brain-app-relay.yml").read_text(encoding="utf-8")
+          if '"task_id", "project_id"' not in relay_workflow:
+              raise SystemExit("Workflow must pass task identity into the relay runner.")
           print("Relay run links, project switching, autosave, and status-refresh checks passed.")
           PY
       - name: Validate public relay status privacy schema
