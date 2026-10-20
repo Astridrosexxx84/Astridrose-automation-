@@ -150,6 +150,41 @@
     try { document.execCommand("copy"); toast("Packet copied."); } catch(e) { toast("Copy unavailable. Export a JSON backup instead."); }
     area.remove();
   }
+  $("relayResultFile").addEventListener("change", async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      if (file.size > 5 * 1024 * 1024) throw new Error("Relay result file is larger than 5 MB.");
+      const incoming = JSON.parse(await file.text());
+      if (!incoming || !Array.isArray(incoming.turns)) throw new Error("Choose brain-relay-packet.json from the relay artifact.");
+      const t = currentTask();
+      if (!t) throw new Error("Select a task before importing a relay result.");
+      const lines = [
+        "Relay outcome: " + String(incoming.overall_outcome || incoming.outcome || "unknown"),
+        "Successful workers: " + Number(incoming.successful_turns || 0) + "/" + Number(incoming.total_turns || incoming.turns.length || 0)
+      ];
+      for (const turn of incoming.turns.slice(0, 10)) {
+        lines.push("");
+        lines.push("## " + String(turn.provider || "worker") + " / " + String(turn.model || "unknown") + " — " + String(turn.outcome || "unknown"));
+        if (turn.error_category) lines.push("Blocker: " + String(turn.error_category));
+        if (turn.worker_output) lines.push(String(turn.worker_output));
+      }
+      const imported = lines.join("\n");
+      t.output = [t.output, imported].filter(Boolean).join("\n\n--- Imported relay result ---\n\n");
+      t.worker = incoming.turns.slice(0, 10).map(turn => String(turn.provider || "worker")).join(" → ");
+      t.status = incoming.overall_outcome === "error" ? "blocked" : "working";
+      if (incoming.next_action) t.next = String(incoming.next_action);
+      t.context = [t.context, "Relay result imported locally at " + now() + ". API keys and provider credentials are not part of the result packet."].filter(Boolean).join("\n\n");
+      t.updatedAt = now();
+      persist();
+      render();
+      toast("Relay result added to the selected task.");
+    } catch (error) {
+      alert("Import failed: " + (error.message || "Invalid relay result."));
+    } finally {
+      e.target.value = "";
+    }
+  });
   $("deleteTaskBtn").addEventListener("click", () => {
     const t = currentTask(); if (!t) return;
     if (!confirm(`Delete task "${t.name}"? This cannot be undone unless you have a backup.`)) return;
