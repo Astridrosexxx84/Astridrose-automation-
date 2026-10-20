@@ -25,6 +25,8 @@ jobs:
           python-version: "3.12"
       - name: Compile relay Python files
         run: python -m py_compile brain_relay_worker.py brain_relay_chain.py
+      - name: Run offline relay handoff tests
+        run: python -m unittest discover -s tests -p 'test_brain_relay*.py' -v
       - name: Validate app manifest
         run: python -m json.tool brain-app/manifest.webmanifest >/dev/null
       - name: Check dashboard JavaScript syntax
