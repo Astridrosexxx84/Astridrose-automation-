@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-20T10:57:00+00:00",
-  "run_id": "39411354474",
-  "run_url": "https://github.com/Astridrosexxx84/Astridrose-automation-/actions/runs/39411354474",
-  "outcome": "success",
-  "successful_turns": 3,
+  "updated_at": "2026-10-20T22:00:16+00:00",
+  "run_id": "39504688307",
+  "run_url": "https://github.com/Astridrosexxx84/Astridrose-automation-/actions/runs/39504688307",
+  "outcome": "partial",
+  "successful_turns": 2,
   "total_turns": 3,
   "turns": [
     {
@@ -15,15 +15,15 @@
     },
     {
       "provider": "gemini",
-      "model": "gemini-flash-lite-latest",
+      "model": "gemini-flash-latest",
       "outcome": "success",
       "error_category": ""
     },
     {
       "provider": "openrouter",
-      "model": "cohere/north-mini-code:free",
-      "outcome": "success",
-      "error_category": ""
+      "model": "unavailable",
+      "outcome": "error",
+      "error_category": "All attempted zero-price OpenRouter routes failed: Provider HTTP 429"
     }
   ],
   "note": "Metadata only. Prompts, task text, model responses and API keys are not published here."
