@@ -285,6 +285,10 @@
   }
   $("refreshRelayStatus").addEventListener("click", refreshRelayStatus);
   refreshRelayStatus();
+  // Keep the visible dashboard current without requiring repeated manual refresh taps.
+  setInterval(() => {
+    if (!document.hidden) refreshRelayStatus();
+  }, 60000);
   if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("./service-worker.js").catch(() => {});
   render();
 })();
