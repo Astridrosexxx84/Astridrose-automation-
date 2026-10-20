@@ -23,7 +23,7 @@ def topics_from_scorecard():
         return []
     topics = []
     for line in SCORECARD.read_text(encoding='utf-8').splitlines():
-        match = re.match(r'^\\s*\\d+\\.\\s*(.*?)\\s*\\|\\s*markets=', line)
+        match = re.match(r'^\s*\d+\.\s*(.*?)\s*\|\s*markets=', line)
         if match:
             topic = match.group(1).strip()
             if topic and topic.casefold() not in {x.casefold() for x in topics}:
