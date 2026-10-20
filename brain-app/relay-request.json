@@ -1,7 +1,7 @@
 {
-  "task": "Design the next implementation milestone for the Brain App: a genuinely usable, free-only path that lets ChatGPT queue non-sensitive tasks, run multiple AI workers sequentially, retrieve results, and continue work with minimal user clicks. Constraints: repository is public, GitHub Pages is static, no paid services or credit-card trials, do not expose secrets, do not put privileged tokens in browser code, do not claim browser-local tasks sync automatically, and do not use fake/simulated AI output. Compare realistic options, choose the smallest safe architecture we can implement now, identify any unavoidable user setup/consent, and give a concrete ordered implementation plan. Keep broad-strokes and preserve current working workflows.",
+  "task": "Brain App only: inspect the current repository architecture and propose the smallest safe, free-only implementation that makes the Brain App genuinely usable end-to-end. Focus exclusively on the Brain App itself, not the social media business or content pipeline. The app must let its coordinator queue a task, send it to multiple AI workers sequentially, retrieve their actual outputs, persist project/task state, resume work, and minimize phone clicks. Repository is public and GitHub Pages is static; do not expose secrets or private task content, embed privileged tokens in browser code, use paid services/trials, or claim untested features work. Inspect existing files and workflows rather than inventing an architecture. Return concrete implementation steps, risks, and the first code change to make.",
   "provider": "auto",
   "role": "create",
   "prior_packet": "",
-  "next_worker": "Review the architecture against the actual repository constraints and choose the safest implementable next step"
+  "next_worker": "Independently review the first worker's plan against actual repo constraints; reject unsafe or imaginary capabilities and pick the most practical next step"
 }
