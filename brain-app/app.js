@@ -167,6 +167,8 @@
     if (!confirm("This relay request includes the selected task packet. Your repository is PUBLIC, so its task, context and current output will be committed to public Git history and may be visible to others. Continue only if all included content is safe to publish.")) return null;
     return JSON.stringify({
       task: "Brain App task: " + (t.name || "Untitled task") + "\n\nGoal: " + (t.goal || "(not set)"),
+      task_id: t.id,
+      project_id: t.projectId,
       provider: "auto",
       role: t.output ? "continue" : "create",
       prior_packet: packetText(t),
@@ -200,8 +202,16 @@
       if (file.size > 5 * 1024 * 1024) throw new Error("Relay result file is larger than 5 MB.");
       const incoming = JSON.parse(await file.text());
       if (!incoming || !Array.isArray(incoming.turns)) throw new Error("Choose brain-relay-packet.json from the relay artifact.");
-      const t = currentTask();
-      if (!t) throw new Error("Select a task before importing a relay result.");
+      let t;
+      if (incoming.task_id) {
+        t = state.tasks.find(task => task.id === incoming.task_id);
+        if (!t) throw new Error("This relay result belongs to a task ID that is not in this browser workspace. Import the matching Brain App backup first; no task was changed.");
+        selectedProjectId = t.projectId;
+        selectedTaskId = t.id;
+      } else {
+        t = currentTask();
+        if (!t) throw new Error("This older relay result has no task ID. Select the intended task before importing it.");
+      }
       const lines = [
         "Relay outcome: " + String(incoming.overall_outcome || incoming.outcome || "unknown"),
         "Successful workers: " + Number(incoming.successful_turns || 0) + "/" + Number(incoming.total_turns || incoming.turns.length || 0)
