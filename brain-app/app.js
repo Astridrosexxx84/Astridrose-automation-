@@ -355,8 +355,9 @@
       t.updatedAt = now();
       persist(); render();
       toast("AI relay started. Check Latest relay run for status.");
-      if (data?.workflow_url) window.open(data.workflow_url, "_blank", "noopener");
-      if (data?.run_url) window.open(data.run_url, "_blank", "noopener");
+      // Keep the user in Brain App; GitHub workflow links are for diagnostics only.
+      // Poll the published relay status after dispatch instead of opening the manual form.
+      setTimeout(() => { refreshRelayStatus(); }, 8000);
     } catch (err) {
       // Supabase FunctionsHttpError often hides the server's useful JSON
       // message in err.context; surface the real blocker instead of a generic toast.
