@@ -48,8 +48,12 @@ jobs:
               raise SystemExit("Switching projects must save the current task editor first.")
           if handler.index("savePacket(false)") > handler.index("selectedProjectId ="):
               raise SystemExit("Project switch must save edits before changing the selected project.")
-          if "function syncPacketFromForm()" not in app:
+          if "function syncPacketFromForm(trimValues=false)" not in app:
               raise SystemExit("Task packet must have a shared form-to-state sync function.")
+          if 'const read = id => trimValues ? $(id).value.trim() : $(id).value;' not in app:
+              raise SystemExit("Autosave must preserve trailing spaces while the user is typing.")
+          if "if (!syncPacketFromForm(true)) return false;" not in app:
+              raise SystemExit("Explicit save must normalize task fields after editing.")
           if '$("packetForm").addEventListener("input"' not in app:
               raise SystemExit("Task packet fields must autosave while being edited.")
           autosave = app.split('$("packetForm").addEventListener("input"', 1)[1].split('$("newProjectBtn").addEventListener("click"', 1)[0]
