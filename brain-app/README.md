@@ -5,6 +5,8 @@ The Brain App is the coordinator/control room. AI providers are replaceable work
 ## Current capabilities
 - Mobile-friendly project dashboard with separate projects and task queues; the first task in the selected project opens automatically so the work packet is visible immediately.
 - Browser-local storage and JSON backup/import.
+- First Supabase sign-in and cloud-sync code is present, but end-to-end browser sync remains unverified; do not rely on it as the only copy of important work yet.
+- A free GitHub Actions smoke-check workflow now runs JavaScript syntax checks and verifies that the app's referenced UI IDs and core database contract are present.
 - Task packet fields autosave as you type without re-rendering the editor; switching projects also saves the current packet first.
 - Live relay status refreshes automatically every 60 seconds while the dashboard is visible.
 - Portable work packets containing goal, context, current output and next action.
@@ -46,11 +48,11 @@ GitHub Pages is a static client, so it must never contain provider API keys or a
 - Supabase organisation: `Astrid` (Free plan).
 - Project: `brain-app`, region `ap-southeast-2` (Sydney), project ref `cjqgdqcbtcwsgbbqrqcf`.
 - Live Supabase project quote was **$0/month** at creation. Project status verified as `ACTIVE_HEALTHY`.
-- Applied migration `brain_app_core` from `brain-app/supabase/migrations/0001_brain_app_core.sql`.
-- Verified the four database tables exist: `brain_projects`, `brain_tasks`, `brain_worker_runs`, and `brain_task_events`. Row-level security is enabled on all four tables; the schema contains owner-scoped policies and relevant indexes.
+- Applied migration `brain_app_core` from `brain-app/supabase/migrations/0001_brain_app_core.sql` and `brain_app_owner_fk_indexes` from `brain-app/supabase/migrations/0002_brain_app_owner_fk_indexes.sql`.
+- Verified the four database tables exist: `brain_projects`, `brain_tasks`, `brain_worker_runs`, and `brain_task_events`. Row-level security is enabled on all four tables; the schema contains owner-scoped policies and relevant indexes. A follow-up migration adds indexes on the owner foreign keys for worker runs and task events.
 - Added a first browser-side Supabase integration in `brain-app/app.js` and sign-in/sign-up controls in `brain-app/index.html` (commit `fca0646` / `257cd0a`). It uses only the public publishable key and authenticated client queries under RLS. **This code has not yet been browser-tested end-to-end**: account creation/sign-in, email-confirmation redirect settings, first sync, multi-device conflict handling and deletion propagation still need validation before calling cloud sync usable. Do not assume it is production-ready.
 - No trusted server-side AI dispatcher has been deployed yet; the existing GitHub Actions relay remains a separate, transitional mechanism.
 - Notion contains a private page named “Brain App — System Architecture and Build Plan” documenting the tool roles, privacy boundaries, current verified baseline and build sequence.
 - Target division of responsibility: Brain App coordinates; Supabase stores operational state; Notion stores readable architecture/decisions; GitHub stores source and tests; GitHub Actions is the current transitional relay; Groq/Gemini/OpenRouter are replaceable workers.
 - **Hard $0 policy:** use free resources only. Never create, enable, upgrade, or continue any resource that has a nonzero cost or could incur an unapproved charge. If a required capability is paid or the cost cannot be verified as zero, skip it and find a free alternative. Do not ask the user to approve nonzero costs.
-- Next implementation: wire authenticated dashboard reads/writes to Supabase, then implement a trusted dispatcher using only verified $0 infrastructure. Never put service-role credentials in browser code or the public repository.
+- Next implementation: verify the cloud sync path in a real browser session, fix merge/deletion edge cases, and make the task queue's worker execution/result return path dependable. Then implement a trusted dispatcher using only verified $0 infrastructure. Never put service-role credentials in browser code or the public repository.
