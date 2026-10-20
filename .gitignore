@@ -1,0 +1,22 @@
+# Local environment and credentials — never commit secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+client_secret*.json
+credentials.json
+token.json
+oauth-token.json
+oauth_credentials.json
+
+# Python and local development
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local exports and downloaded relay results
+*.backup.json
+brain-relay-packet.json
+brain-relay-packet.md
