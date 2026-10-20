@@ -170,10 +170,10 @@ def main():
     if groq_key and not allow_groq:
         print("Groq key detected but calls are disabled until free-tier-only access is confirmed.")
     if not task:
-        task = "Design one practical $0-upfront experiment for the Astrid Rose creator business. Focus on a repeatable workflow, measurable demand, and free tools. Do not create or publish actual content."
+        task = """Coordinate the whole $0-upfront creator-content pipeline, not a separate business idea. Current goal: use trends to choose relevant topics, research them, find usable free/licensed images and video, add free stock media and AI-generated assets only where useful, build a coherent storyline and storyboard, assemble short videos using phone-friendly free tools, publish with human review, measure audience response, and improve iteratively. We have an Android phone, GitHub Actions, Gemini, Groq, OpenRouter free models, CapCut, Canva, Metricool, and YouTube/Instagram accounts with publishing tested. Some connections and automation remain unfinished. Prioritise broad pipeline architecture and the next three practical implementation milestones over deep dives. Monetisation comes later: first make a few good videos and attract initial viewers/subscribers. Use only genuinely free routes before revenue; never silently fall back to paid services. Have each configured AI provider contribute independently where practical, preserve partial results on failures, and use only runtime-verified zero-price OpenRouter models for synthesis. Do not publish content, change accounts, invent completed work, or assume a large audience. Return a concise actionable plan, what is already working vs not connected, and the next implementation step."""
     task = task[:4000]
 
-    print("AI team starting: Gemini analysis, Groq challenge, OpenRouter challenge, Gemini synthesis.")
+    print("AI team starting: Gemini analysis, Groq challenge, OpenRouter challenge, OpenRouter free-model synthesis.")
     battery = empty_ledger()
     for provider, key in (("gemini", gemini_key), ("groq", groq_key), ("openrouter", openrouter_key)):
         if not key:
