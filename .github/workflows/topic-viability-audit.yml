@@ -10,6 +10,7 @@ on:
       - "topic_shortlist_audit.py"
       - "free_trend_selector.py"
       - "build_storyboard.py"
+      - "assess_production_viability.py"
       - "build_rights_review_queue.py"
       - "build_footage_review_queue.py"
       - "build_footage_edit_plan.py"
@@ -39,7 +40,7 @@ jobs:
           python-version: "3.12"
 
       - name: Validate Python syntax
-        run: python -m py_compile topic_viability_audit.py topic_shortlist_audit.py free_trend_selector.py build_storyboard.py build_rights_review_queue.py build_footage_review_queue.py build_footage_edit_plan.py youtube_breakout_discovery.py
+        run: python -m py_compile topic_viability_audit.py topic_shortlist_audit.py free_trend_selector.py build_storyboard.py assess_production_viability.py build_rights_review_queue.py build_footage_review_queue.py build_footage_edit_plan.py youtube_breakout_discovery.py
 
       - name: Detect candidates from free Google Trends RSS when no topic was entered
         if: ${{ inputs.topic == '' }}
@@ -62,6 +63,10 @@ jobs:
       - name: Build preliminary storyboard drafts from audit evidence
         run: python build_storyboard.py
 
+      - name: Assess evidence and competitive viability after storyboard drafts
+        if: ${{ inputs.topic == '' }}
+        run: python assess_production_viability.py
+
       - name: Build item-level rights review queue
         run: python build_rights_review_queue.py
 
@@ -82,6 +87,5 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-# Triggered by a workflow-only comment change from the connected GitHub integration; no publishing occurs.
-# Refresh run requested 2026-10-20: compare current free-trend shortlist and media leads.
-# Pipeline integration smoke run requested 2026-10-20: exercise trend -> research/media audit -> storyboard -> review queues.
+# Trend discovery -> research/media audit -> evidence-informed storyboard -> conservative viability gate -> human review queues.
+# This workflow never publishes content and never automatically clears asset rights.
