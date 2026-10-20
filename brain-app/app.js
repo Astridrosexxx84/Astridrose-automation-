@@ -78,24 +78,26 @@
     $("taskOutput").value = t.output || "";
     $("taskNext").value = t.next || "";
   }
-  function syncPacketFromForm() {
+  function syncPacketFromForm(trimValues=false) {
     const t = currentTask();
     if (!t) return false;
-    t.name = $("taskName").value.trim();
+    // Keep raw text while typing so trailing spaces can be entered normally.
+    const read = id => trimValues ? $(id).value.trim() : $(id).value;
+    t.name = read("taskName");
     t.status = $("taskStatus").value;
-    t.worker = $("taskWorker").value.trim();
-    t.nextWorker = $("nextWorker").value.trim();
-    t.goal = $("taskGoal").value.trim();
-    t.context = $("taskContext").value.trim();
-    t.output = $("taskOutput").value.trim();
-    t.next = $("taskNext").value.trim();
+    t.worker = read("taskWorker");
+    t.nextWorker = read("nextWorker");
+    t.goal = read("taskGoal");
+    t.context = read("taskContext");
+    t.output = read("taskOutput");
+    t.next = read("taskNext");
     t.updatedAt = now();
     const p = state.projects.find(p => p.id === selectedProjectId);
     if (p) p.updatedAt = t.updatedAt;
     return true;
   }
   function savePacket(showMessage=true) {
-    if (!syncPacketFromForm()) return false;
+    if (!syncPacketFromForm(true)) return false;
     persist(); render();
     if (showMessage) toast("Work packet saved.");
     return true;
