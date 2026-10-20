@@ -156,13 +156,13 @@ jobs:
               "turns": turns,
               "note": "Metadata only. Prompts, task text, model responses and API keys are not published here."
           }
-          path = Path(".github/brain-relay-status.json")
+          path = Path("brain-app/relay-status.json")
           path.parent.mkdir(parents=True, exist_ok=True)
           path.write_text(json.dumps(status, indent=2) + "\n", encoding="utf-8")
           print("Publishing relay status metadata only; no task or response content.")
           PY
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .github/brain-relay-status.json
+          git add brain-app/relay-status.json
           git commit -m "Update Brain App relay status metadata [skip ci]"
           git push
