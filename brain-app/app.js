@@ -10,6 +10,154 @@
   let selectedTaskId = null;
   let toastTimer;
 
+  // Free Supabase backend: browser uses only the public publishable key;
+  // row-level security limits database access to the signed-in owner.
+  const SUPABASE_URL = "https://cjqgdqcbtcwsgbbqrqcf.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable__pFBwxTsfTJwEDIGVjhppQ_qKomVqf-";
+  const cloudClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  let cloudUser = null;
+  let cloudReady = false;
+  let syncingCloud = false;
+  let cloudSyncTimer = null;
+
+  function setCloudStatus(message, bad=false) {
+    const el = $("cloudStatus");
+    if (!el) return;
+    el.textContent = message;
+    el.className = bad ? "muted status-blocked" : "muted";
+  }
+  function scheduleCloudSync() {
+    if (!cloudUser || !cloudReady || syncingCloud || !cloudClient) return;
+    clearTimeout(cloudSyncTimer);
+    cloudSyncTimer = setTimeout(() => syncLocalToCloud().catch(e => setCloudStatus("Cloud sync paused: " + (e.message || "network error"), true)), 900);
+  }
+  function toRemoteProject(p) {
+    return {id:p.id, owner_id:cloudUser.id, name:p.name || "Untitled project", description:p.description || "", status:"active", created_at:p.createdAt || now(), updated_at:p.updatedAt || now()};
+  }
+  function toRemoteTask(t) {
+    return {id:t.id, owner_id:cloudUser.id, project_id:t.projectId || null, title:t.name || "Untitled task", goal:t.goal || "", context:t.context || "", status:({waiting:"queued",working:"running",handed_off:"review",blocked:"blocked",complete:"completed"})[t.status] || "queued", priority:3, assigned_worker:t.worker || null, current_worker:t.worker || "", next_worker:t.nextWorker || "", result_summary:t.output || "", current_output:t.output || "", next_action:t.next || "", created_at:t.createdAt || now(), updated_at:t.updatedAt || now()};
+  }
+  function fromRemoteProject(p) {
+    return {id:p.id,name:p.name,description:p.description || "",createdAt:p.created_at || now(),updatedAt:p.updated_at || now()};
+  }
+  function fromRemoteTask(t) {
+    const status = ({queued:"waiting",running:"working",review:"handed_off",blocked:"blocked",completed:"complete",failed:"blocked",cancelled:"blocked"})[t.status] || "waiting";
+    return {id:t.id,projectId:t.project_id,name:t.title,goal:t.goal || "",context:t.context || "",status,worker:t.current_worker || t.assigned_worker || "",nextWorker:t.next_worker || "",output:t.current_output || t.result_summary || "",next:t.next_action || "",createdAt:t.created_at || now(),updatedAt:t.updated_at || now()};
+  }
+  function mergeByFreshness(localItems, remoteItems) {
+    const byId = new Map();
+    for (const item of [...remoteItems, ...localItems]) {
+      const prior = byId.get(item.id);
+      if (!prior || Date.parse(item.updatedAt || 0) >= Date.parse(prior.updatedAt || 0)) byId.set(item.id, item);
+    }
+    return [...byId.values()];
+  }
+  async function syncLocalToCloud() {
+    if (!cloudClient || !cloudUser || syncingCloud) return;
+    syncingCloud = true;
+    try {
+      // Upsert parents first, then tasks so project references are valid.
+      if (state.projects.length) {
+        const {error} = await cloudClient.from("brain_projects").upsert(state.projects.map(toRemoteProject), {onConflict:"id"});
+        if (error) throw error;
+      }
+      if (state.tasks.length) {
+        const {error} = await cloudClient.from("brain_tasks").upsert(state.tasks.map(toRemoteTask), {onConflict:"id"});
+        if (error) throw error;
+      }
+      setCloudStatus("Cloud sync connected · saved to this device and Supabase");
+    } finally { syncingCloud = false; }
+  }
+  async function mergeCloudWorkspace() {
+    if (!cloudClient || !cloudUser) return;
+    syncingCloud = true;
+    cloudReady = false;
+    setCloudStatus("Signing in · merging this device with your private cloud workspace…");
+    try {
+      const [pr, tr] = await Promise.all([
+        cloudClient.from("brain_projects").select("*").order("updated_at",{ascending:false}),
+        cloudClient.from("brain_tasks").select("*").order("updated_at",{ascending:false})
+      ]);
+      if (pr.error) throw pr.error;
+      if (tr.error) throw tr.error;
+      const remoteProjects = (pr.data || []).map(fromRemoteProject);
+      const remoteTasks = (tr.data || []).map(fromRemoteTask);
+      state.projects = mergeByFreshness(state.projects, remoteProjects);
+      state.tasks = mergeByFreshness(state.tasks, remoteTasks);
+      const validProjects = new Set(state.projects.map(p=>p.id));
+      state.tasks = state.tasks.filter(t=>validProjects.has(t.projectId));
+      // Persist the merged view locally before uploading any locally-only records.
+      try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (_) {}
+      syncingCloud = false;
+      await syncLocalToCloud();
+      syncingCloud = true;
+      cloudReady = true;
+      selectedProjectId = state.projects[0]?.id || null;
+      selectedTaskId = state.tasks.find(t=>t.projectId===selectedProjectId)?.id || null;
+      render();
+      setCloudStatus("Cloud sync connected · workspace merged");
+    } catch (e) {
+      setCloudStatus("Cloud sync could not start: " + (e.message || "check connection and account"), true);
+    } finally {
+      syncingCloud = false;
+      cloudReady = !!cloudUser;
+    }
+  }
+  async function setupCloudAuth() {
+    const status = $("cloudStatus");
+    if (!cloudClient) {
+      setCloudStatus("Cloud sync unavailable: Supabase client did not load.", true);
+      return;
+    }
+    $("authForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      const email = $("authEmail").value.trim();
+      const password = $("authPassword").value;
+      const action = e.submitter?.value || "signin";
+      $("authSubmit").disabled = true;
+      try {
+        const result = action === "signup"
+          ? await cloudClient.auth.signUp({email,password})
+          : await cloudClient.auth.signInWithPassword({email,password});
+        if (result.error) throw result.error;
+        if (action === "signup" && !result.data.session) setCloudStatus("Account created. Check your email to confirm it, then sign in.");
+        else if (result.data.user) {
+          cloudUser = result.data.user;
+          await mergeCloudWorkspace();
+          setAuthUI();
+        }
+      } catch (err) {
+        setCloudStatus("Sign-in failed: " + (err.message || "unknown error"), true);
+      } finally { $("authSubmit").disabled = false; }
+    });
+    $("signOutBtn").addEventListener("click", async () => {
+      const {error} = await cloudClient.auth.signOut();
+      if (error) { setCloudStatus("Could not sign out: " + error.message, true); return; }
+      cloudUser = null; cloudReady = false; setAuthUI(); setCloudStatus("Signed out · workspace remains on this device");
+    });
+    cloudClient.auth.onAuthStateChange((_event, session) => {
+      cloudUser = session?.user || null;
+      setAuthUI();
+      if (cloudUser && !cloudReady) setTimeout(() => mergeCloudWorkspace(), 0);
+      if (!cloudUser) { cloudReady = false; setCloudStatus("Not signed in · this device only"); }
+    });
+    const {data} = await cloudClient.auth.getSession();
+    cloudUser = data.session?.user || null;
+    setAuthUI();
+    if (cloudUser) await mergeCloudWorkspace();
+    else setCloudStatus("Not signed in · sign in to enable private cloud sync");
+  }
+  function setAuthUI() {
+    const signed = !!cloudUser;
+    $("authEmail").hidden = signed;
+    $("authPassword").hidden = signed;
+    $("authSubmit").hidden = signed;
+    $("authSignupBtn").hidden = signed;
+    $("signOutBtn").hidden = !signed;
+    $("authIdentity").textContent = signed ? "Signed in as " + cloudUser.email : "Sign in or create a free account";
+  }
+
+
   function seedState() {
     const p = {id:uid(),name:"Brain App development",description:"Build the coordinator and sequential AI handoff system.",createdAt:now(),updatedAt:now()};
     const t = {id:uid(),projectId:p.id,name:"Build the first usable control room",status:"working",worker:"ChatGPT (manual build)",nextWorker:"Gemini / Groq / another verified free route",goal:"Create a usable app where separate projects and tasks persist, and work can be handed from one AI worker to the next without restarting.",context:"MVP is a static phone-first web app. Provider integrations must be verified before being shown as connected. Never put API keys in browser code.",output:"The initial project dashboard and packet editor are in place. Project and task data is stored in this browser and can be exported as JSON.",next:"Add a secure server-side/GitHub Actions worker runner, then test a real sequential relay: worker A creates an artifact, worker B continues it, worker C reviews it.",createdAt:now(),updatedAt:now()};
@@ -28,6 +176,7 @@
   function persist() {
     try { localStorage.setItem(KEY, JSON.stringify(state)); }
     catch (e) { toast("Browser storage is full or unavailable. Export a backup."); }
+    scheduleCloudSync();
   }
   function esc(value) {
     return String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -303,4 +452,5 @@
   }, 60000);
   if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("./service-worker.js").catch(() => {});
   render();
+  setupCloudAuth().catch(e => setCloudStatus("Cloud setup failed: " + (e.message || "unknown error"), true));
 })();
