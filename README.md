@@ -51,3 +51,13 @@ This curation approach does not guarantee eligibility for YouTube monetization. 
 ## Required topic decision gate
 
 Before writing a script or storyboard, research the actual subject, audit relevant free media, check licences and rights, and compare audience opportunity with media coverage, production feasibility, and risk. Read [TOPIC_SELECTION_GATE.md](TOPIC_SELECTION_GATE.md). The audit is a first-pass triage aid, not legal clearance; every chosen asset still requires human review. A public video is not automatically reusable, attribution is not permission, and fair use/fair dealing are not blanket exceptions. Do not build the pipeline around superficial repackaging of other creators' videos.
+
+
+## Separate project: Brain App
+
+The Brain App is a separate coordinator project being built alongside this content pipeline. Its job is to manage independent projects and let replaceable AI workers take turns through persistent task packets—not to make the social-media pipeline the coordinator.
+
+- [Open the Brain App MVP](brain-app/index.html)
+- [Brain App build notes and limitations](brain-app/README.md)
+
+The current MVP saves data in the current browser and supports JSON backup/import and manual handoffs. It does not yet make AI API calls or connect ChatGPT automatically. Provider keys must stay server-side; automatic workers and verified free-tier failover are future milestones.
