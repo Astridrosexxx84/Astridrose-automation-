@@ -357,7 +357,18 @@
       toast("AI relay started. Check Latest relay run for status.");
       if (data?.run_url) window.open(data.run_url, "_blank", "noopener");
     } catch (err) {
-      toast("Could not start relay: " + (err.message || "check dispatcher setup"));
+      // Supabase FunctionsHttpError often hides the server's useful JSON
+      // message in err.context; surface the real blocker instead of a generic toast.
+      let detail = err?.message || "check dispatcher setup";
+      try {
+        const response = err?.context;
+        if (response && typeof response.json === "function") {
+          const payload = await response.clone().json();
+          if (payload?.error) detail = String(payload.error);
+          if (payload?.detail) detail += " " + String(payload.detail);
+        }
+      } catch (_) {}
+      toast("Could not start relay: " + detail);
     } finally {
       button.disabled = false;
       button.textContent = "Run AI workers now";
