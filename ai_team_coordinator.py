@@ -270,6 +270,7 @@ def main():
         + "\n\nOPENROUTER CHALLENGE:\n" + openrouter_answer
     )
     final = None
+    synthesis_model = "unavailable"
     synthesis_status = "AI synthesis unavailable; deterministic fallback report generated"
     # Try every model from the live zero-price catalogue, starting with the model
     # that already contributed successfully. A quota error on one model must not
@@ -286,7 +287,7 @@ def main():
                 synthesis_prompt,
                 "Astrid Rose AI Team - OpenRouter synthesis",
             )
-            openrouter_model = model_id
+            synthesis_model = model_id
             record_event(battery, "openrouter", "success", model=model_id, free_route="verified_zero_price", configured=True)
             synthesis_status = "OpenRouter verified zero-price route"
             print(f"Final synthesis complete via OpenRouter ({model_id}).")
@@ -314,7 +315,7 @@ Generated: {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")}
 Coordinator/researcher: Gemini {GEMINI_MODEL} (only if free-tier opt-in enabled)
 Independent challenger: Groq {groq_model} (only if free-tier opt-in enabled)
 Independent challenger: OpenRouter {openrouter_model}
-Independent free-model panel: {", ".join(model for model, _ in openrouter_answers) or "none available"}\nFinal synthesizer: OpenRouter verified-zero-price route ({synthesis_status})
+Independent free-model panel: {", ".join(model for model, _ in openrouter_answers) or "none available"}\nFinal synthesizer: OpenRouter {synthesis_model} ({synthesis_status})
 Scope: analysis only; no posts, comments, account changes, or publishing.
 
 ## Task
