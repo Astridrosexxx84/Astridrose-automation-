@@ -47,10 +47,22 @@ def main():
             "AI_RELAY_PRIOR_PACKET": successful_packet,
             "AI_RELAY_NEXT_WORKER": order[index + 1] if index + 1 < len(order) else "Review the complete relay packet",
         })
+        # Remove the previous turn's packet so an early worker exit (for example,
+        # missing credentials) cannot be mistaken for this provider's result.
+        for output_path in (PACKET_MD, PACKET_JSON, STATUS_JSON):
+            try:
+                output_path.unlink()
+            except FileNotFoundError:
+                pass
         completed = subprocess.run([sys.executable, "brain_relay_worker.py"], env=env, check=False)
         record = read_json(PACKET_JSON)
-        if not record:
-            record = {"provider": provider, "outcome": "error", "error_category": "Worker did not produce a readable packet", "worker_output": ""}
+        if not record or record.get("provider") != provider:
+            record = {
+                "provider": provider,
+                "outcome": "error",
+                "error_category": "Worker exited without producing its own readable packet (exit code " + str(completed.returncode) + ")",
+                "worker_output": "",
+            }
         turns.append(record)
         print("Chain turn: provider=" + provider + "; outcome=" + str(record.get("outcome", "unknown")))
         if record.get("outcome") == "success":
