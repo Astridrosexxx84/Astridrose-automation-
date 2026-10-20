@@ -41,6 +41,7 @@ jobs:
           chain = Path("brain_relay_chain.py").read_text(encoding="utf-8")
           required_worker = [
               "No paid fallback",
+              "You have no filesystem",
               'provider.upper()',
               '_FREE_TIER_CALLS',
               "No currently listed zero-price OpenRouter model",
