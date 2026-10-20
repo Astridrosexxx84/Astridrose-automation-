@@ -2,8 +2,17 @@
   "name": "AI Control Room",
   "short_name": "AI Room",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#0d1320",
   "theme_color": "#172033",
-  "description": "Private personal multi-AI project manager"
+  "description": "Personal multi-AI project manager with portable project memory",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
