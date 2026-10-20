@@ -51,6 +51,12 @@
         <div class="actions packet-actions"><button class="primary" type="submit">Save packet</button><button id="handoffBtn" class="secondary" type="button">Hand off to next worker</button><button id="copyPacketBtn" class="secondary" type="button">Copy packet</button><button id="deleteTaskBtn" class="danger" type="button">Delete task</button></div>
       </form>
     </section>
+    <section class="panel relay-status-panel" aria-live="polite">
+      <div class="section-heading"><div><p class="eyebrow">LIVE WORKER STATUS</p><h2>Latest relay run</h2></div><button id="refreshRelayStatus" class="secondary small" type="button">Refresh</button></div>
+      <p id="relayStatusSummary" class="muted">Loading the latest relay status…</p>
+      <div id="relayStatusProviders" class="provider-grid"></div>
+      <p class="footnote"><a id="relayRunLink" href="https://github.com/Astridrosexxx84/Astridrose-automation-/actions/workflows/brain-app-relay.yml" target="_blank" rel="noopener">Open workflow history ↗</a> · Status metadata only; task prompts and AI responses are not published here.</p>
+    </section>
     <section class="panel providers-panel">
       <div class="section-heading"><div><p class="eyebrow">WORKER SWITCHBOARD</p><h2>Provider connections</h2></div><span class="tag">2 workers live-tested</span></div>
       <p class="muted">The relay now supports an automatic GitHub file-triggered request, and a live run confirmed Groq and Gemini. This browser dashboard still stores its own projects/tasks locally and does not automatically sync its queue with relay packets.</p>
