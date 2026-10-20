@@ -10,7 +10,7 @@ The Brain App is the coordinator/control room. AI providers are replaceable work
 - GitHub Actions relay that attempts configured providers in sequence and records the combined result.
 - A file-triggered relay request: updating `brain-app/relay-request.json` on `main` automatically starts the relay. ChatGPT can queue work by committing this request file through the connected GitHub integration, without a user click.
 - A live dashboard status panel reads a metadata-only status file updated by the relay workflow. It shows each provider result and links to the run, without publishing prompts, task content, model responses or API keys.
-- Latest live relay reviewed: Groq and Gemini succeeded; OpenRouter returned HTTP 429 (2/3). Earlier 3/3 runs are historical, not proof that every current run succeeds.
+- Latest live relay reviewed: Groq and Gemini succeeded; OpenRouter returned HTTP 429 (2/3). The chain now labels this `partial` rather than `success`; the dashboard also presents partial completion separately. Earlier 3/3 runs are historical, not proof that every current run succeeds.
 
 ## Open the dashboard
 https://astridrosexxx84.github.io/Astridrose-automation-/brain-app/
@@ -36,4 +36,4 @@ This repository is public. The file-triggered request at `brain-app/relay-reques
 - A configured key is not proof that a provider is healthy; only a successful live call counts as verified.
 
 ## Security and next milestone
-GitHub Pages is a static client, so it must never contain provider API keys or a privileged GitHub token. The next milestone is a secure, free-first bridge between browser task records and Actions relay packets, with durable result import and honest run status. Until that exists, use the dashboard for planning and portable packets, and let the assistant queue relay work through the request file.
+GitHub Pages is a static client, so it must never contain provider API keys or a privileged GitHub token. A true direct bridge still requires a trusted write path from the browser and a private way to store/read task content. GitHub Pages cannot safely hold a privileged GitHub token, and this public repository cannot safely store plaintext task packets or full responses. Do not solve the sync gap by committing results or embedding a token in the page. The safe current route is assistant-driven queueing of generic, non-sensitive tasks plus artifact retrieval by the assistant; dashboard task records remain browser-local. A private bridge must first establish a free hosting/authentication design and a privacy boundary before implementation.
