@@ -376,6 +376,9 @@
       button.textContent = "Run AI workers now";
     }
   });
+  // The header action must use the same authenticated in-app dispatcher, not GitHub's manual workflow form.
+  $("runRelayTopBtn")?.addEventListener("click", () => $("runRelayBtn")?.click());
+
   $("copyRelayRequestBtn").addEventListener("click", () => {
     const request = relayRequestText();
     if (!request) return;
