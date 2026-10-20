@@ -82,11 +82,15 @@ jobs:
                   "role": os.environ.get("INPUT_ROLE", "continue"),
                   "prior_packet": os.environ.get("INPUT_PRIOR_PACKET", ""),
                   "next_worker": os.environ.get("INPUT_NEXT_WORKER", "openrouter"),
+                  "task_id": "",
+                  "project_id": "",
               }
           request.setdefault("provider", "auto")
           request.setdefault("role", "continue")
           request.setdefault("prior_packet", "")
           request.setdefault("next_worker", "review the complete relay packet")
+          request.setdefault("task_id", "")
+          request.setdefault("project_id", "")
           if not str(request.get("task", "")).strip():
               raise SystemExit("Relay request must include a non-empty task.")
           if request["provider"] not in ("auto", "openrouter", "gemini", "groq"):
@@ -94,7 +98,7 @@ jobs:
           if request["role"] not in ("create", "continue", "review"):
               raise SystemExit("Role must be create, continue, or review.")
           with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env:
-              for key in ("task", "provider", "role", "prior_packet", "next_worker"):
+              for key in ("task", "provider", "role", "prior_packet", "next_worker", "task_id", "project_id"):
                   value = str(request[key])
                   delimiter = "BRAINAPP_" + uuid.uuid4().hex
                   env.write(f"AI_RELAY_{key.upper()}<<{delimiter}\n{value}\n{delimiter}\n")
