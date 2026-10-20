@@ -33,6 +33,18 @@ jobs:
         run: python -m json.tool brain-app/manifest.webmanifest >/dev/null
       - name: Check dashboard JavaScript syntax
         run: node --check brain-app/app.js
+      - name: Check relay run link ID validation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          app = Path("brain-app/app.js").read_text(encoding="utf-8")
+          if r"/^\d+$/.test(runId)" not in app:
+              raise SystemExit("Relay run link must accept numeric GitHub Actions run IDs.")
+          if r"/^\\d+$/.test(runId)" in app:
+              raise SystemExit("Relay run link contains an over-escaped digit pattern.")
+          print("Relay run link ID validation passed.")
+          PY
       - name: Validate public relay status privacy schema
         run: |
           python - <<'PY'
