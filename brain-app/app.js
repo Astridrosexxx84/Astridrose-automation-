@@ -324,6 +324,45 @@
       next_worker: t.nextWorker || "review the previous worker and choose the next concrete step"
     }, null, 2);
   }
+  $("runRelayBtn").addEventListener("click", async () => {
+    const t = currentTask();
+    if (!t) { toast("Select a task first."); return; }
+    if (!cloudClient || !cloudUser) {
+      toast("Sign in to the Brain App first. The secure relay dispatcher requires an account.");
+      $("authEmail")?.focus();
+      return;
+    }
+    if (!confirm("Run the AI worker chain for this task? The repository is public, so do not send private or sensitive task content. This sends the task packet to GitHub Actions and the configured free AI providers.")) return;
+    const button = $("runRelayBtn");
+    button.disabled = true;
+    button.textContent = "Starting workers…";
+    try {
+      const { data, error } = await cloudClient.functions.invoke("dispatch-brain-relay", {
+        body: {
+          task: "Brain App task: " + (t.name || "Untitled task") + "\n\nGoal: " + (t.goal || "(not set)"),
+          task_id: t.id,
+          project_id: t.projectId,
+          provider: "auto",
+          role: t.output ? "continue" : "create",
+          prior_packet: packetText(t),
+          next_worker: t.nextWorker || "review the previous worker and choose the next concrete step"
+        }
+      });
+      if (error) throw error;
+      t.status = "handed_off";
+      t.worker = t.worker || "Brain App relay";
+      t.next = "AI relay dispatched at " + now() + ". Refresh worker status to check completion; then import the relay artifact.";
+      t.updatedAt = now();
+      persist(); render();
+      toast("AI relay started. Check Latest relay run for status.");
+      if (data?.run_url) window.open(data.run_url, "_blank", "noopener");
+    } catch (err) {
+      toast("Could not start relay: " + (err.message || "check dispatcher setup"));
+    } finally {
+      button.disabled = false;
+      button.textContent = "Run AI workers now";
+    }
+  });
   $("copyRelayRequestBtn").addEventListener("click", () => {
     const request = relayRequestText();
     if (!request) return;
