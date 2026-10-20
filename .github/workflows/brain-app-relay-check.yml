@@ -37,8 +37,8 @@ jobs:
           chain = Path("brain_relay_chain.py").read_text(encoding="utf-8")
           required_worker = [
               "No paid fallback",
-              "ALLOW_GEMINI_FREE_TIER_CALLS",
-              "ALLOW_GROQ_FREE_TIER_CALLS",
+              'provider.upper()',
+              '_FREE_TIER_CALLS',
               "No currently listed zero-price OpenRouter model",
           ]
           missing = [item for item in required_worker if item not in worker]
