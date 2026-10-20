@@ -148,6 +148,33 @@
     if (navigator.clipboard?.writeText) navigator.clipboard.writeText(copy).then(()=>toast("Portable packet copied."),()=>fallbackCopy(copy));
     else fallbackCopy(copy);
   });
+  function relayRequestText() {
+    const t = currentTask();
+    if (!t) return null;
+    if (!confirm("This relay request includes the selected task packet. Your repository is PUBLIC, so its task, context and current output will be committed to public Git history and may be visible to others. Continue only if all included content is safe to publish.")) return null;
+    return JSON.stringify({
+      task: "Brain App task: " + (t.name || "Untitled task") + "\n\nGoal: " + (t.goal || "(not set)"),
+      provider: "auto",
+      role: t.output ? "continue" : "create",
+      prior_packet: packetText(t),
+      next_worker: t.nextWorker || "review the previous worker and choose the next concrete step"
+    }, null, 2);
+  }
+  $("copyRelayRequestBtn").addEventListener("click", () => {
+    const request = relayRequestText();
+    if (!request) return;
+    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(request).then(()=>toast("Relay request JSON copied. It is not sent until committed to GitHub."),()=>fallbackCopy(request));
+    else fallbackCopy(request);
+  });
+  $("downloadRelayRequestBtn").addEventListener("click", () => {
+    const request = relayRequestText();
+    if (!request) return;
+    const blob = new Blob([request + "\n"], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "relay-request.json"; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast("Relay request downloaded. It still needs to be committed to GitHub to start the workers.");
+  });
   function fallbackCopy(text) {
     const area = document.createElement("textarea"); area.value=text; area.style.position="fixed"; area.style.opacity="0"; document.body.appendChild(area); area.select();
     try { document.execCommand("copy"); toast("Packet copied."); } catch(e) { toast("Copy unavailable. Export a JSON backup instead."); }
