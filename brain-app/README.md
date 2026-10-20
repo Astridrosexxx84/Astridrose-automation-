@@ -10,7 +10,7 @@ The Brain App is the coordinator/control room. AI providers are replaceable work
 - GitHub Actions relay that attempts configured providers in sequence and records the combined result.
 - A file-triggered relay request: updating `brain-app/relay-request.json` on `main` automatically starts the relay. ChatGPT can queue work by committing this request file through the connected GitHub integration, without a user click.
 - A live dashboard status panel reads a metadata-only status file updated by the relay workflow. It shows each provider result and links to the run, without publishing prompts, task content, model responses or API keys.
-- Latest verified live run: Groq, Gemini, and OpenRouter all completed successfully in sequence (3/3).
+- Latest live relay reviewed: Groq and Gemini succeeded; OpenRouter returned HTTP 429 (2/3). Earlier 3/3 runs are historical, not proof that every current run succeeds.
 
 ## Open the dashboard
 https://astridrosexxx84.github.io/Astridrose-automation-/brain-app/
@@ -22,11 +22,11 @@ There are two routes:
 
 The chain order is Groq → Gemini → OpenRouter. Each successful worker passes its packet to the next; failures are recorded and skipped. OpenRouter is attempted only when its live model catalogue lists a model ending in `:free` with zero prompt and completion prices.
 
-The relay creates a downloadable `brain-app-relay-packet` artifact and updates `brain-app/relay-status.json` with metadata only (run ID, outcome, provider/model names, and error categories). The dashboard reads that public metadata file automatically, displays per-provider results, and marks the last run stale if it is older than 24 hours. It does not fetch the private task packet or response content. The browser dashboard is **not yet directly synced** to the relay: project/task data lives in browser storage, and results currently remain in the workflow artifact until imported or otherwise handed back. The request-file trigger removes the need for the user to click Run workflow, but it does not yet make the browser dashboard itself automatically dispatch or sync packets.
+The relay creates a downloadable `brain-app-relay-packet` artifact containing the full task and worker responses, and updates `brain-app/relay-status.json` with metadata only (run ID, outcome, provider/model names, and error categories). The dashboard reads that public metadata file automatically, displays per-provider results, and marks the last run stale if it is older than 24 hours. It does not fetch the private task packet or response content. The browser dashboard is **not yet directly synced** to the relay: project/task data lives in browser storage, and results currently remain in the workflow artifact until imported or otherwise handed back. The request-file trigger removes the need for the user to click Run workflow, but it does not yet make the browser dashboard itself automatically dispatch or sync packets.
 
 ## Privacy boundary — important
 
-This repository is public. The file-triggered request at `brain-app/relay-request.json` is committed to the public Git history, so its `task` and `prior_packet` fields are public even though the dashboard status file excludes them. Only put generic, non-sensitive work in that file; never put personal, confidential, credential, or private business data there. Workflow artifacts are separate from the public request file, but access depends on GitHub artifact permissions. A genuinely private task-to-relay bridge is not implemented yet; do not describe the current static dashboard as private or fully synced.
+This repository is public. The file-triggered request at `brain-app/relay-request.json` is committed to the public Git history, so its `task` and `prior_packet` fields are public even though the dashboard status file excludes them. Only put generic, non-sensitive work in that file; never put personal, confidential, credential, or private business data there. The repository is public, so treat workflow artifacts and their task/response contents as potentially accessible to anyone who can read the repository or its Actions artifacts. Do not send confidential or personal tasks through this relay. A genuinely private task-to-relay bridge is not implemented yet; do not describe the current static dashboard as private or fully synced.
 
 ## Provider and quota rules
 - Gemini and Groq require explicit free-tier opt-in.
