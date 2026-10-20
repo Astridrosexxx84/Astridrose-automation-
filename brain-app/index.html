@@ -20,6 +20,19 @@
       <div class="actions"><a class="button primary" href="https://github.com/Astridrosexxx84/Astridrose-automation-/actions/workflows/brain-app-relay.yml" target="_blank" rel="noopener">Run AI relay ↗</a><button id="newProjectBtn" class="primary">＋ New project</button><button id="exportBtn" class="secondary">Export backup</button><label class="button secondary" for="importFile">Import backup</label><input id="importFile" type="file" accept="application/json" hidden></div>
     </section>
     <section class="panel" aria-label="Privacy notice"><p class="footnote"><strong>Privacy notice:</strong> this is a public GitHub Pages app and public repository. Browser task data stays in this browser, but any task text sent through the repository-triggered relay is committed to public Git history, and relay artifacts contain task text and AI responses that may be accessible to repository readers. Use only non-sensitive work descriptions; never include passwords, API keys, personal details or confidential material.</p></section>
+    <section class="panel cloud-panel" aria-label="Private cloud sync">
+      <div class="section-heading"><div><p class="eyebrow">PRIVATE WORKSPACE</p><h2>Cloud sync</h2></div><span class="tag">Free backend</span></div>
+      <p id="authIdentity" class="muted">Sign in or create a free account</p>
+      <form id="authForm" class="actions">
+        <label>Email<input id="authEmail" type="email" required autocomplete="email" placeholder="you@example.com"></label>
+        <label>Password<input id="authPassword" type="password" required minlength="8" autocomplete="current-password" placeholder="At least 8 characters"></label>
+        <button id="authSubmit" class="primary" type="submit" value="signin">Sign in</button>
+        <button id="authSignupBtn" class="secondary" type="submit" value="signup">Create free account</button>
+        <button id="signOutBtn" class="secondary" type="button" hidden>Sign out</button>
+      </form>
+      <p id="cloudStatus" class="muted">Checking cloud sync…</p>
+      <p class="footnote">The browser uses a public key protected by database row-level security. Sign in to sync your projects and tasks across devices. Use a unique password; never reuse a sensitive password.</p>
+    </section>
     <section class="stats" aria-label="Workspace summary">
       <div class="stat panel"><span>Projects</span><strong id="projectCount">0</strong></div>
       <div class="stat panel"><span>Open tasks</span><strong id="openCount">0</strong></div>
@@ -86,6 +99,7 @@
     </form>
   </dialog>
   <div id="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
 </body>
 </html>
