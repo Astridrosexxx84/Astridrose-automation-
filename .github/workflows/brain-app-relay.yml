@@ -1,4 +1,4 @@
-name: Brain App — One Worker Relay Turn
+name: Brain App — One-Click Sequential Relay
 
 on:
   workflow_dispatch:
@@ -9,14 +9,15 @@ on:
         type: string
         default: "Build the first working version of the Brain App multi-AI handoff system. Produce a clear first-turn plan and identify the next concrete implementation step."
       provider:
-        description: "One worker for this turn"
+        description: "Choose auto to run the free-provider chain in one go"
         required: true
         type: choice
         options:
+          - auto
           - openrouter
           - gemini
           - groq
-        default: gemini
+        default: auto
       role:
         description: "What this worker should do"
         required: true
@@ -53,7 +54,7 @@ on:
 
           Important correction for this project: the actual product goal is a coordinator/control room with separate projects, task queues, checkpoints, portable handoff packets and sequential replaceable AI workers. Do not redesign it as a parallel multi-AI answer aggregator unless needed. Preserve the strict $0-upfront/free-tier-only constraint, avoid metered routes, and do not claim providers are connected until a real call succeeds. The next worker should continue from this packet, review the existing Brain App dashboard and relay runner, and recommend/implement the next concrete integration step rather than merely repeating this plan.
       next_worker:
-        description: "Suggested next worker (manual handoff for now)"
+        description: "Informational next-worker hint"
         required: false
         type: string
         default: openrouter
@@ -64,7 +65,7 @@ permissions:
 jobs:
   relay-turn:
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 15
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -72,7 +73,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Run exactly one worker turn
+      - name: Run sequential provider chain
         env:
           AI_RELAY_TASK: ${{ inputs.task }}
           AI_RELAY_PROVIDER: ${{ inputs.provider }}
@@ -84,7 +85,7 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           ALLOW_GEMINI_FREE_TIER_CALLS: "true"
           ALLOW_GROQ_FREE_TIER_CALLS: "true"
-        run: python brain_relay_worker.py
+        run: python brain_relay_chain.py
       - name: Upload portable handoff packet
         if: always()
         uses: actions/upload-artifact@v4
