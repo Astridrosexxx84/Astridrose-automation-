@@ -74,7 +74,7 @@ def main():
         "schema_version": 1,
         "task": task,
         "chain_order": order,
-        "overall_outcome": "success" if successes else "error",
+        "overall_outcome": "success" if len(successes) == len(turns) else ("partial" if successes else "error"),
         "successful_turns": len(successes),
         "total_turns": len(turns),
         "turns": turns,
