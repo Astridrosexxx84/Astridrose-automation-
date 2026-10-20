@@ -78,5 +78,13 @@ jobs:
           workflow = Path(".github/workflows/brain-app-relay.yml").read_text(encoding="utf-8")
           if '"brain-app/relay-request.json"' not in workflow:
               raise SystemExit("Missing file-triggered relay request path.")
-          print("Relay safeguard checks passed.")
+          if "PUBLIC REPO" not in workflow:
+              raise SystemExit("Workflow inputs must warn that task text may be public.")
+          readme = Path("brain-app/README.md").read_text(encoding="utf-8")
+          dashboard = Path("brain-app/index.html").read_text(encoding="utf-8")
+          if "workflow artifacts" not in readme.lower() or "potentially accessible" not in readme.lower():
+              raise SystemExit("README must explain that relay artifacts may be accessible to repository readers.")
+          if "relay artifacts contain task text and AI responses" not in dashboard:
+              raise SystemExit("Dashboard must show the relay artifact privacy warning.")
+          print("Relay safeguard and public-artifact privacy checks passed.")
           PY
