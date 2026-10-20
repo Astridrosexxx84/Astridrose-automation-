@@ -33,8 +33,8 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          ALLOW_GEMINI_FREE_TIER_CALLS: ${{ vars.ALLOW_GEMINI_FREE_TIER_CALLS }}
-          ALLOW_GROQ_FREE_TIER_CALLS: ${{ vars.ALLOW_GROQ_FREE_TIER_CALLS }}
+          ALLOW_GEMINI_FREE_TIER_CALLS: "true"
+          ALLOW_GROQ_FREE_TIER_CALLS: "true"
           AI_TEAM_TASK: ${{ inputs.task }}
         run: python ai_team_coordinator.py
       - name: Save report for review
