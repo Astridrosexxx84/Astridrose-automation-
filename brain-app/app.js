@@ -438,10 +438,28 @@
       e.target.value = "";
     }
   });
-  $("deleteTaskBtn").addEventListener("click", () => {
+  $("deleteTaskBtn").addEventListener("click", async () => {
     const t = currentTask(); if (!t) return;
     if (!confirm(`Delete task "${t.name}"? This cannot be undone unless you have a backup.`)) return;
-    state.tasks = state.tasks.filter(x=>x.id!==t.id); selectedTaskId=null; persist(); render(); toast("Task deleted.");
+    const button = $("deleteTaskBtn");
+    button.disabled = true;
+    try {
+      // Remove the cloud row first when signed in. If this fails, keep the
+      // local task so a later sync cannot silently resurrect a "deleted" task.
+      if (cloudClient && cloudUser) {
+        const {error} = await cloudClient.from("brain_tasks").delete().eq("id", t.id).eq("owner_id", cloudUser.id);
+        if (error) throw error;
+      }
+      state.tasks = state.tasks.filter(x=>x.id!==t.id);
+      selectedTaskId=null;
+      persist();
+      render();
+      toast(cloudClient && cloudUser ? "Task deleted on this device and in cloud." : "Task deleted on this device. Sign in to sync deletions.");
+    } catch (error) {
+      toast("Task was not deleted: " + (error.message || "cloud delete failed"));
+    } finally {
+      button.disabled = false;
+    }
   });
   $("exportBtn").addEventListener("click", () => {
     const data = JSON.stringify({...state,exportedAt:now()},null,2);
