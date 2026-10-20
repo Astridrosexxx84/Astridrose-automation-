@@ -171,5 +171,6 @@
     } catch(err) { alert("Import failed: "+err.message); }
     finally { e.target.value=""; }
   });
+  if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("./service-worker.js").catch(() => {});
   render();
 })();
