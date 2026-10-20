@@ -43,7 +43,12 @@ jobs:
               raise SystemExit("Relay run link must accept numeric GitHub Actions run IDs.")
           if r"/^\\d+$/.test(runId)" in app:
               raise SystemExit("Relay run link contains an over-escaped digit pattern.")
-          print("Relay run link ID validation passed.")
+          handler = app.split('$("projectList").addEventListener("click"', 1)[1].split('$("taskList").addEventListener("click"', 1)[0]
+          if "savePacket(false)" not in handler:
+              raise SystemExit("Switching projects must save the current task editor first.")
+          if handler.index("savePacket(false)") > handler.index("selectedProjectId ="):
+              raise SystemExit("Project switch must save edits before changing the selected project.")
+          print("Relay run link and project-switch save checks passed.")
           PY
       - name: Validate public relay status privacy schema
         run: |
