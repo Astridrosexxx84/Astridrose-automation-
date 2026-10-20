@@ -8,6 +8,7 @@ The Brain App is the coordinator/control room. AI providers are replaceable work
 - Portable work packets containing goal, context, current output and next action.
 - GitHub Actions relay that attempts configured providers in sequence and records the combined result.
 - A file-triggered relay request: updating `brain-app/relay-request.json` on `main` automatically starts the relay. ChatGPT can queue work by committing this request file through the connected GitHub integration, without a user click.
+- A live dashboard status panel reads a metadata-only status file updated by the relay workflow. It shows each provider result and links to the run, without publishing prompts, task content, model responses or API keys.
 - Live verification: Groq and Gemini have each completed real calls and handed work to the next provider. OpenRouter was rate-limited (HTTP 429) in the latest verified run.
 
 ## Open the dashboard
@@ -20,7 +21,7 @@ There are two routes:
 
 The chain order is Groq → Gemini → OpenRouter. Each successful worker passes its packet to the next; failures are recorded and skipped. OpenRouter is attempted only when its live model catalogue lists a model ending in `:free` with zero prompt and completion prices.
 
-The relay creates a downloadable `brain-app-relay-packet` artifact. The browser dashboard is **not yet directly synced** to the relay: project/task data lives in browser storage, and results currently remain in the workflow artifact until imported or otherwise handed back. The request-file trigger removes the need for the user to click Run workflow, but it does not yet make the browser dashboard itself automatically dispatch or sync packets.
+The relay creates a downloadable `brain-app-relay-packet` artifact and updates `.github/brain-relay-status.json` with metadata only (run ID, outcome, provider/model names, and error categories). The dashboard reads that public metadata file automatically; it does not fetch the private task packet or response content. The browser dashboard is **not yet directly synced** to the relay: project/task data lives in browser storage, and results currently remain in the workflow artifact until imported or otherwise handed back. The request-file trigger removes the need for the user to click Run workflow, but it does not yet make the browser dashboard itself automatically dispatch or sync packets.
 
 ## Provider and quota rules
 - Gemini and Groq require explicit free-tier opt-in.
