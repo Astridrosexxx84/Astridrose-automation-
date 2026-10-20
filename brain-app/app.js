@@ -78,7 +78,7 @@
     $("taskOutput").value = t.output || "";
     $("taskNext").value = t.next || "";
   }
-  function savePacket(showMessage=true) {
+  function syncPacketFromForm() {
     const t = currentTask();
     if (!t) return false;
     t.name = $("taskName").value.trim();
@@ -91,11 +91,20 @@
     t.next = $("taskNext").value.trim();
     t.updatedAt = now();
     const p = state.projects.find(p => p.id === selectedProjectId);
-    if (p) p.updatedAt = now();
+    if (p) p.updatedAt = t.updatedAt;
+    return true;
+  }
+  function savePacket(showMessage=true) {
+    if (!syncPacketFromForm()) return false;
     persist(); render();
     if (showMessage) toast("Work packet saved.");
     return true;
   }
+  // Persist edits as they happen without re-rendering the form (which would move the cursor).
+  $("packetForm").addEventListener("input", () => {
+    if (!syncPacketFromForm()) return;
+    persist();
+  });
   function packetText(t) {
     return ["BRAIN APP — PORTABLE WORK PACKET","",`Task: ${t.name}`,`Task ID: ${t.id}`,`Project: ${state.projects.find(p=>p.id===t.projectId)?.name || "Unknown"}`,`Status: ${statuses[t.status] || t.status}`,`Current worker: ${t.worker || "Unassigned"}`,`Next worker: ${t.nextWorker || "Unassigned"}`,"", "GOAL / DEFINITION OF DONE",t.goal || "(not set)","","CONTEXT / CONSTRAINTS / EVIDENCE",t.context || "(none)","","CURRENT OUTPUT / ARTIFACT",t.output || "(none)","","NEXT ACTION",t.next || "(not set)","","INSTRUCTIONS FOR NEXT WORKER: Continue from the actual artifact above. Do not restart completed work. Update the output and next action, record any tests/evidence, and hand off to the next worker. Respect verified free-tier limits."].join("\n");
   }
