@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <meta name="description" content="A project control room for sequential AI workers and persistent task handoffs.">
+  <title>Brain App — AI Relay Control Room</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div><p class="eyebrow">PROJECT CONTROL ROOM</p><h1>Brain App</h1><p class="subhead">One coordinator. Replaceable brains. Real handoffs.</p></div>
+    <span class="status-pill"><span class="dot"></span> Local MVP</span>
+  </header>
+  <main>
+    <section class="intro panel">
+      <div><h2>The app coordinates. The AIs take turns.</h2><p>Each worker picks up the same saved packet, does one piece of work, and hands it on. Projects stay separate.</p></div>
+      <div class="actions"><button id="newProjectBtn" class="primary">＋ New project</button><button id="exportBtn" class="secondary">Export backup</button><label class="button secondary" for="importFile">Import backup</label><input id="importFile" type="file" accept="application/json" hidden></div>
+    </section>
+    <section class="stats" aria-label="Workspace summary">
+      <div class="stat panel"><span>Projects</span><strong id="projectCount">0</strong></div>
+      <div class="stat panel"><span>Open tasks</span><strong id="openCount">0</strong></div>
+      <div class="stat panel"><span>Ready for handoff</span><strong id="handoffCount">0</strong></div>
+    </section>
+    <div class="workspace">
+      <section class="panel projects-panel">
+        <div class="section-heading"><div><p class="eyebrow">WORKSPACES</p><h2>Projects</h2></div></div>
+        <div id="projectList" class="project-list"></div>
+      </section>
+      <section class="panel tasks-panel">
+        <div class="section-heading task-heading"><div><p class="eyebrow">SHARED TASK QUEUE</p><h2 id="selectedProjectTitle">Choose a project</h2></div><button id="newTaskBtn" class="primary small" disabled>＋ Task</button></div>
+        <div id="taskList" class="task-list empty">Create or select a project to see its queue.</div>
+      </section>
+    </div>
+    <section class="panel packet-panel">
+      <div class="section-heading"><div><p class="eyebrow">PORTABLE WORK PACKET</p><h2>Handoff details</h2></div><span id="packetStatus" class="tag">No task selected</span></div>
+      <div id="packetEmpty" class="empty">Select a task to view its goal, working notes and next action.</div>
+      <form id="packetForm" hidden>
+        <div class="form-grid">
+          <label>Task name<input id="taskName" required maxlength="120"></label>
+          <label>Status<select id="taskStatus"><option value="waiting">Waiting</option><option value="working">Working</option><option value="handed_off">Handed off</option><option value="blocked">Blocked</option><option value="complete">Complete</option></select></label>
+          <label>Current / last worker<input id="taskWorker" placeholder="e.g. Gemini, Groq, ChatGPT (manual)"></label>
+          <label>Next worker<input id="nextWorker" placeholder="Who should pick this up next?"></label>
+          <label class="full">Goal and definition of done<textarea id="taskGoal" rows="3" required></textarea></label>
+          <label class="full">Context, constraints and evidence<textarea id="taskContext" rows="4" placeholder="Relevant files, decisions, constraints, links…"></textarea></label>
+          <label class="full">Current output / artifact<textarea id="taskOutput" rows="5" placeholder="The actual work completed so far—not just a summary."></textarea></label>
+          <label class="full">Next action for the next worker<textarea id="taskNext" rows="3" placeholder="The specific next step, plus anything the next worker must not redo."></textarea></label>
+        </div>
+        <div class="actions packet-actions"><button class="primary" type="submit">Save packet</button><button id="handoffBtn" class="secondary" type="button">Hand off to next worker</button><button id="copyPacketBtn" class="secondary" type="button">Copy packet</button><button id="deleteTaskBtn" class="danger" type="button">Delete task</button></div>
+      </form>
+    </section>
+    <section class="panel providers-panel">
+      <div class="section-heading"><div><p class="eyebrow">WORKER SWITCHBOARD</p><h2>Provider connections</h2></div><span class="tag">Not connected yet</span></div>
+      <p class="muted">This screen records the intended routes without pretending they are live. API calls and real quota/error observations are the next engineering layer.</p>
+      <div class="provider-grid">
+        <div class="provider"><strong>Gemini</strong><span class="state unknown">Not tested by this app</span></div>
+        <div class="provider"><strong>Groq</strong><span class="state unknown">Not tested by this app</span></div>
+        <div class="provider"><strong>OpenRouter free models</strong><span class="state unknown">Not tested by this app</span></div>
+        <div class="provider"><strong>ChatGPT</strong><span class="state manual">Manual worker only</span></div>
+      </div>
+      <p class="footnote">No invented battery percentages. No paid routes without approval. No provider keys in this page.</p>
+    </section>
+    <footer>Brain App MVP · Your browser is the current storage location. Export backups regularly.</footer>
+  </main>
+  <dialog id="projectDialog">
+    <form id="projectForm" method="dialog">
+      <h2>New project</h2><label>Project name<input id="projectName" required maxlength="100" placeholder="e.g. Brain App development"></label>
+      <label>Purpose<textarea id="projectDescription" rows="3" placeholder="What is this project for?"></textarea></label>
+      <div class="actions"><button class="secondary" value="cancel">Cancel</button><button class="primary" value="create">Create project</button></div>
+    </form>
+  </dialog>
+  <dialog id="taskDialog">
+    <form id="taskForm" method="dialog">
+      <h2>New task</h2><label>Task name<input id="newTaskName" required maxlength="120" placeholder="A specific piece of work"></label>
+      <label>Goal<textarea id="newTaskGoal" required rows="3" placeholder="What should be true when this is done?"></textarea></label>
+      <div class="actions"><button class="secondary" value="cancel">Cancel</button><button class="primary" value="create">Add to queue</button></div>
+    </form>
+  </dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
