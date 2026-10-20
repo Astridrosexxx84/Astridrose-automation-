@@ -43,7 +43,7 @@ on:
       - "brain-app/relay-request.json"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   relay-turn:
@@ -115,3 +115,54 @@ jobs:
             brain-relay-status.json
           if-no-files-found: warn
           retention-days: 14
+      - name: Publish safe relay status for the dashboard
+        if: always()
+        env:
+          RUN_ID: ${{ github.run_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          ledger = {}
+          packet = {}
+          for name, target in (("brain-relay-status.json", "ledger"), ("brain-relay-packet.json", "packet")):
+              try:
+                  data = json.loads(Path(name).read_text(encoding="utf-8"))
+              except (OSError, json.JSONDecodeError):
+                  data = {}
+              if target == "ledger":
+                  ledger = data
+              else:
+                  packet = data
+          turns = []
+          for item in packet.get("turns", []):
+              turns.append({
+                  "provider": str(item.get("provider", "unknown"))[:40],
+                  "model": str(item.get("model", ""))[:100],
+                  "outcome": "success" if item.get("outcome") == "success" else "error",
+                  "error_category": str(item.get("error_category") or "")[:100],
+              })
+          status = {
+              "schema_version": 1,
+              "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+              "run_id": os.environ["RUN_ID"],
+              "run_url": os.environ["RUN_URL"],
+              "outcome": str(packet.get("overall_outcome") or ledger.get("outcome") or "error"),
+              "successful_turns": int(packet.get("successful_turns", ledger.get("successful_turns", 0)) or 0),
+              "total_turns": int(packet.get("total_turns", ledger.get("total_turns", 0)) or 0),
+              "turns": turns,
+              "note": "Metadata only. Prompts, task text, model responses and API keys are not published here."
+          }
+          path = Path(".github/brain-relay-status.json")
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_text(json.dumps(status, indent=2) + "\n", encoding="utf-8")
+          print("Publishing relay status metadata only; no task or response content.")
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/brain-relay-status.json
+          git commit -m "Update Brain App relay status metadata [skip ci]"
+          git push
