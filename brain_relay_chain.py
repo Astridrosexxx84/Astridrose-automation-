@@ -27,6 +27,8 @@ def main():
     selected = os.environ.get("AI_RELAY_PROVIDER", "auto").strip().lower()
     role = os.environ.get("AI_RELAY_ROLE", "continue").strip().lower()
     prior = os.environ.get("AI_RELAY_PRIOR_PACKET", "").strip()
+    task_id = os.environ.get("AI_RELAY_TASK_ID", "").strip()
+    project_id = os.environ.get("AI_RELAY_PROJECT_ID", "").strip()
     if not task:
         raise SystemExit("Task goal is required.")
     if selected == "auto":
@@ -73,6 +75,8 @@ def main():
     final = {
         "schema_version": 1,
         "task": task,
+        "task_id": task_id,
+        "project_id": project_id,
         "chain_order": order,
         "overall_outcome": "success" if len(successes) == len(turns) else ("partial" if successes else "error"),
         "successful_turns": len(successes),
