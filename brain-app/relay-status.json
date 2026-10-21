@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-21T01:47:48+00:00",
-  "run_id": "39529259366",
-  "run_url": "https://github.com/Astridrosexxx84/Astridrose-automation-/actions/runs/39529259366",
-  "outcome": "success",
-  "successful_turns": 3,
+  "updated_at": "2026-10-21T02:12:19+00:00",
+  "run_id": "39531526968",
+  "run_url": "https://github.com/Astridrosexxx84/Astridrose-automation-/actions/runs/39531526968",
+  "outcome": "partial",
+  "successful_turns": 2,
   "total_turns": 3,
   "turns": [
     {
@@ -15,15 +15,15 @@
     },
     {
       "provider": "gemini",
-      "model": "gemini-flash-latest",
+      "model": "gemini-flash-lite-latest",
       "outcome": "success",
       "error_category": ""
     },
     {
       "provider": "openrouter",
-      "model": "dots-studio/dots-3-note-preview:free",
-      "outcome": "success",
-      "error_category": ""
+      "model": "unavailable",
+      "outcome": "error",
+      "error_category": "All attempted zero-price OpenRouter routes failed: Provider HTTP 429"
     }
   ],
   "note": "Metadata only. Prompts, task text, model responses and API keys are not published here."
