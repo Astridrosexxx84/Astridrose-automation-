@@ -69,10 +69,16 @@ Deno.serve(async (req: Request) => {
     if (!["success", "partial", "error"].includes(outcome)) return reply({ error: "Unknown relay outcome." }, 400);
     const status = outcome === "success" || outcome === "partial" ? "succeeded" : "failed";
     const errorCategory = outcome === "partial" ? "partial_provider_result" : outcome === "error" ? "all_providers_failed" : null;
-    // Only the active runner may finish a running job. A completed job cannot be overwritten.
-    const { data: row, error } = await db.from("brain_worker_runs").update({
+    // Successful/partial results must come from a claimed running job. An error packet may
+    // also close a queued job when OIDC/claim failed before the runner could mark it running.
+    // Never overwrite a terminal state or let a success bypass the claim step.
+    let completion = db.from("brain_worker_runs").update({
       status, response_payload: packet, error_category: errorCategory, finished_at: new Date().toISOString(),
-    }).eq("id", runId).eq("status", "running").select("id").maybeSingle();
+    }).eq("id", runId);
+    completion = outcome === "error"
+      ? completion.in("status", ["running", "queued"])
+      : completion.eq("status", "running");
+    const { data: row, error } = await completion.select("id").maybeSingle();
     if (error) return reply({ error: "Could not store private relay result." }, 500);
     if (!row) return reply({ error: "Private relay job is missing or already finished." }, 409);
     return reply({ ok: true, status }, 200);
