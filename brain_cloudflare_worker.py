@@ -80,12 +80,12 @@ def main():
         "review": "Review the actual artifact for correctness, missing pieces, risks and testability; provide corrected content where possible.",
     }[role]
     prompt = (
-        "GOAL / DEFINITION OF DONE:\\n" + task +
-        "\\n\\nWORKER ROLE: " + role.upper() + "\\n" + role_text +
-        "\\n\\nPRIOR HANDOFF PACKET / ACTUAL WORK SO FAR:\\n" + (prior or "(No prior packet: first turn.)") +
-        "\\n\\nOUTPUT REQUIREMENTS:\\n1. Return concrete work, not only advice.\\n"
-        "2. State evidence honestly.\\n3. End with NEXT ACTION: and one specific action.\\n"
-        "4. Respect the $0 constraint; never suggest paid fallback.\\n"
+        "GOAL / DEFINITION OF DONE:\n" + task +
+        "\n\nWORKER ROLE: " + role.upper() + "\n" + role_text +
+        "\n\nPRIOR HANDOFF PACKET / ACTUAL WORK SO FAR:\n" + (prior or "(No prior packet: first turn.)") +
+        "\n\nOUTPUT REQUIREMENTS:\n1. Return concrete work, not only advice.\n"
+        "2. State evidence honestly.\n3. End with NEXT ACTION: and one specific action.\n"
+        "4. Respect the $0 constraint; never suggest paid fallback.\n"
         "5. Never claim repository changes or tests you did not perform."
     )
     started = now()
@@ -107,7 +107,7 @@ def main():
             if line.strip().lower().startswith("next action:"):
                 record["next_action"] = line.split(":", 1)[1].strip()
                 break
-    OUT_JSON.write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8")
+    OUT_JSON.write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     lines = [
         "# Brain App — Portable AI Relay Packet", "",
         "- **Goal:** " + task, "- **Role:** " + role,
@@ -118,7 +118,7 @@ def main():
     else:
         lines += ["## Actual worker output", answer, ""]
     lines += ["## Next action", record["next_action"] or "Review the output and choose the next worker.", ""]
-    OUT_MD.write_text("\\n".join(lines) + "\\n", encoding="utf-8")
+    OUT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
     LEDGER.write_text(json.dumps({
         "schema_version": 1, "updated_at": record["finished_at"],
         "provider": "cloudflare", "model": MODEL,
@@ -126,7 +126,7 @@ def main():
         "outcome": outcome, "error_category": error_category,
         "quota_remaining": "not queried; check Cloudflare account usage",
         "free_route": "explicit opt-in; Workers AI free allocation applies subject to account limits",
-    }, indent=2) + "\\n", encoding="utf-8")
+    }, indent=2) + "\n", encoding="utf-8")
     print("Relay turn: " + outcome + "; provider=cloudflare; model=" + MODEL)
     if outcome != "success":
         sys.exit(1)
