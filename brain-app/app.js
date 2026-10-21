@@ -217,6 +217,30 @@
     }
   }
 
+  function proposeNextAction() {
+    const task = currentTask();
+    if (!task?.verification) {
+      toast("Verify the current result first; proposals must be grounded in recorded evidence.");
+      return;
+    }
+    const goal = String(task.goal || "").trim();
+    const output = String(task.output || "").trim();
+    const notes = String(task.verification.notes || "").trim();
+    if (!goal || !output || !notes) {
+      toast("A goal, output, and verification notes are required before proposing the next action.");
+      return;
+    }
+    const excerpt = output.replace(/\\s+/g, " ").slice(0, 240);
+    task.next = task.verification.passed
+      ? "PROPOSED NEXT ACTION — NOT EXECUTED. The signed-in owner marked the goal verified. Review the saved output for any broader project scope not covered by this goal; if none remains, define the next goal as a new task.\n\nEvidence basis — goal: " + goal + "\nVerified output excerpt: " + excerpt + "\nOwner's check: " + notes
+      : "PROPOSED CORRECTIVE ACTION — NOT EXECUTED. Address the failed check before marking this task complete. Use the existing output as the starting point and change only what is needed to satisfy the goal.\n\nEvidence basis — goal: " + goal + "\nCurrent output excerpt: " + excerpt + "\nFailure notes: " + notes;
+    task.updatedAt = now();
+    persist();
+    render();
+    $("nextActionProposal").textContent = task.next;
+    toast("Evidence-based next action proposed and saved; nothing was run.");
+  }
+
   function renderVerification() {
     const task = currentTask();
     const evidence = task?.verification;
@@ -226,6 +250,8 @@
       : "No verification evidence recorded for this task yet.";
     $("verifyPassBtn").disabled = !task;
     $("verifyFailBtn").disabled = !task;
+    $("proposeNextActionBtn").disabled = !evidence;
+    $("nextActionProposal").textContent = evidence ? (task.next || "No next-action proposal saved yet.") : "Record a verification outcome first.";
   }
 
   async function mergeCloudWorkspace() {
@@ -502,6 +528,7 @@
   $("packetForm").addEventListener("submit", e => { e.preventDefault(); savePacket(); });
   $("verifyPassBtn").addEventListener("click", () => recordVerification(true));
   $("verifyFailBtn").addEventListener("click", () => recordVerification(false));
+  $("proposeNextActionBtn").addEventListener("click", proposeNextAction);
   $("handoffBtn").addEventListener("click", () => {
     if (!savePacket(false)) return;
     const t = currentTask();
