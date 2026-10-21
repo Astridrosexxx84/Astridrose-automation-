@@ -384,7 +384,7 @@
         return;
       }
     }
-    if (!confirm("Run the AI worker chain for this task? The repository is public, so do not send private or sensitive task content. This sends the task packet to GitHub Actions and the configured free AI providers.")) return;
+    if (!confirm("Run the AI worker chain for this task? The in-app private route sends only an opaque run ID to GitHub Actions; task text/results are stored in your private Supabase workspace and task content is sent to the configured AI providers. The repository is public, and older manual/file-triggered routes may expose content. Do not include passwords, API keys, personal details, or confidential material.")) return;
     const button = $("runRelayBtn");
     button.disabled = true;
     button.textContent = "Starting workers…";
