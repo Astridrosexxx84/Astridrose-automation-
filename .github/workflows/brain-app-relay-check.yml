@@ -10,6 +10,14 @@ on:
       - ".github/workflows/brain-app-relay.yml"
       - "brain-app/**"
       - ".github/workflows/brain-app-relay-check.yml"
+  pull_request:
+    paths:
+      - "brain_relay_worker.py"
+      - "brain_relay_chain.py"
+      - "tests/test_brain_relay*.py"
+      - ".github/workflows/brain-app-relay.yml"
+      - "brain-app/**"
+      - ".github/workflows/brain-app-relay-check.yml"
   workflow_dispatch:
 
 permissions:
