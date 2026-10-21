@@ -53,7 +53,11 @@
         <div id="projectList" class="project-list"></div>
       </section>
       <section class="panel tasks-panel">
-        <div class="section-heading task-heading"><div><p class="eyebrow">SHARED TASK QUEUE</p><h2 id="selectedProjectTitle">Choose a project</h2></div><button id="newTaskBtn" class="primary small" disabled>＋ Task</button></div>
+        <div class="section-heading task-heading"><div><p class="eyebrow">SHARED TASK QUEUE</p><h2 id="selectedProjectTitle">Choose a project</h2><p id="taskCount" class="task-count" aria-live="polite">0 tasks</p></div><button id="newTaskBtn" class="primary small" disabled>＋ Task</button></div>
+        <div class="task-filters">
+          <label class="task-search-label" for="taskSearch">Find a task<input id="taskSearch" type="search" placeholder="Search tasks, notes, results…" autocomplete="off"></label>
+          <label class="task-status-label" for="taskStatusFilter">Status<select id="taskStatusFilter"><option value="all">All statuses</option><option value="waiting">Waiting</option><option value="working">Working</option><option value="handed_off">Handed off</option><option value="blocked">Blocked</option><option value="complete">Complete</option></select></label>
+        </div>
         <div id="taskList" class="task-list empty">Create or select a project to see its queue.</div>
       </section>
     </div>
