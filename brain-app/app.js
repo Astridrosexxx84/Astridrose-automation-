@@ -514,11 +514,11 @@
   });
   // Mobile quick navigation keeps the two most-used work areas one tap apart.
   $("jumpQueueBtn")?.addEventListener("click", () => {
-    document.querySelector(".tasks-panel")?.scrollIntoView({behavior:"smooth",block:"start"});
+    document.querySelector(".tasks-panel")?.scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
     $("taskSearch")?.focus({preventScroll:true});
   });
   $("jumpDetailsBtn")?.addEventListener("click", () => {
-    document.querySelector(".packet-panel")?.scrollIntoView({behavior:"smooth",block:"start"});
+    document.querySelector(".packet-panel")?.scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
     if (currentTask()) $("taskOutput")?.focus({preventScroll:true});
   });
   $("projectList").addEventListener("click", e => {
