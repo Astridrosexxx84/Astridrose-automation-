@@ -108,8 +108,8 @@
       const outputs = turns.filter(turn => turn?.outcome === "success" && turn?.worker_output)
         .map(turn => "**" + String(turn.provider || "AI worker") + "**\\n" + String(turn.worker_output));
       task.output = outputs.join("\\n\\n") || (run.error_category ? "Relay failed: " + run.error_category : "Relay finished without a usable output.");
-      task.status = run.status === "succeeded" ? "complete" : "blocked";
-      task.next = String(packet.next_action || (run.status === "succeeded" ? "Review the returned AI output and choose the next task." : "Check the relay error and retry when ready."));
+      task.status = run.status === "succeeded" ? "handed_off" : "blocked";
+      task.next = String(packet.next_action || (run.status === "succeeded" ? "Verify the returned output against the goal and acceptance criteria before marking complete." : "Check the relay error and retry when ready."));
       task.worker = "Private AI relay";
       task.updatedAt = run.finished_at || now();
       changed = true;
