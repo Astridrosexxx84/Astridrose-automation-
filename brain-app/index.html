@@ -98,6 +98,13 @@
     <details class="panel providers-panel compact-details"><summary>Advanced · provider connections</summary>
       <div class="section-heading"><div><p class="eyebrow">WORKER SWITCHBOARD</p><h2>Provider connections</h2></div><span class="tag">Free-provider chain</span></div>
       <p class="muted">Run AI relay from inside the app to use the private dispatcher. The intended flow stores the task and result in your private Supabase workspace and attaches the result to the same task automatically; this still needs one live authenticated test. Manual workflow launches and the legacy file-triggered route are separate older paths and may expose task text or responses publicly. Only use packet import for those legacy/manual runs, and only with non-sensitive test content. Provider availability and free-tier limits can change; no paid fallback is allowed.</p>
+      <label class="full">AI worker route
+        <select id="relayProviderSelect">
+          <option value="auto">Automatic free-provider chain (default)</option>
+          <option value="cloudflare">Cloudflare Workers AI (explicit opt-in)</option>
+        </select>
+      </label>
+      <p class="footnote">Cloudflare is not included in automatic runs. It requires CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN configured as GitHub Actions secrets; without them it stops safely.</p>
       <div class="provider-grid">
         <div class="provider"><strong>Gemini</strong><span class="state manual">Free relay worker · see latest status above</span></div>
         <div class="provider"><strong>Groq</strong><span class="state manual">Free relay worker · see latest status above</span></div>
@@ -124,6 +131,6 @@
   </dialog>
   <div id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js?v=task-verification-bucket-1"></script>
+  <script src="app.js?v=cloudflare-provider-optin-1"></script>
 </body>
 </html>

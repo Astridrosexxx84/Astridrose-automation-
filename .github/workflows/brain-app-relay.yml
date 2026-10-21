@@ -17,6 +17,7 @@ on:
           - openrouter
           - gemini
           - groq
+          - cloudflare
         default: auto
       role:
         description: "What this worker should do"
@@ -148,8 +149,8 @@ jobs:
           request.setdefault("project_id", "")
           if not str(request.get("task", "")).strip():
               raise SystemExit("Relay request must include a non-empty task.")
-          if request["provider"] not in ("auto", "openrouter", "gemini", "groq"):
-              raise SystemExit("Provider must be auto, openrouter, gemini, or groq.")
+          if request["provider"] not in ("auto", "openrouter", "gemini", "groq", "cloudflare"):
+              raise SystemExit("Provider must be auto, openrouter, gemini, groq, or cloudflare.")
           if request["role"] not in ("create", "continue", "review"):
               raise SystemExit("Role must be create, continue, or review.")
           with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env:
@@ -164,6 +165,8 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           ALLOW_GEMINI_FREE_TIER_CALLS: "true"
           ALLOW_GROQ_FREE_TIER_CALLS: "true"
         run: python brain_relay_chain.py
