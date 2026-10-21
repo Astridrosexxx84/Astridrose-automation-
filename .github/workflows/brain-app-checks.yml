@@ -49,6 +49,15 @@ jobs:
               raise SystemExit("Core migration does not enable row-level security")
           if 'const recoveringMissingOutput = task.status === "complete" && !String(task.output || "").trim();' not in app:
               raise SystemExit("Private relay recovery must backfill completed tasks whose output is empty")
+          for ui_id in ("taskSearch", "taskStatusFilter", "taskCount"):
+              if f'id="{ui_id}"' not in html:
+                  raise SystemExit(f"Task filter UI is missing {ui_id}")
+          if 'const visibleTasks = tasks.filter(t => {' not in app or 'haystack.includes(taskQuery)' not in app:
+              raise SystemExit("Task search must filter by task content")
+          if 't.status !== statusFilter' not in app:
+              raise SystemExit("Task status filter must be applied")
+          if "No tasks match. Try another search or status." not in app:
+              raise SystemExit("Task search must show a helpful empty state")
           if "if (!recoveringMissingOutput && Date.parse(run.finished_at || 0) < Date.parse(task.updatedAt || 0)) continue;" not in app:
               raise SystemExit("Empty-output recovery must not be blocked by a newer task sync timestamp")
           for status in ("queued", "running", "review", "blocked", "completed"):

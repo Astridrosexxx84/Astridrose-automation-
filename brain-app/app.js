@@ -265,8 +265,18 @@
       $("taskList").textContent = "Create a project to start its task queue.";
     } else {
       const tasks = projectTasks(project.id);
+      const taskQuery = $("taskSearch").value.trim().toLowerCase();
+      const statusFilter = $("taskStatusFilter").value;
+      const visibleTasks = tasks.filter(t => {
+        if (statusFilter !== "all" && t.status !== statusFilter) return false;
+        const haystack = [t.name, t.goal, t.context, t.output, t.next, t.worker, t.nextWorker].join(" ").toLowerCase();
+        return !taskQuery || haystack.includes(taskQuery);
+      });
+      $("taskCount").textContent = visibleTasks.length === tasks.length
+        ? `${tasks.length} ${tasks.length === 1 ? "task" : "tasks"}`
+        : `${visibleTasks.length} of ${tasks.length} tasks`;
       $("taskList").className = "task-list";
-      $("taskList").innerHTML = tasks.length ? tasks.map(t => `<button type="button" class="task-card ${t.id===selectedTaskId?"selected":""}" data-task="${esc(t.id)}"><span class="task-top"><strong>${esc(t.name)}</strong><span class="task-status status-${esc(t.status)}">${esc(statuses[t.status]||t.status)}</span></span><p>Next: ${esc(t.nextWorker || "Unassigned")} · ${esc(t.next || "No next action recorded")}</p></button>`).join("") : '<div class="empty">Queue is empty. Add a specific task.</div>';
+      $("taskList").innerHTML = visibleTasks.length ? visibleTasks.map(t => `<button type="button" class="task-card ${t.id===selectedTaskId?"selected":""}" data-task="${esc(t.id)}"><span class="task-top"><strong>${esc(t.name)}</strong><span class="task-status status-${esc(t.status)}">${esc(statuses[t.status]||t.status)}</span></span><p>Next: ${esc(t.nextWorker || "Unassigned")} · ${esc(t.next || "No next action recorded")}</p></button>`).join("") : tasks.length ? '<div class="empty">No tasks match. Try another search or status.</div>' : '<div class="empty">Queue is empty. Add a specific task.</div>';
     }
     renderPacket();
   }
@@ -372,6 +382,8 @@
     savePacket(false);
     selectedProjectId = btn.dataset.project; selectedTaskId = null; render();
   });
+  $("taskSearch").addEventListener("input", render);
+  $("taskStatusFilter").addEventListener("change", render);
   $("taskList").addEventListener("click", e => {
     const btn = e.target.closest("[data-task]"); if (!btn) return;
     if (selectedTaskId && selectedTaskId !== btn.dataset.task) savePacket(false);
