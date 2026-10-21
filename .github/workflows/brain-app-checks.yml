@@ -32,6 +32,11 @@ jobs:
           app = Path("brain-app/app.js").read_text(encoding="utf-8")
           html = Path("brain-app/index.html").read_text(encoding="utf-8")
           schema = Path("brain-app/supabase/migrations/0001_brain_app_core.sql").read_text(encoding="utf-8")
+          service_worker = Path("brain-app/service-worker.js").read_text(encoding="utf-8")
+          html_script = re.search(r'<script src="(app\\.js\\?[^"]+)"', html)
+          cached_script = re.search(r'"(\\./app\\.js\\?[^"]+)"', service_worker)
+          if not html_script or not cached_script or "./" + html_script.group(1) != cached_script.group(1):
+              raise SystemExit("index.html app.js URL must match the service-worker precache URL")
           html_ids = set(re.findall(r"""\bid=["']([^"']+)["']""", html))
           app_ids = set(re.findall(r"""\$\(["']([^"']+)["']\)""", app))
           missing = sorted(app_ids - html_ids)
