@@ -125,7 +125,7 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          migration = Path("brain-app/supabase/migrations/0003_one_active_run_per_task.sql").read_text(encoding="utf-8")
+          migration = Path("brain-app/supabase/migrations/0005_one_active_run_per_task.sql").read_text(encoding="utf-8")
           dispatcher = Path("brain-app/supabase/functions/dispatch-brain-relay/index.ts").read_text(encoding="utf-8")
           if "create unique index if not exists brain_worker_runs_one_active_per_task_idx" not in migration:
               raise SystemExit("Missing database-level single-active-run invariant.")
