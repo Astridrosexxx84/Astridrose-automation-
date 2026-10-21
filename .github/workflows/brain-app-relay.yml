@@ -17,6 +17,7 @@ on:
           - openrouter
           - gemini
           - groq
+          - cloudflare
         default: auto
       role:
         description: "What this worker should do"
@@ -164,6 +165,8 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           ALLOW_GEMINI_FREE_TIER_CALLS: "true"
           ALLOW_GROQ_FREE_TIER_CALLS: "true"
         run: python brain_relay_chain.py
