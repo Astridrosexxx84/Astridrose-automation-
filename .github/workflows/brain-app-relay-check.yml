@@ -217,6 +217,7 @@ jobs:
           if missing:
               raise SystemExit("Private relay bridge missing safeguards: " + ", ".join(missing))
           print("Bridge source has expected GitHub OIDC, workflow-claim, private-key, and replay safeguards.")
+          PY
 
       - name: Check cloud sync preserves concurrent relay result updates
         run: |
@@ -236,5 +237,4 @@ jobs:
           if missing:
               raise SystemExit("Cloud sync can drop concurrent relay updates: " + ", ".join(missing))
           print("Concurrent cloud writes queue a follow-up sync so relay results are not silently lost.")
-          PY
           PY
