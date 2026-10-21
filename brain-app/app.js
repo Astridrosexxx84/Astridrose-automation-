@@ -312,6 +312,34 @@
     const p = state.projects.find(p=>p.id===selectedProjectId); if(p)p.updatedAt=now();
     persist(); $("taskDialog").close(); render(); toast("Task added to queue.");
   });
+  $("quickTestBtn").addEventListener("click", () => {
+    const button = $("quickTestBtn");
+    if (button.disabled) return;
+    let project = state.projects.find(p => p.id === selectedProjectId);
+    if (!project) {
+      project = {id:uid(),name:"My first Brain test",description:"A safe sample task to check the private AI workers.",createdAt:now(),updatedAt:now()};
+      state.projects.push(project);
+      selectedProjectId = project.id;
+    }
+    const existing = state.tasks.find(t => t.projectId === project.id && t.name === "Brain connection check" && t.goal.includes("BRAIN-APP-OK"));
+    let task = existing;
+    if (!task) {
+      task = {id:uid(),projectId:project.id,name:"Brain connection check",goal:"Reply with exactly BRAIN-APP-OK. Do not use tools or external services.",status:"waiting",worker:"",nextWorker:"",context:"Safe sample task. Contains no private information.",output:"",next:"",createdAt:now(),updatedAt:now()};
+      state.tasks.push(task);
+    }
+    selectedTaskId = task.id;
+    persist(); render();
+    $("quickTestStatus").textContent = "Step 2 of 3 · Sample task ready. Confirm to start the private AI workers.";
+    button.disabled = true;
+    button.textContent = "Starting your test…";
+    $("runRelayBtn").scrollIntoView({behavior:"smooth",block:"center"});
+    $("runRelayBtn").click();
+    setTimeout(() => {
+      button.disabled = false;
+      button.textContent = "▶ Run another safe test";
+      $("quickTestStatus").textContent = "Step 3 of 3 · Follow the task status below. Your result should appear on this task.";
+    }, 1200);
+  });
   $("projectList").addEventListener("click", e => {
     const btn = e.target.closest("[data-project]"); if (!btn) return;
     // Save the current editor before changing projects, just as task switching does.
