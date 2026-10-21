@@ -9,7 +9,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="simple-mode">
   <header class="topbar">
     <div><p class="eyebrow">PROJECT CONTROL ROOM</p><h1>Brain App</h1><p class="subhead">One coordinator. Replaceable brains. Real handoffs.</p></div>
     <span class="status-pill"><span class="dot"></span> Local MVP</span>
@@ -26,7 +26,8 @@
       <p>Skip the technical setup. We’ll create a safe sample task and start the private AI workers for you.</p>
       <button class="primary quick-start-button" id="quickTestBtn" type="button">▶ Run a safe test</button>
       <p class="footnote">Uses a made-up prompt only. Never enter passwords, API keys or private information.</p>
-      <p id="quickTestStatus" class="quick-test-status" aria-live="polite">Step 1 of 3 · Create a sample task</p>
+      <p id="quickTestStatus" class="quick-test-status" aria-live="polite">Start with one safe test. You can open the other tools only when you need them.</p>
+      <button id="showToolsBtn" class="secondary small" type="button" aria-expanded="false">Show all tools</button>
     </section>
     <details class="panel compact-details"><summary>Advanced · privacy & safety</summary><p class="footnote"><strong>Privacy notice:</strong> this is a public GitHub Pages app and public repository. Browser task data stays in this browser until you send it to the relay. The in-app Run AI relay is wired to send only an opaque run ID to GitHub Actions and store task text and results in your private Supabase workspace; the private dispatch and worker execution have been verified; the app-to-task display is the remaining check. Manual workflow launches and the legacy file-triggered route can still expose content publicly: relay artifacts contain task text and AI responses, and request files can be committed to public Git history. Use only non-sensitive work descriptions; never include passwords, API keys, personal details or confidential material.</p>    </details>
     <details class="panel cloud-panel compact-details">
