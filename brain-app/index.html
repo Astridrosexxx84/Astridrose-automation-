@@ -29,6 +29,12 @@
       <p id="quickTestStatus" class="quick-test-status" aria-live="polite">Start with one safe test. You can open the other tools only when you need them.</p>
       <button id="showToolsBtn" class="secondary small" type="button" aria-expanded="false">Show all tools</button>
     </section>
+    <section class="panel simple-result" aria-labelledby="simpleResultTitle">
+      <h2 id="simpleResultTitle">Your test result</h2>
+      <p id="simpleResultState" class="simple-result-state" aria-live="polite">Not run yet. Tap “Run a safe test” above.</p>
+      <pre id="simpleResultOutput" class="simple-result-output">Your result will appear here automatically.</pre>
+      <p id="simpleResultHint" class="footnote">For this test, the expected answer is BRAIN-APP-OK.</p>
+    </section>
     <details class="panel compact-details"><summary>Advanced · privacy & safety</summary><p class="footnote"><strong>Privacy notice:</strong> this is a public GitHub Pages app and public repository. Browser task data stays in this browser until you send it to the relay. The in-app Run AI relay is wired to send only an opaque run ID to GitHub Actions and store task text and results in your private Supabase workspace; the private dispatch and worker execution have been verified; the app-to-task display is the remaining check. Manual workflow launches and the legacy file-triggered route can still expose content publicly: relay artifacts contain task text and AI responses, and request files can be committed to public Git history. Use only non-sensitive work descriptions; never include passwords, API keys, personal details or confidential material.</p>    </details>
     <details class="panel cloud-panel compact-details">
       <summary>Cloud sync <span class="tag">Optional account</span></summary>
