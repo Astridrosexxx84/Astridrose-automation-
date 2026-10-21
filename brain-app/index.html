@@ -15,6 +15,7 @@
     <span class="status-pill"><span class="dot"></span> Local MVP</span>
   </header>
   <main>
+    <nav class="mobile-jumpbar" aria-label="Quick navigation"><button type="button" id="jumpQueueBtn">Task queue</button><button type="button" id="jumpDetailsBtn">Handoff details</button></nav>
     <section class="intro panel">
       <div><h2>The app coordinates. The AIs take turns.</h2><p>Each worker picks up the same saved packet, does one piece of work, and hands it on. Projects stay separate.</p></div>
       <div class="actions"><button class="primary" id="runRelayTopBtn" type="button">Run AI relay</button><button id="newProjectBtn" class="primary">＋ New project</button><button id="exportBtn" class="secondary">Export backup</button><label class="button secondary" for="importFile">Import backup</label><input id="importFile" type="file" accept="application/json" hidden></div>

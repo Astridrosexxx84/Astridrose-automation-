@@ -59,3 +59,101 @@ dialog{padding:18px;max-height:88dvh;overflow:auto}dialog .actions{display:grid;
 .quick-start-button{position:relative;min-height:58px;border-radius:14px}
 #runRelayBtn{scroll-margin:24px}
 }
+
+
+/* QoL pass: put the active work first and reduce mobile scrolling friction. */
+:root {
+  --bg: #080d19;
+  --panel: #111a2b;
+  --panel2: #18253c;
+  --line: #34445f;
+  --accent: #b9c8ff;
+  --green: #91e6b5;
+}
+.panel { box-shadow: 0 5px 18px rgba(0,0,0,.12); }
+.intro, .quick-start { box-shadow: 0 8px 26px rgba(0,0,0,.16); }
+.quick-start { border-color: #607bb4; }
+.quick-start-button { min-height: 52px; padding-inline: 20px; }
+.project-card, .task-card { transition: border-color .15s ease, background .15s ease, transform .15s ease; }
+.project-card:hover, .task-card:hover { border-color: #7286b2; }
+.project-card.selected, .task-card.selected { box-shadow: inset 3px 0 0 var(--accent); }
+.task-card.selected { background: rgba(112,139,220,.19); }
+.task-status { line-height: 1.35; }
+.task-top strong { line-height: 1.35; }
+.task-card p { line-height: 1.45; }
+#taskSearch { background-image: none; }
+#packetForm label { color: #d2dcef; }
+#packetForm input, #packetForm textarea, #packetForm select { border-color: #3b4c69; }
+#packetForm textarea { line-height: 1.55; }
+.packet-panel .section-heading { position: relative; }
+.verification-panel { border-top: 1px solid var(--line); margin-top: 22px; padding-top: 18px; }
+.verification-panel h3 { margin: 0 0 8px; font-size: 1.08rem; }
+.verification-panel h4 { margin-bottom: 6px; }
+.verification-evidence { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 260px; overflow: auto; background: #0a1120; border: 1px solid var(--line); border-radius: 10px; padding: 12px; color: #d9e3fa; font: .84rem/1.55 ui-monospace,SFMono-Regular,Menlo,monospace; }
+button:active, .button:active { transform: translateY(1px); }
+@media (max-width: 760px) {
+  .topbar { padding-bottom: 10px; }
+  .topbar h1 { margin-bottom: 5px; }
+  .topbar .eyebrow { margin-bottom: 4px; }
+  .intro { padding: 14px; }
+  .quick-start { padding: 16px; }
+  .quick-start h2 { font-size: 1.2rem; }
+  .quick-start-button { width: 100%; }
+  /* Projects become a compact horizontal switcher instead of a tall wall of cards. */
+  .projects-panel { order: 1; padding: 12px; }
+  .tasks-panel { order: 0; }
+  .projects-panel .section-heading { margin-bottom: 8px; }
+  .project-list { flex-direction: row; overflow-x: auto; overscroll-behavior-x: contain; padding: 2px 2px 8px; scroll-snap-type: x proximity; }
+  .project-card { flex: 0 0 min(78vw, 280px); scroll-snap-align: start; }
+  .project-card p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .task-heading { align-items: center; }
+  .task-heading > div { min-width: 0; }
+  .task-heading h2 { font-size: 1rem; }
+  .task-filters { position: sticky; top: 64px; z-index: 3; background: var(--panel); padding: 8px 0; margin-top: -4px; }
+  .task-card { min-height: 76px; }
+  .packet-panel { scroll-margin-top: 12px; }
+  .packet-actions { position: static; }
+  .verification-panel .actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .verification-panel .actions button { min-width: 0; }
+}
+@media (max-width: 420px) {
+  .task-filters { grid-template-columns: minmax(0,1fr) minmax(105px,.72fr); gap: 7px; }
+  .task-filters label { font-size: .72rem; }
+  .task-filters input, .task-filters select { padding: 10px 8px; }
+  .task-card { padding: 12px 10px; }
+  .task-status { white-space: normal; text-align: center; max-width: 112px; }
+  .verification-panel .actions { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .project-card, .task-card, button, .button { transition: none; }
+}
+
+
+/* Mobile quick navigation: keep queue and handoff one tap apart. */
+.mobile-jumpbar { display: none; }
+@media (max-width: 760px) {
+  .mobile-jumpbar {
+    display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    gap: 8px;
+    padding: 8px 10px;
+    margin: 0 -2px 12px;
+    background: rgba(8,13,25,.96);
+    border-bottom: 1px solid var(--line);
+    backdrop-filter: blur(10px);
+  }
+  .mobile-jumpbar button {
+    flex: 1;
+    min-height: 44px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--panel2);
+    color: #edf2ff;
+    font: inherit;
+    font-weight: 650;
+  }
+  .mobile-jumpbar button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tasks-panel, .packet-panel { scroll-margin-top: 70px; }
+}
