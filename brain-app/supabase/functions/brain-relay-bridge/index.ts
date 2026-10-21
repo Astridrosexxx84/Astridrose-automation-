@@ -15,7 +15,7 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return reply({ error: "POST required" }, 405);
 
-  const bearer = (req.headers.get("Authorization") || "").replace(/^Bearer\\s+/i, "");
+  const bearer = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
   if (!bearer) return reply({ error: "GitHub Actions identity token required." }, 401);
 
   let claims: Record<string, unknown>;
