@@ -81,6 +81,10 @@
           <label class="full">What did you check, and what evidence supports the outcome?<textarea id="verificationNotes" rows="3" placeholder="e.g. Checked each acceptance criterion against the output; test X passed, Y remains missing."></textarea></label>
           <pre id="verificationEvidence" class="verification-evidence" aria-live="polite">No verification evidence recorded for this task yet.</pre>
           <div class="actions"><button id="verifyPassBtn" class="primary" type="button">Mark verified</button><button id="verifyFailBtn" class="secondary" type="button">Record failed verification</button></div>
+          <h4>Next action</h4>
+          <p class="footnote">Build a proposal from the saved goal, actual output, and verification notes. Brain will save the proposal, but will not execute it.</p>
+          <pre id="nextActionProposal" class="verification-evidence" aria-live="polite">Record a verification outcome first.</pre>
+          <div class="actions"><button id="proposeNextActionBtn" class="secondary" type="button">Propose next action</button></div>
         </section>
         <div class="actions packet-actions"><button class="primary" type="submit">Save packet</button><button id="handoffBtn" class="secondary" type="button">Hand off to next worker</button><button id="copyPacketBtn" class="secondary" type="button">Copy packet</button><button id="runRelayBtn" class="primary" type="button">Run AI workers now</button><button id="copyRelayRequestBtn" class="secondary" type="button">Copy AI relay request</button><button id="downloadRelayRequestBtn" class="secondary" type="button">Download relay request</button><label class="button secondary" for="relayResultFile">Import relay result</label><input id="relayResultFile" type="file" accept="application/json" hidden><button id="deleteTaskBtn" class="danger" type="button">Delete task</button></div>
       </form>
