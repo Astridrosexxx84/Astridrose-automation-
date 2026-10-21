@@ -230,7 +230,7 @@
       toast("A goal, output, and verification notes are required before proposing the next action.");
       return;
     }
-    const excerpt = output.replace(/\\s+/g, " ").slice(0, 240);
+    const excerpt = output.replace(/\s+/g, " ").slice(0, 240);
     task.next = task.verification.passed
       ? "PROPOSED NEXT ACTION — NOT EXECUTED. The signed-in owner marked the goal verified. Review the saved output for any broader project scope not covered by this goal; if none remains, define the next goal as a new task.\n\nEvidence basis — goal: " + goal + "\nVerified output excerpt: " + excerpt + "\nOwner's check: " + notes
       : "PROPOSED CORRECTIVE ACTION — NOT EXECUTED. Address the failed check before marking this task complete. Use the existing output as the starting point and change only what is needed to satisfy the goal.\n\nEvidence basis — goal: " + goal + "\nCurrent output excerpt: " + excerpt + "\nFailure notes: " + notes;
