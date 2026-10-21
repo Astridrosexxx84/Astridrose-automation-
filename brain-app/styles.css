@@ -157,3 +157,17 @@ button:active, .button:active { transform: translateY(1px); }
   .mobile-jumpbar button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .tasks-panel, .packet-panel { scroll-margin-top: 70px; }
 }
+
+
+/* Simple mode: first screen contains only the safe test and account access. */
+body.simple-mode .intro,
+body.simple-mode .stats,
+body.simple-mode .workspace,
+body.simple-mode .packet-panel,
+body.simple-mode .relay-status-panel,
+body.simple-mode .providers-panel { display:none !important; }
+body.simple-mode .topbar { padding-bottom:8px; }
+body.simple-mode main { max-width:720px; }
+body.simple-mode .quick-start { margin-bottom:12px; }
+body.simple-mode #showToolsBtn { width:100%; margin-top:12px; }
+body.simple-mode .cloud-panel { margin-top:12px; }

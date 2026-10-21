@@ -502,7 +502,16 @@
     const p = state.projects.find(p=>p.id===selectedProjectId); if(p)p.updatedAt=now();
     persist(); $("taskDialog").close(); render(); toast("Task added to queue.");
   });
+  $("showToolsBtn")?.addEventListener("click", () => {
+    const simple = document.body.classList.toggle("simple-mode");
+    const button = $("showToolsBtn");
+    button.textContent = simple ? "Show all tools" : "Hide extra tools";
+    button.setAttribute("aria-expanded", String(!simple));
+  });
   $("quickTestBtn").addEventListener("click", () => {
+    document.body.classList.remove("simple-mode");
+    $("showToolsBtn").textContent = "Hide extra tools";
+    $("showToolsBtn").setAttribute("aria-expanded", "true");
     const button = $("quickTestBtn");
     if (button.disabled) return;
     let project = state.projects.find(p => p.id === selectedProjectId);
