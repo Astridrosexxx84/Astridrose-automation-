@@ -145,3 +145,28 @@ jobs:
               raise SystemExit("Dashboard must show the relay artifact privacy warning.")
           print("Relay safeguard and public-artifact privacy checks passed.")
           PY
+
+      - name: Check private relay bridge security contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          bridge = Path("brain-app/supabase/functions/brain-relay-bridge/index.ts").read_text(encoding="utf-8")
+          required = [
+              'createRemoteJWKSet',
+              'issuer: "https://token.actions.githubusercontent.com"',
+              'audience: "brain-app-relay"',
+              'claims.repository !== repo',
+              'claims.ref !== "refs/heads/main"',
+              'claims.workflow_ref !== workflowRef',
+              'claims.event_name !== "workflow_dispatch"',
+              'Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")',
+              'Cache-Control": "no-store"',
+              'operation === "claim"',
+              'operation === "complete"',
+              'row.status === "succeeded" || row.status === "failed"',
+          ]
+          missing = [item for item in required if item not in bridge]
+          if missing:
+              raise SystemExit("Private relay bridge missing safeguards: " + ", ".join(missing))
+          print("Bridge source has expected GitHub OIDC, workflow-claim, private-key, and replay safeguards.")
+          PY
