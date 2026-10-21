@@ -47,8 +47,8 @@ jobs:
                   raise SystemExit(f"Core table missing from migration: {table}")
           if "enable row level security" not in schema.lower():
               raise SystemExit("Core migration does not enable row-level security")
-          if 'const recoveringMissingOutput = task.status === "complete" && !String(task.output || "").trim();' not in app:
-              raise SystemExit("Private relay recovery must backfill completed tasks whose output is empty")
+          if 'const recoveringMissingOutput = ["handed_off", "working", "complete"].includes(task.status) && !String(task.output || "").trim();' not in app:
+              raise SystemExit("Private relay recovery must backfill empty output for eligible in-flight, review, and completed tasks")
           if 'task.status = run.status === "succeeded" ? "handed_off" : "blocked";' not in app:
               raise SystemExit("Recovered successful private relay results must remain in review until verified")
           if 'Verify the returned output against the goal and acceptance criteria before marking complete.' not in app:
@@ -64,6 +64,19 @@ jobs:
               raise SystemExit("Task search must show a helpful empty state")
           if "if (!recoveringMissingOutput && Date.parse(run.finished_at || 0) < Date.parse(task.updatedAt || 0)) continue;" not in app:
               raise SystemExit("Empty-output recovery must not be blocked by a newer task sync timestamp")
+          for required in ("async function loadVerificationEvents()", "async function recordVerification(passed)", "verification_passed", "verification_failed", "await cloudClient.from(\"brain_task_events\").insert({", "await loadVerificationEvents();", "renderVerification();"):
+              if required not in app:
+                  raise SystemExit(f"Task verification flow is missing: {required}")
+          for ui_id in ("verificationNotes", "verificationEvidence", "verifyPassBtn", "verifyFailBtn", "nextActionProposal", "proposeNextActionBtn"):
+              if f'id="{ui_id}"' not in html:
+                  raise SystemExit(f"Task verification UI is missing {ui_id}")
+          for guard in ('if (!String(task.goal || "").trim())', 'if (!String(task.output || "").trim())', 'if (!notes)'):
+              if guard not in app:
+                  raise SystemExit("Verification must require goal, output, and review notes")
+          if 'task.status = passed ? "complete" : "handed_off";' not in app:
+              raise SystemExit("Only passed owner verification may mark a task complete")
+          if "function proposeNextAction()" not in app or "PROPOSED NEXT ACTION — NOT EXECUTED" not in app or "PROPOSED CORRECTIVE ACTION — NOT EXECUTED" not in app:
+              raise SystemExit("Next-action proposal must be grounded in verification and remain non-executing")
           for status in ("queued", "running", "review", "blocked", "completed"):
               if status not in schema:
                   raise SystemExit(f"Expected task status missing from database schema: {status}")
