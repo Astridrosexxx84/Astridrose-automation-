@@ -150,7 +150,7 @@ jobs:
           if not str(request.get("task", "")).strip():
               raise SystemExit("Relay request must include a non-empty task.")
           if request["provider"] not in ("auto", "openrouter", "gemini", "groq", "cloudflare"):
-              raise SystemExit("Provider must be auto, openrouter, gemini, or groq.")
+              raise SystemExit("Provider must be auto, openrouter, gemini, groq, or cloudflare.")
           if request["role"] not in ("create", "continue", "review"):
               raise SystemExit("Role must be create, continue, or review.")
           with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env:
