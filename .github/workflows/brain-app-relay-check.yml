@@ -121,6 +121,29 @@ jobs:
                   raise SystemExit("Public relay status contains unexpected provider fields.")
           print("Relay status schema and privacy checks passed.")
           PY
+      - name: Check private relay stale-run recovery
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          bridge = Path("brain-app/supabase/functions/brain-relay-bridge/index.ts").read_text(encoding="utf-8")
+          required = [
+              'select("id,owner_id").eq("id", runId).eq("status", "queued")',
+              '15 * 60 * 1000',
+              '30 * 60 * 1000',
+              '"stale_queued_run_reconciled"',
+              '"stale_running_run_reconciled"',
+              '.eq("owner_id", target.owner_id)',
+              '.eq("status", "queued")',
+              '.eq("status", "running")',
+              '.select("id,request_payload").maybeSingle()',
+          ]
+          missing = [item for item in required if item not in bridge]
+          if missing:
+              raise SystemExit("Private relay stale-run recovery missing safeguards: " + ", ".join(missing))
+          if "request_payload" in bridge[bridge.index("staleQueuedError"):bridge.index("staleRunningError")]:
+              raise SystemExit("Stale queued-run reconciliation must not read or expose task payloads.")
+          print("Private relay stale queued/running recovery checks passed.")
+          PY
       - name: Check required relay safeguards
         run: |
           python - <<'PY'

@@ -47,9 +47,32 @@ Deno.serve(async (req: Request) => {
   const operation = String(input.operation || "");
 
   if (operation === "claim") {
-    // Atomic compare-and-set: only one runner may claim a queued job.
+    // Resolve the owner without exposing task content; recovery is scoped to that owner.
+    const { data: target, error: targetError } = await db.from("brain_worker_runs")
+      .select("id,owner_id").eq("id", runId).eq("status", "queued").maybeSingle();
+    if (targetError) return reply({ error: "Could not inspect private relay job." }, 500);
+    if (!target) return reply({ error: "Private relay job is missing or already claimed." }, 409);
+
+    // Reconcile abandoned work before claiming the new run. The workflow timeout is
+    // 15 minutes, so queued jobs older than 15 minutes and running jobs older than
+    // 30 minutes cannot be healthy current executions. Only status metadata changes.
+    const timestamp = new Date().toISOString();
+    const queuedCutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    const runningCutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    const { error: staleQueuedError } = await db.from("brain_worker_runs")
+      .update({ status: "failed", error_category: "stale_queued_run_reconciled", finished_at: timestamp })
+      .eq("owner_id", target.owner_id).eq("status", "queued")
+      .lt("created_at", queuedCutoff).neq("id", runId);
+    if (staleQueuedError) return reply({ error: "Could not reconcile abandoned queued runs." }, 500);
+    const { error: staleRunningError } = await db.from("brain_worker_runs")
+      .update({ status: "failed", error_category: "stale_running_run_reconciled", finished_at: timestamp })
+      .eq("owner_id", target.owner_id).eq("status", "running")
+      .lt("started_at", runningCutoff).neq("id", runId);
+    if (staleRunningError) return reply({ error: "Could not reconcile abandoned running jobs." }, 500);
+
+    // Atomic compare-and-set: only one runner may claim the new queued job.
     const { data: row, error } = await db.from("brain_worker_runs")
-      .update({ status: "running", started_at: new Date().toISOString() })
+      .update({ status: "running", started_at: timestamp })
       .eq("id", runId).eq("status", "queued")
       .select("id,request_payload").maybeSingle();
     if (error) return reply({ error: "Could not claim private relay job." }, 500);
