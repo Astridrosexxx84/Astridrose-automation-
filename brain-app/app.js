@@ -297,17 +297,18 @@
     }
   }
   async function setupCloudAuth() {
-    const status = $("cloudStatus");
-    if (!cloudClient) {
-      setCloudStatus("Cloud sync unavailable: Supabase client did not load.", true);
-      return;
-    }
-    $("authForm").addEventListener("submit", async e => {
+    const authForm = $("authForm");
+    authForm.addEventListener("submit", async e => {
       e.preventDefault();
+      if (!cloudClient) {
+        setCloudStatus("Cloud sign-in is unavailable because the Supabase library did not load. Check your connection and reload this page.", true);
+        return;
+      }
       const email = $("authEmail").value.trim();
       const password = $("authPassword").value;
       const action = e.submitter?.value || "signin";
-      $("authSubmit").disabled = true;
+      const buttons = [$("authSubmit"), $("authSignupBtn")];
+      buttons.forEach(button => button.disabled = true);
       try {
         const result = action === "signup"
           ? await cloudClient.auth.signUp({email,password})
@@ -320,21 +321,38 @@
           setAuthUI();
         }
       } catch (err) {
-        setCloudStatus("Sign-in failed: " + (err.message || "unknown error"), true);
-      } finally { $("authSubmit").disabled = false; }
+        setCloudStatus((action === "signup" ? "Account creation failed: " : "Sign-in failed: ") + (err.message || "unknown error"), true);
+      } finally { buttons.forEach(button => button.disabled = false); }
     });
     $("signOutBtn").addEventListener("click", async () => {
-      const {error} = await cloudClient.auth.signOut();
-      if (error) { setCloudStatus("Could not sign out: " + error.message, true); return; }
-      cloudUser = null; cloudReady = false; setAuthUI(); setCloudStatus("Signed out · workspace remains on this device");
+      if (!cloudClient) {
+        setCloudStatus("Cloud sign-out is unavailable because the Supabase library did not load. Reload the page and try again.", true);
+        return;
+      }
+      $("signOutBtn").disabled = true;
+      try {
+        const {error} = await cloudClient.auth.signOut();
+        if (error) throw error;
+        cloudUser = null; cloudReady = false; setAuthUI(); setCloudStatus("Signed out · workspace remains on this device");
+      } catch (err) {
+        setCloudStatus("Could not sign out: " + (err.message || "unknown error"), true);
+      } finally { $("signOutBtn").disabled = false; }
     });
+    if (!cloudClient) {
+      setCloudStatus("Cloud sync unavailable: the Supabase library did not load. Sign-in controls will explain the problem if tapped; check your connection and reload.", true);
+      return;
+    }
     cloudClient.auth.onAuthStateChange((_event, session) => {
       cloudUser = session?.user || null;
       setAuthUI();
       if (cloudUser && !cloudReady) setTimeout(() => mergeCloudWorkspace(), 0);
       if (!cloudUser) { cloudReady = false; setCloudStatus("Not signed in · this device only"); }
     });
-    const {data} = await cloudClient.auth.getSession();
+    const {data, error} = await cloudClient.auth.getSession();
+    if (error) {
+      setCloudStatus("Cloud session check failed: " + (error.message || "unknown error"), true);
+      return;
+    }
     cloudUser = data.session?.user || null;
     setAuthUI();
     if (cloudUser) await mergeCloudWorkspace();
