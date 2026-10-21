@@ -49,6 +49,15 @@ jobs:
                   raise SystemExit(f"Core table missing from migration: {table}")
           if "enable row level security" not in schema.lower():
               raise SystemExit("Core migration does not enable row-level security")
+          active_run_migration = Path("brain-app/supabase/migrations/0003_one_active_run_per_task.sql").read_text(encoding="utf-8")
+          if "create unique index if not exists brain_worker_runs_one_active_per_task_idx" not in active_run_migration:
+              raise SystemExit("Database contract must prevent concurrent active runs for one task")
+          if "where status in ('queued', 'running')" not in active_run_migration:
+              raise SystemExit("Active-run uniqueness must cover queued and running attempts only")
+          dispatcher = Path("brain-app/supabase/functions/dispatch-brain-relay/index.ts").read_text(encoding="utf-8")
+          for guard in ('"stale_queued_run_reconciled"', '"stale_running_run_reconciled"', 'in("status", ["queued", "running"])', 'runError?.code === "23505"', '}, 409)'):
+              if guard not in dispatcher:
+                  raise SystemExit("Dispatcher must reconcile stale runs and reject concurrent attempts: " + guard)
           if 'const recoveringMissingOutput = ["handed_off", "working", "complete"].includes(task.status) && !String(task.output || "").trim();' not in app:
               raise SystemExit("Private relay recovery must backfill empty output for eligible in-flight, review, and completed tasks")
           if 'task.status = run.status === "succeeded" ? "handed_off" : "blocked";' not in app:
