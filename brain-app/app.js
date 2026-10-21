@@ -120,6 +120,106 @@
     return changed;
   }
 
+  async function loadVerificationEvents() {
+    if (!cloudClient || !cloudUser) return;
+    const { data, error } = await cloudClient.from("brain_task_events")
+      .select("id,task_id,event_type,details,created_at")
+      .in("event_type", ["verification_passed", "verification_failed"])
+      .order("created_at", {ascending:false}).limit(100);
+    if (error) throw error;
+    const latest = new Map();
+    for (const event of data || []) {
+      if (!latest.has(event.task_id)) latest.set(event.task_id, event);
+    }
+    for (const task of state.tasks) {
+      const event = latest.get(task.id);
+      if (!event) continue;
+      const details = event.details || {};
+      task.verification = {
+        passed: event.event_type === "verification_passed",
+        notes: String(details.notes || ""),
+        criteria: String(details.acceptance_criteria || ""),
+        at: event.created_at,
+        reviewer: String(details.reviewer || "Signed-in owner"),
+        source: String(details.source || "Brain App")
+      };
+    }
+  }
+
+  async function recordVerification(passed) {
+    const task = currentTask();
+    if (!task) return;
+    if (!cloudClient || !cloudUser || !cloudReady) {
+      toast("Sign in and wait for cloud sync before recording durable verification.");
+      return;
+    }
+    const notes = $("verificationNotes").value.trim();
+    if (!String(task.goal || "").trim()) {
+      toast("Add the goal / acceptance criteria before verifying.");
+      $("taskGoal").focus();
+      return;
+    }
+    if (!String(task.output || "").trim()) {
+      toast("There is no output to verify yet.");
+      $("taskOutput").focus();
+      return;
+    }
+    if (!notes) {
+      toast("Add a short note describing what you checked.");
+      $("verificationNotes").focus();
+      return;
+    }
+    const timestamp = now();
+    const eventType = passed ? "verification_passed" : "verification_failed";
+    const details = {
+      acceptance_criteria: task.goal,
+      notes,
+      output_present: true,
+      outcome: passed ? "pass" : "fail",
+      reviewer: "signed-in owner",
+      source: "brain-app-verification-ui",
+      verified_at: timestamp
+    };
+    const buttonIds = ["verifyPassBtn", "verifyFailBtn"];
+    buttonIds.forEach(id => $(id).disabled = true);
+    try {
+      const { error } = await cloudClient.from("brain_task_events").insert({
+        owner_id: cloudUser.id,
+        task_id: task.id,
+        event_type: eventType,
+        details
+      });
+      if (error) throw error;
+      task.verification = {passed, notes, criteria:task.goal, at:timestamp, reviewer:"Signed-in owner", source:"Brain App"};
+      task.status = passed ? "complete" : "handed_off";
+      task.next = passed
+        ? "Verified against the stated goal by the signed-in owner. Choose the next goal."
+        : "Verification failed. Address the recorded gap, update the output, then verify again.";
+      task.updatedAt = timestamp;
+      persist();
+      render();
+      renderVerification();
+      setCloudStatus("Verification evidence saved privately to this task.");
+      toast(passed ? "Verified and saved privately." : "Failure recorded privately; task remains open.");
+    } catch (error) {
+      setCloudStatus("Could not save verification evidence: " + (error.message || "unknown error"), true);
+      toast("Verification was not saved. Check cloud sync and retry.");
+    } finally {
+      buttonIds.forEach(id => $(id).disabled = false);
+    }
+  }
+
+  function renderVerification() {
+    const task = currentTask();
+    const evidence = task?.verification;
+    $("verificationNotes").value = evidence?.notes || "";
+    $("verificationEvidence").textContent = evidence
+      ? (evidence.passed ? "PASS" : "FAIL") + " · " + new Date(evidence.at).toLocaleString() + " · " + evidence.reviewer + "\nCriteria: " + evidence.criteria + "\nChecked: " + evidence.notes
+      : "No verification evidence recorded for this task yet.";
+    $("verifyPassBtn").disabled = !task;
+    $("verifyFailBtn").disabled = !task;
+  }
+
   async function mergeCloudWorkspace() {
     if (!cloudClient || !cloudUser) return;
     syncingCloud = true;
@@ -140,6 +240,7 @@
       state.tasks = state.tasks.filter(t=>validProjects.has(t.projectId));
       // Recover completed private relay outputs even if the app was closed while workers ran.
       await applyPrivateRelayResults();
+      await loadVerificationEvents();
       // Persist the merged view locally before uploading any locally-only records.
       try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (_) {}
       syncingCloud = false;
@@ -279,6 +380,7 @@
       $("taskList").innerHTML = visibleTasks.length ? visibleTasks.map(t => `<button type="button" class="task-card ${t.id===selectedTaskId?"selected":""}" data-task="${esc(t.id)}"><span class="task-top"><strong>${esc(t.name)}</strong><span class="task-status status-${esc(t.status)}">${esc(statuses[t.status]||t.status)}</span></span><p>Next: ${esc(t.nextWorker || "Unassigned")} · ${esc(t.next || "No next action recorded")}</p></button>`).join("") : tasks.length ? '<div class="empty">No tasks match. Try another search or status.</div>' : '<div class="empty">Queue is empty. Add a specific task.</div>';
     }
     renderPacket();
+    renderVerification();
   }
   function renderPacket() {
     const t = currentTask();
@@ -390,6 +492,8 @@
     selectedTaskId = btn.dataset.task; render();
   });
   $("packetForm").addEventListener("submit", e => { e.preventDefault(); savePacket(); });
+  $("verifyPassBtn").addEventListener("click", () => recordVerification(true));
+  $("verifyFailBtn").addEventListener("click", () => recordVerification(false));
   $("handoffBtn").addEventListener("click", () => {
     if (!savePacket(false)) return;
     const t = currentTask();
