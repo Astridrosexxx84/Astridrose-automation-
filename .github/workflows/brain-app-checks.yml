@@ -60,6 +60,13 @@ jobs:
                   raise SystemExit("Dispatcher must reconcile stale runs and reject concurrent attempts: " + guard)
           if 'const recoveringMissingOutput = ["handed_off", "working", "complete"].includes(task.status) && !String(task.output || "").trim();' not in app:
               raise SystemExit("Private relay recovery must backfill empty output for eligible in-flight, review, and completed tasks")
+          recovery = app.split("async function applyPrivateRelayResults()", 1)[1].split("async function loadVerificationEvents()", 1)[0]
+          if "const recoverableTaskIds = recoverableTasks.map(task => task.id);" not in recovery:
+              raise SystemExit("Private relay recovery must scope result lookup to tasks needing recovery")
+          if '.in("task_id", recoverableTaskIds)' not in recovery:
+              raise SystemExit("Private relay recovery must query all results for the affected task IDs")
+          if ".limit(30)" in recovery:
+              raise SystemExit("Private relay recovery must not silently drop results beyond a global latest-30 limit")
           if 'task.status = run.status === "succeeded" ? "handed_off" : "blocked";' not in app:
               raise SystemExit("Recovered successful private relay results must remain in review until verified")
           if 'Verify the returned output against the goal and acceptance criteria before marking complete.' not in app:
