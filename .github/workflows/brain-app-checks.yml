@@ -49,6 +49,10 @@ jobs:
               raise SystemExit("Core migration does not enable row-level security")
           if 'const recoveringMissingOutput = task.status === "complete" && !String(task.output || "").trim();' not in app:
               raise SystemExit("Private relay recovery must backfill completed tasks whose output is empty")
+          if 'task.status = run.status === "succeeded" ? "handed_off" : "blocked";' not in app:
+              raise SystemExit("Recovered successful private relay results must remain in review until verified")
+          if 'Verify the returned output against the goal and acceptance criteria before marking complete.' not in app:
+              raise SystemExit("Recovered successful results must request acceptance-criteria verification")
           for ui_id in ("taskSearch", "taskStatusFilter", "taskCount"):
               if f'id="{ui_id}"' not in html:
                   raise SystemExit(f"Task filter UI is missing {ui_id}")
