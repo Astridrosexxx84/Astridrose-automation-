@@ -27,7 +27,7 @@
       <p class="footnote">Uses a made-up prompt only. Never enter passwords, API keys or private information.</p>
       <p id="quickTestStatus" class="quick-test-status" aria-live="polite">Step 1 of 3 · Create a sample task</p>
     </section>
-    <details class="panel compact-details"><summary>Advanced · privacy & safety</summary><p class="footnote"><strong>Privacy notice:</strong> this is a public GitHub Pages app and public repository. Browser task data stays in this browser until you send it to the relay. The in-app Run AI relay is wired to send only an opaque run ID to GitHub Actions and store task text and results in your private Supabase workspace; its complete live flow still needs a real app test. Manual workflow launches and the legacy file-triggered route can still expose content publicly: relay artifacts contain task text and AI responses, and request files can be committed to public Git history. Use only non-sensitive work descriptions; never include passwords, API keys, personal details or confidential material.</p>    </details>
+    <details class="panel compact-details"><summary>Advanced · privacy & safety</summary><p class="footnote"><strong>Privacy notice:</strong> this is a public GitHub Pages app and public repository. Browser task data stays in this browser until you send it to the relay. The in-app Run AI relay is wired to send only an opaque run ID to GitHub Actions and store task text and results in your private Supabase workspace; the private dispatch and worker execution have been verified; the app-to-task display is the remaining check. Manual workflow launches and the legacy file-triggered route can still expose content publicly: relay artifacts contain task text and AI responses, and request files can be committed to public Git history. Use only non-sensitive work descriptions; never include passwords, API keys, personal details or confidential material.</p>    </details>
     <details class="panel cloud-panel compact-details">
       <summary>Cloud sync <span class="tag">Optional account</span></summary>
 
@@ -109,6 +109,6 @@
   </dialog>
   <div id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js?v=private-relay-2"></script>
+  <script src="app.js?v=mobile-qol-1"></script>
 </body>
 </html>
