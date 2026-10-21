@@ -217,4 +217,24 @@ jobs:
           if missing:
               raise SystemExit("Private relay bridge missing safeguards: " + ", ".join(missing))
           print("Bridge source has expected GitHub OIDC, workflow-claim, private-key, and replay safeguards.")
+
+      - name: Check cloud sync preserves concurrent relay result updates
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          app = Path("brain-app/app.js").read_text(encoding="utf-8")
+          required = [
+              "let cloudSyncPending = false;",
+              "if (syncingCloud) {",
+              "cloudSyncPending = true;",
+              "if (cloudSyncPending && cloudReady)",
+              "cloudSyncPending = false;",
+              "scheduleCloudSync();",
+          ]
+          missing = [item for item in required if item not in app]
+          if missing:
+              raise SystemExit("Cloud sync can drop concurrent relay updates: " + ", ".join(missing))
+          print("Concurrent cloud writes queue a follow-up sync so relay results are not silently lost.")
+          PY
           PY
