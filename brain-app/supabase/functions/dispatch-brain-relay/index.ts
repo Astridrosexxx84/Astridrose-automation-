@@ -36,7 +36,7 @@ Deno.serve(async (req: Request) => {
   if (!task || !taskId) return reply({ error: "A task description and saved task ID are required for private dispatch." }, 400);
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(taskId)) return reply({ error: "Invalid task ID." }, 400);
   if (task.length > 8000 || priorPacket.length > 20000) return reply({ error: "Task packet is too large. Shorten the task/context and retry." }, 413);
-  if (!["auto", "openrouter", "gemini", "groq"].includes(provider)) return reply({ error: "Unsupported provider." }, 400);
+  if (!["auto", "openrouter", "gemini", "groq", "cloudflare"].includes(provider)) return reply({ error: "Unsupported provider." }, 400);
   if (!["create", "continue", "review"].includes(role)) return reply({ error: "Unsupported worker role." }, 400);
 
   // RLS ensures the signed-in owner can only dispatch a task they own.
