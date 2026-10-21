@@ -64,6 +64,17 @@ jobs:
               raise SystemExit("Task search must show a helpful empty state")
           if "if (!recoveringMissingOutput && Date.parse(run.finished_at || 0) < Date.parse(task.updatedAt || 0)) continue;" not in app:
               raise SystemExit("Empty-output recovery must not be blocked by a newer task sync timestamp")
+          for required in ("async function loadVerificationEvents()", "async function recordVerification(passed)", "verification_passed", "verification_failed", "await cloudClient.from(\"brain_task_events\").insert({", "await loadVerificationEvents();", "renderVerification();"):
+              if required not in app:
+                  raise SystemExit(f"Task verification flow is missing: {required}")
+          for ui_id in ("verificationNotes", "verificationEvidence", "verifyPassBtn", "verifyFailBtn"):
+              if f'id="{ui_id}"' not in html:
+                  raise SystemExit(f"Task verification UI is missing {ui_id}")
+          for guard in ('if (!String(task.goal || "").trim())', 'if (!String(task.output || "").trim())', 'if (!notes)'):
+              if guard not in app:
+                  raise SystemExit("Verification must require goal, output, and review notes")
+          if 'task.status = passed ? "complete" : "handed_off";' not in app:
+              raise SystemExit("Only passed owner verification may mark a task complete")
           for status in ("queued", "running", "review", "blocked", "completed"):
               if status not in schema:
                   raise SystemExit(f"Expected task status missing from database schema: {status}")
