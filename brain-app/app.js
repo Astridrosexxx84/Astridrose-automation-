@@ -512,6 +512,15 @@
       $("quickTestStatus").textContent = "Step 3 of 3 · Follow the task status below. Your result should appear on this task.";
     }, 1200);
   });
+  // Mobile quick navigation keeps the two most-used work areas one tap apart.
+  $("jumpQueueBtn")?.addEventListener("click", () => {
+    document.querySelector(".tasks-panel")?.scrollIntoView({behavior:"smooth",block:"start"});
+    $("taskSearch")?.focus({preventScroll:true});
+  });
+  $("jumpDetailsBtn")?.addEventListener("click", () => {
+    document.querySelector(".packet-panel")?.scrollIntoView({behavior:"smooth",block:"start"});
+    if (currentTask()) $("taskOutput")?.focus({preventScroll:true});
+  });
   $("projectList").addEventListener("click", e => {
     const btn = e.target.closest("[data-project]"); if (!btn) return;
     // Save the current editor before changing projects, just as task switching does.
