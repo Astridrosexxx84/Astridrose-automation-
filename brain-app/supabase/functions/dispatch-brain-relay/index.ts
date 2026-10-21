@@ -46,6 +46,35 @@ Deno.serve(async (req: Request) => {
   if (!ownedTask) return reply({ error: "This task is not saved to your private cloud workspace yet. Sync and retry." }, 403);
   if (projectId && ownedTask.project_id && projectId !== ownedTask.project_id) return reply({ error: "Task/project mismatch." }, 400);
 
+  // Enforce one authoritative execution at a time per task. Reconcile only
+  // abandoned runs for this owner/task before checking for an active attempt.
+  const now = new Date();
+  const queuedCutoff = new Date(now.getTime() - 15 * 60 * 1000).toISOString();
+  const runningCutoff = new Date(now.getTime() - 30 * 60 * 1000).toISOString();
+  const timestamp = now.toISOString();
+  const { error: staleQueuedError } = await supabase.from("brain_worker_runs")
+    .update({ status: "failed", error_category: "stale_queued_run_reconciled", finished_at: timestamp })
+    .eq("owner_id", user.id).eq("task_id", taskId).eq("status", "queued")
+    .lt("created_at", queuedCutoff);
+  if (staleQueuedError) return reply({ error: "Could not reconcile an abandoned task run. No new run was dispatched." }, 500);
+  const { error: staleRunningError } = await supabase.from("brain_worker_runs")
+    .update({ status: "failed", error_category: "stale_running_run_reconciled", finished_at: timestamp })
+    .eq("owner_id", user.id).eq("task_id", taskId).eq("status", "running")
+    .lt("started_at", runningCutoff);
+  if (staleRunningError) return reply({ error: "Could not reconcile an abandoned task run. No new run was dispatched." }, 500);
+
+  const { data: activeRun, error: activeRunError } = await supabase.from("brain_worker_runs")
+    .select("id,status").eq("owner_id", user.id).eq("task_id", taskId)
+    .in("status", ["queued", "running"]).maybeSingle();
+  if (activeRunError) return reply({ error: "Could not check whether this task already has an active run." }, 500);
+  if (activeRun) {
+    return reply({
+      error: "This task already has a worker run in progress. Wait for it to finish before starting another.",
+      active_run_id: activeRun.id,
+      active_status: activeRun.status
+    }, 409);
+  }
+
   const { data: workerRun, error: runError } = await supabase.from("brain_worker_runs").insert({
     owner_id: user.id,
     task_id: taskId,
@@ -53,7 +82,12 @@ Deno.serve(async (req: Request) => {
     status: "queued",
     request_payload: { task, task_id: taskId, project_id: ownedTask.project_id || projectId, provider, role, prior_packet: priorPacket, next_worker: nextWorker }
   }).select("id").single();
-  if (runError || !workerRun) return reply({ error: "Could not save a private relay request. Nothing was dispatched." }, 500);
+  if (runError || !workerRun) {
+    if (runError?.code === "23505") {
+      return reply({ error: "This task already has a worker run in progress. Wait for it to finish before starting another." }, 409);
+    }
+    return reply({ error: "Could not save a private relay request. Nothing was dispatched." }, 500);
+  }
 
   const owner = "Astridrosexxx84";
   const repo = "Astridrose-automation-";
