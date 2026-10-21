@@ -96,8 +96,13 @@
     let changed = false;
     for (const run of runs || []) {
       const task = state.tasks.find(item => item.id === run.task_id);
-      if (!task || !["handed_off", "working"].includes(task.status)) continue;
-      if (Date.parse(run.finished_at || 0) < Date.parse(task.updatedAt || 0)) continue;
+      if (!task) continue;
+      // A completed task can still be missing its output if an earlier cloud sync
+      // persisted the status before the relay result. Recover that result even if
+      // the task's sync timestamp is newer than the worker run's finish timestamp.
+      const recoveringMissingOutput = task.status === "complete" && !String(task.output || "").trim();
+      if (!["handed_off", "working"].includes(task.status) && !recoveringMissingOutput) continue;
+      if (!recoveringMissingOutput && Date.parse(run.finished_at || 0) < Date.parse(task.updatedAt || 0)) continue;
       const packet = run.response_payload || {};
       const turns = Array.isArray(packet.turns) ? packet.turns : [];
       const outputs = turns.filter(turn => turn?.outcome === "success" && turn?.worker_output)
