@@ -370,17 +370,49 @@
         }
       });
       if (error) throw error;
+      if (!data?.run_id) throw new Error("Private relay dispatch returned no run ID; no result can be tracked safely.");
       relayDispatchedAt = Date.now();
       t.status = "handed_off";
       t.worker = t.worker || "Brain App relay";
-      t.next = "Relay dispatch accepted at " + now() + ". Waiting for the workflow result; then import its relay artifact.";
+      t.next = "Private relay accepted at " + now() + ". Waiting for the result to return automatically.";
       t.updatedAt = now();
       persist(); render();
-      toast("Dispatch accepted. Waiting for the AI workers to finish.");
+      toast("Private dispatch accepted. Results will return automatically.");
       // Keep the user in Brain App and make the next state visible immediately.
       const statusPanel = document.querySelector(".relay-status-panel");
       if (statusPanel) statusPanel.scrollIntoView({behavior:"smooth",block:"start"});
       refreshRelayStatus();
+      // Poll the owner-protected worker-run row; result text never travels through public artifacts.
+      const privateRunId = data.run_id;
+      let privatePolls = 0;
+      const pollPrivateResult = async () => {
+        if (!cloudClient || !cloudUser || privatePolls++ >= 180) return;
+        try {
+          const { data: run, error: runError } = await cloudClient.from("brain_worker_runs")
+            .select("status,response_payload,error_category,finished_at")
+            .eq("id", privateRunId).maybeSingle();
+          if (runError) throw runError;
+          if (run?.status === "succeeded" || run?.status === "failed") {
+            const packet = run.response_payload || {};
+            const turns = Array.isArray(packet.turns) ? packet.turns : [];
+            const outputs = turns.filter(turn => turn?.outcome === "success" && turn?.worker_output)
+              .map(turn => "**" + String(turn.provider || "AI worker") + "**\\n" + String(turn.worker_output));
+            t.output = outputs.join("\\n\\n") || (run.error_category ? "Relay failed: " + run.error_category : "Relay finished without a usable output.");
+            t.status = run.status === "succeeded" ? "complete" : "blocked";
+            t.next = String(packet.next_action || (run.status === "succeeded" ? "Review the returned AI output and choose the next task." : "Check the relay error and retry when ready."));
+            t.worker = "Private AI relay";
+            t.updatedAt = now();
+            persist(); render();
+            await syncLocalToCloud().catch(() => {});
+            toast(run.status === "succeeded" ? "Private relay result received and saved." : "Private relay finished with an error. Check the task result.");
+            return;
+          }
+        } catch (pollError) {
+          console.warn("Private relay result polling paused:", pollError?.message || "request failed");
+        }
+        setTimeout(pollPrivateResult, 8000);
+      };
+      setTimeout(pollPrivateResult, 5000);
       // The published status file updates only after the workflow finishes. Check
       // briefly in the background so the user doesn't mistake the previous run
       // for the result of the request they just sent.
