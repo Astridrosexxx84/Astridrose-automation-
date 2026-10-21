@@ -1,6 +1,6 @@
 "use strict";
-const CACHE = "brain-app-shell-v9";
-const FILES = ["./", "./index.html", "./styles.css", "./app.js?v=mobile-qol-1", "./manifest.webmanifest"];
+const CACHE = "brain-app-shell-v10";
+const FILES = ["./", "./index.html", "./styles.css", "./app.js?v=private-result-recovery-2", "./manifest.webmanifest"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)).then(() => self.skipWaiting()));
 });
