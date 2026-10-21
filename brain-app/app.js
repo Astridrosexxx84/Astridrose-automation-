@@ -400,6 +400,45 @@
   }
   function projectTasks(projectId) { return state.tasks.filter(t => t.projectId === projectId); }
   function currentTask() { return state.tasks.find(t => t.id === selectedTaskId && t.projectId === selectedProjectId); }
+  function renderSimpleResult() {
+    const task = state.tasks
+      .filter(item => item.name === "Brain connection check" && String(item.goal || "").includes("BRAIN-APP-OK"))
+      .sort((a, b) => Date.parse(b.updatedAt || b.createdAt || 0) - Date.parse(a.updatedAt || a.createdAt || 0))[0];
+    const stateEl = $("simpleResultState");
+    const outputEl = $("simpleResultOutput");
+    const hintEl = $("simpleResultHint");
+    if (!stateEl || !outputEl || !hintEl) return;
+    if (!task) {
+      stateEl.textContent = "Not run yet. Tap “Run a safe test” above.";
+      stateEl.className = "simple-result-state";
+      outputEl.textContent = "Your result will appear here automatically.";
+      hintEl.textContent = "For this test, the expected answer is BRAIN-APP-OK.";
+      return;
+    }
+    const output = String(task.output || "").trim();
+    const expectedFound = output.includes("BRAIN-APP-OK");
+    if (task.status === "blocked") {
+      stateEl.textContent = "The test hit a problem.";
+      stateEl.className = "simple-result-state is-error";
+    } else if (expectedFound) {
+      stateEl.textContent = "Test succeeded — the expected answer arrived.";
+      stateEl.className = "simple-result-state is-success";
+    } else if (output) {
+      stateEl.textContent = "Result received — the expected answer was not found.";
+      stateEl.className = "simple-result-state is-error";
+    } else if (task.status === "handed_off" || task.status === "working") {
+      stateEl.textContent = "Test sent. Waiting for the answer…";
+      stateEl.className = "simple-result-state is-working";
+    } else {
+      stateEl.textContent = "Test is ready. Tap “Run a safe test” above.";
+      stateEl.className = "simple-result-state";
+    }
+    outputEl.textContent = output || "No answer yet. Keep this page open; the result should appear here automatically.";
+    hintEl.textContent = expectedFound
+      ? "The AI returned the exact phrase requested. This confirms the safe test responded; it does not verify all of Vision."
+      : "Expected answer: BRAIN-APP-OK. You do not need to open the task queue or technical tools.";
+  }
+
   function render() {
     if (!state.projects.some(p => p.id === selectedProjectId)) selectedProjectId = state.projects[0]?.id || null;
     if (!state.tasks.some(t => t.id === selectedTaskId && t.projectId === selectedProjectId)) {
@@ -433,6 +472,7 @@
     }
     renderPacket();
     renderVerification();
+    renderSimpleResult();
   }
   function renderPacket() {
     const t = currentTask();
@@ -509,9 +549,6 @@
     button.setAttribute("aria-expanded", String(!simple));
   });
   $("quickTestBtn").addEventListener("click", () => {
-    document.body.classList.remove("simple-mode");
-    $("showToolsBtn").textContent = "Hide extra tools";
-    $("showToolsBtn").setAttribute("aria-expanded", "true");
     const button = $("quickTestBtn");
     if (button.disabled) return;
     let project = state.projects.find(p => p.id === selectedProjectId);
@@ -528,15 +565,16 @@
     }
     selectedTaskId = task.id;
     persist(); render();
-    $("quickTestStatus").textContent = "Step 2 of 3 · Sample task ready. Confirm to start the private AI workers.";
+    $("quickTestStatus").textContent = "Starting the safe test… your answer will appear below.";
     button.disabled = true;
     button.textContent = "Starting your test…";
-    $("runRelayBtn").scrollIntoView({behavior:"smooth",block:"center"});
     $("runRelayBtn").click();
     setTimeout(() => {
       button.disabled = false;
-      button.textContent = "▶ Run another safe test";
-      $("quickTestStatus").textContent = "Step 3 of 3 · Follow the task status below. Your result should appear on this task.";
+      button.textContent = "▶ Run a safe test again";
+      if (!$("simpleResultOutput").textContent.trim() || $("simpleResultOutput").textContent.includes("No answer yet")) {
+        $("quickTestStatus").textContent = "Test started. Waiting for the answer in “Your test result” below.";
+      }
     }, 1200);
   });
   // Mobile quick navigation keeps the two most-used work areas one tap apart.
