@@ -33,10 +33,13 @@ def main():
         raise SystemExit("Task goal is required.")
     if selected == "auto":
         order = list(PROVIDERS)
+    elif selected == "cloudflare":
+        # Explicit selection only: don't consume Workers AI quota during default auto runs.
+        order = ["cloudflare"]
     elif selected in PROVIDERS:
         order = [selected] + [p for p in PROVIDERS if p != selected]
     else:
-        raise SystemExit("Provider must be auto, openrouter, groq, or gemini.")
+        raise SystemExit("Provider must be auto, openrouter, groq, gemini, or cloudflare.")
 
     turns = []
     successful_packet = prior
@@ -56,7 +59,8 @@ def main():
                 output_path.unlink()
             except FileNotFoundError:
                 pass
-        completed = subprocess.run([sys.executable, "brain_relay_worker.py"], env=env, check=False)
+        worker_script = "brain_cloudflare_worker.py" if provider == "cloudflare" else "brain_relay_worker.py"
+        completed = subprocess.run([sys.executable, worker_script], env=env, check=False)
         record = read_json(PACKET_JSON)
         if not record or record.get("provider") != provider:
             record = {
