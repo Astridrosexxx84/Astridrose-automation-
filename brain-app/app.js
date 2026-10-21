@@ -358,6 +358,7 @@
     button.disabled = true;
     button.textContent = "Starting workers…";
     try {
+      await syncLocalToCloud();
       const { data, error } = await cloudClient.functions.invoke("dispatch-brain-relay", {
         body: {
           task: "Brain App task: " + (t.name || "Untitled task") + "\n\nGoal: " + (t.goal || "(not set)"),
