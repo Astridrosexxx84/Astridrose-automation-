@@ -183,6 +183,14 @@
     const buttonIds = ["verifyPassBtn", "verifyFailBtn"];
     buttonIds.forEach(id => $(id).disabled = true);
     try {
+      // Ensure the task and project exist remotely before writing an event with a
+      // foreign key to the task. This also covers a brand-new local-only task.
+      const project = state.projects.find(item => item.id === task.projectId);
+      if (!project) throw new Error("Task project is missing; save or restore the project first.");
+      const { error: projectError } = await cloudClient.from("brain_projects").upsert(toRemoteProject(project), {onConflict:"id"});
+      if (projectError) throw projectError;
+      const { error: taskError } = await cloudClient.from("brain_tasks").upsert(toRemoteTask(task), {onConflict:"id"});
+      if (taskError) throw taskError;
       const { error } = await cloudClient.from("brain_task_events").insert({
         owner_id: cloudUser.id,
         task_id: task.id,
