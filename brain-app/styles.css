@@ -171,3 +171,25 @@ body.simple-mode main { max-width:720px; }
 body.simple-mode .quick-start { margin-bottom:12px; }
 body.simple-mode #showToolsBtn { width:100%; margin-top:12px; }
 body.simple-mode .cloud-panel { margin-top:12px; }
+
+
+/* Keep the first-run path focused on one action and one plain-language result. */
+body.simple-mode .topbar .eyebrow,
+body.simple-mode .topbar .subhead,
+body.simple-mode .topbar .status-pill,
+body.simple-mode .compact-details { display:none !important; }
+body.simple-mode .topbar { justify-content:flex-start; padding-top:18px; padding-bottom:4px; }
+body.simple-mode .topbar h1 { font-size:clamp(1.8rem,7vw,2.3rem); margin:0; }
+body.simple-mode main { padding-top:8px; }
+body.simple-mode .quick-start { margin-top:0; }
+body.simple-mode .quick-start .eyebrow { display:none; }
+body.simple-mode .quick-start h2 { font-size:1.25rem; }
+body.simple-mode .quick-start .footnote { margin-top:10px; }
+body.simple-mode .quick-test-status { color:var(--muted); }
+body.simple-mode .simple-result { margin-top:12px; }
+.simple-result h2 { margin-bottom:8px; }
+.simple-result-state { font-size:1rem; font-weight:800; margin-bottom:10px; }
+.simple-result-state.is-success { color:var(--green); }
+.simple-result-state.is-error { color:var(--red); }
+.simple-result-state.is-working { color:var(--amber); }
+.simple-result-output { white-space:pre-wrap; overflow-wrap:anywhere; font:inherit; font-size:.92rem; line-height:1.5; color:var(--text); background:rgba(5,10,20,.45); border:1px solid var(--line); border-radius:10px; padding:12px; margin:0; max-height:260px; overflow:auto; }
