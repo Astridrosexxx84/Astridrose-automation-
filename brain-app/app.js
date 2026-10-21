@@ -69,6 +69,35 @@
       setCloudStatus("Cloud sync connected · saved to this device and Supabase");
     } finally { syncingCloud = false; }
   }
+  async function applyPrivateRelayResults() {
+    if (!cloudClient || !cloudUser || !state.tasks.length) return false;
+    const { data: runs, error } = await cloudClient.from("brain_worker_runs")
+      .select("id,task_id,status,response_payload,error_category,finished_at")
+      .in("status", ["succeeded", "failed"])
+      .order("finished_at", {ascending:false}).limit(30);
+    if (error) throw error;
+    let changed = false;
+    for (const run of runs || []) {
+      const task = state.tasks.find(item => item.id === run.task_id);
+      if (!task || !["handed_off", "working"].includes(task.status)) continue;
+      if (Date.parse(run.finished_at || 0) < Date.parse(task.updatedAt || 0)) continue;
+      const packet = run.response_payload || {};
+      const turns = Array.isArray(packet.turns) ? packet.turns : [];
+      const outputs = turns.filter(turn => turn?.outcome === "success" && turn?.worker_output)
+        .map(turn => "**" + String(turn.provider || "AI worker") + "**\\n" + String(turn.worker_output));
+      task.output = outputs.join("\\n\\n") || (run.error_category ? "Relay failed: " + run.error_category : "Relay finished without a usable output.");
+      task.status = run.status === "succeeded" ? "complete" : "blocked";
+      task.next = String(packet.next_action || (run.status === "succeeded" ? "Review the returned AI output and choose the next task." : "Check the relay error and retry when ready."));
+      task.worker = "Private AI relay";
+      task.updatedAt = run.finished_at || now();
+      changed = true;
+    }
+    if (changed) {
+      try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (_) {}
+    }
+    return changed;
+  }
+
   async function mergeCloudWorkspace() {
     if (!cloudClient || !cloudUser) return;
     syncingCloud = true;
@@ -87,6 +116,8 @@
       state.tasks = mergeByFreshness(state.tasks, remoteTasks);
       const validProjects = new Set(state.projects.map(p=>p.id));
       state.tasks = state.tasks.filter(t=>validProjects.has(t.projectId));
+      // Recover completed private relay outputs even if the app was closed while workers ran.
+      await applyPrivateRelayResults();
       // Persist the merged view locally before uploading any locally-only records.
       try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (_) {}
       syncingCloud = false;
