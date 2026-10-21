@@ -42,3 +42,15 @@ dialog{padding:18px;max-height:88dvh;overflow:auto}dialog .actions{display:grid;
 .provider-grid,.relay-status-panel .provider-grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}.stat:last-child{grid-column:auto}.stat span{font-size:.68rem}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important;animation:none!important}}
+
+/* Guided, thumb-friendly first-run experience */
+.quick-start{border:1px solid #49618f;background:linear-gradient(145deg,#1b2b49,#141c2f);padding:20px}
+.quick-start h2{font-size:1.35rem;margin-bottom:6px}
+.quick-start>p:not(.eyebrow):not(.footnote){max-width:58ch;color:var(--muted);margin-bottom:14px}
+.quick-start-button{width:100%;min-height:54px;font-size:1.05rem;font-weight:800}
+.quick-test-status{font-size:.9rem;font-weight:650;margin:12px 0 0;color:var(--green)}
+@media(max-width:760px){
+.quick-start{padding:16px}
+.quick-start-button{position:relative;min-height:58px;border-radius:14px}
+#runRelayBtn{scroll-margin:24px}
+}
