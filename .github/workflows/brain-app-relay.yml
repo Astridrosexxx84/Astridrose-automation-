@@ -76,8 +76,6 @@ jobs:
         if: inputs.private_run_id != ''
         env:
           PRIVATE_RUN_ID: ${{ inputs.private_run_id }}
-          OIDC_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
-          OIDC_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
           BRIDGE_URL: https://cjqgdqcbtcwsgbbqrqcf.supabase.co/functions/v1/brain-relay-bridge
         run: |
           python - <<'PY'
@@ -85,8 +83,8 @@ jobs:
           run_id = os.environ["PRIVATE_RUN_ID"]
           if not run_id:
               raise SystemExit("Private run ID is required.")
-          request_url = os.environ.get("OIDC_REQUEST_URL", "")
-          request_token = os.environ.get("OIDC_REQUEST_TOKEN", "")
+          request_url = os.environ.get("ACTIONS_ID_TOKEN_REQUEST_URL", "")
+          request_token = os.environ.get("ACTIONS_ID_TOKEN_REQUEST_TOKEN", "")
           if not request_url or not request_token:
               raise SystemExit("GitHub OIDC is unavailable; refusing public fallback.")
           separator = "&" if "?" in request_url else "?"
@@ -107,7 +105,7 @@ jobs:
               for key in allowed:
                   value = str(payload.get(key, ""))
                   delimiter = "BRAINAPP_" + uuid.uuid4().hex
-                  env.write(f"AI_RELAY_{key.upper()}<<{delimiter}\\n{value}\\n{delimiter}\\n")
+                  env.write(f"AI_RELAY_{key.upper()}<<{delimiter}\n{value}\n{delimiter}\n")
           print("Private relay request claimed; content was not printed or added to workflow inputs.")
           PY
       - name: Set up Python
@@ -173,15 +171,13 @@ jobs:
         if: always() && inputs.private_run_id != ''
         env:
           PRIVATE_RUN_ID: ${{ inputs.private_run_id }}
-          OIDC_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
-          OIDC_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
           BRIDGE_URL: https://cjqgdqcbtcwsgbbqrqcf.supabase.co/functions/v1/brain-relay-bridge
         run: |
           python - <<'PY'
           import json, os, urllib.parse, urllib.request
           from pathlib import Path
-          request_url = os.environ.get("OIDC_REQUEST_URL", "")
-          request_token = os.environ.get("OIDC_REQUEST_TOKEN", "")
+          request_url = os.environ.get("ACTIONS_ID_TOKEN_REQUEST_URL", "")
+          request_token = os.environ.get("ACTIONS_ID_TOKEN_REQUEST_TOKEN", "")
           if not request_url or not request_token:
               raise SystemExit("GitHub OIDC is unavailable; private result was not published.")
           separator = "&" if "?" in request_url else "?"
