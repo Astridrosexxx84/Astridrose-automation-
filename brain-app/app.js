@@ -555,7 +555,7 @@
       task: "Brain App task: " + (t.name || "Untitled task") + "\n\nGoal: " + (t.goal || "(not set)"),
       task_id: t.id,
       project_id: t.projectId,
-      provider: "auto",
+      provider: $("relayProviderSelect")?.value || "auto",
       role: t.output ? "continue" : "create",
       prior_packet: packetText(t),
       next_worker: t.nextWorker || "review the previous worker and choose the next concrete step"
@@ -600,7 +600,7 @@
           task: "Brain App task: " + (t.name || "Untitled task") + "\n\nGoal: " + (t.goal || "(not set)"),
           task_id: t.id,
           project_id: t.projectId,
-          provider: "auto",
+          provider: $("relayProviderSelect")?.value || "auto",
           role: t.output ? "continue" : "create",
           prior_packet: packetText(t),
           next_worker: t.nextWorker || "review the previous worker and choose the next concrete step"
