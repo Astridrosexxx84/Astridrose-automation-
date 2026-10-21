@@ -412,7 +412,7 @@
       stateEl.textContent = "Not run yet. Tap “Run a safe test” above.";
       stateEl.className = "simple-result-state";
       outputEl.textContent = "Your result will appear here automatically.";
-      hintEl.textContent = "Important: a saved success is historical evidence, not proof that a new test ran just now. Use “Run a safe test” to start a new attempt.";
+      hintEl.textContent = "Expected answer: BRAIN-APP-OK. Tap “Run a safe test” to begin.";
       return;
     }
     const output = String(task.output || "").trim();
@@ -437,7 +437,7 @@
     }
     outputEl.textContent = output || "No answer yet. Keep this page open; the result should appear here automatically.";
     hintEl.textContent = expectedFound
-      ? "The AI returned the exact phrase requested. This confirms the safe test responded; it does not verify all of Vision."
+      ? "This is a saved result, last updated " + when + ". It is historical evidence, not proof that a new test ran just now. Run a new test to check again."
       : "Expected answer: BRAIN-APP-OK. You do not need to open the task queue or technical tools.";
   }
 
