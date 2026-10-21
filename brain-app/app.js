@@ -88,10 +88,19 @@
   }
   async function applyPrivateRelayResults() {
     if (!cloudClient || !cloudUser || !state.tasks.length) return false;
+    // Recover only tasks that can accept a relay result. A global latest-30 query
+    // can silently miss an older in-flight task when other tasks run more often.
+    const recoverableTasks = state.tasks.filter(task =>
+      ["handed_off", "working"].includes(task.status) ||
+      (task.status === "complete" && !String(task.output || "").trim())
+    );
+    if (!recoverableTasks.length) return false;
+    const recoverableTaskIds = recoverableTasks.map(task => task.id);
     const { data: runs, error } = await cloudClient.from("brain_worker_runs")
       .select("id,task_id,status,response_payload,error_category,finished_at")
+      .in("task_id", recoverableTaskIds)
       .in("status", ["succeeded", "failed"])
-      .order("finished_at", {ascending:false}).limit(30);
+      .order("finished_at", {ascending:false});
     if (error) throw error;
     let changed = false;
     for (const run of runs || []) {
