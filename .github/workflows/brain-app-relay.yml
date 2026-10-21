@@ -47,6 +47,11 @@ on:
         required: false
         type: string
         default: ""
+      private_run_id:
+        description: "Opaque ID for retrieving a private task packet from Supabase"
+        required: false
+        type: string
+        default: ""
   push:
     branches: [main]
     paths:
@@ -54,6 +59,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 concurrency:
   group: brain-app-sequential-relay
@@ -66,11 +72,50 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+      - name: Claim private relay request
+        if: inputs.private_run_id != ''
+        env:
+          PRIVATE_RUN_ID: ${{ inputs.private_run_id }}
+          OIDC_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
+          OIDC_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
+          BRIDGE_URL: https://cjqgdqcbtcwsgbbqrqcf.supabase.co/functions/v1/brain-relay-bridge
+        run: |
+          python - <<'PY'
+          import json, os, urllib.parse, urllib.request, uuid
+          run_id = os.environ["PRIVATE_RUN_ID"]
+          if not run_id:
+              raise SystemExit("Private run ID is required.")
+          request_url = os.environ.get("OIDC_REQUEST_URL", "")
+          request_token = os.environ.get("OIDC_REQUEST_TOKEN", "")
+          if not request_url or not request_token:
+              raise SystemExit("GitHub OIDC is unavailable; refusing public fallback.")
+          separator = "&" if "?" in request_url else "?"
+          token_url = request_url + separator + urllib.parse.urlencode({"audience": "brain-app-relay"})
+          req = urllib.request.Request(token_url, headers={"Authorization": "Bearer " + request_token})
+          with urllib.request.urlopen(req, timeout=20) as response:
+              oidc = json.load(response)["value"]
+          body = json.dumps({"operation": "claim", "run_id": run_id}).encode()
+          req = urllib.request.Request(os.environ["BRIDGE_URL"], data=body, method="POST",
+              headers={"Authorization": "Bearer " + oidc, "Content-Type": "application/json"})
+          with urllib.request.urlopen(req, timeout=30) as response:
+              claimed = json.load(response)
+          payload = claimed.get("payload")
+          if not isinstance(payload, dict) or not str(payload.get("task", "")).strip():
+              raise SystemExit("Private bridge returned an invalid task packet.")
+          allowed = ("task", "provider", "role", "prior_packet", "next_worker", "task_id", "project_id")
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env:
+              for key in allowed:
+                  value = str(payload.get(key, ""))
+                  delimiter = "BRAINAPP_" + uuid.uuid4().hex
+                  env.write(f"AI_RELAY_{key.upper()}<<{delimiter}\\n{value}\\n{delimiter}\\n")
+          print("Private relay request claimed; content was not printed or added to workflow inputs.")
+          PY
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Prepare relay request
+        if: inputs.private_run_id == ''
         env:
           EVENT_NAME: ${{ github.event_name }}
           INPUT_TASK: ${{ inputs.task }}
@@ -124,8 +169,41 @@ jobs:
           ALLOW_GEMINI_FREE_TIER_CALLS: "true"
           ALLOW_GROQ_FREE_TIER_CALLS: "true"
         run: python brain_relay_chain.py
+      - name: Store private relay result
+        if: always() && inputs.private_run_id != ''
+        env:
+          PRIVATE_RUN_ID: ${{ inputs.private_run_id }}
+          OIDC_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
+          OIDC_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
+          BRIDGE_URL: https://cjqgdqcbtcwsgbbqrqcf.supabase.co/functions/v1/brain-relay-bridge
+        run: |
+          python - <<'PY'
+          import json, os, urllib.parse, urllib.request
+          from pathlib import Path
+          request_url = os.environ.get("OIDC_REQUEST_URL", "")
+          request_token = os.environ.get("OIDC_REQUEST_TOKEN", "")
+          if not request_url or not request_token:
+              raise SystemExit("GitHub OIDC is unavailable; private result was not published.")
+          separator = "&" if "?" in request_url else "?"
+          token_url = request_url + separator + urllib.parse.urlencode({"audience": "brain-app-relay"})
+          req = urllib.request.Request(token_url, headers={"Authorization": "Bearer " + request_token})
+          with urllib.request.urlopen(req, timeout=20) as response:
+              oidc = json.load(response)["value"]
+          try:
+              result = json.loads(Path("brain-relay-packet.json").read_text(encoding="utf-8"))
+          except (OSError, json.JSONDecodeError):
+              result = {"schema_version": 1, "overall_outcome": "error", "turns": [], "next_action": "Inspect the GitHub workflow failure and retry."}
+          body = json.dumps({"operation": "complete", "run_id": os.environ["PRIVATE_RUN_ID"], "result": result}).encode()
+          req = urllib.request.Request(os.environ["BRIDGE_URL"], data=body, method="POST",
+              headers={"Authorization": "Bearer " + oidc, "Content-Type": "application/json"})
+          with urllib.request.urlopen(req, timeout=30) as response:
+              stored = json.load(response)
+          if not stored.get("ok"):
+              raise SystemExit("Private relay result was not accepted by the bridge.")
+          print("Relay result stored in private Supabase; task text and responses were not uploaded as an artifact.")
+          PY
       - name: Upload portable handoff packet
-        if: always()
+        if: always() && inputs.private_run_id == ''
         uses: actions/upload-artifact@v4
         with:
           name: brain-app-relay-packet
