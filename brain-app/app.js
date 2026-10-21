@@ -19,6 +19,7 @@
   let cloudUser = null;
   let cloudReady = false;
   let syncingCloud = false;
+  let cloudSyncPending = false;
   let cloudSyncTimer = null;
 
   function setCloudStatus(message, bad=false) {
@@ -28,7 +29,12 @@
     el.className = bad ? "muted status-blocked" : "muted";
   }
   function scheduleCloudSync() {
-    if (!cloudUser || !cloudReady || syncingCloud || !cloudClient) return;
+    if (!cloudUser || !cloudReady || !cloudClient) return;
+    if (syncingCloud) {
+      // Do not lose edits/results that arrive while a cloud write is in flight.
+      cloudSyncPending = true;
+      return;
+    }
     clearTimeout(cloudSyncTimer);
     cloudSyncTimer = setTimeout(() => syncLocalToCloud().catch(e => setCloudStatus("Cloud sync paused: " + (e.message || "network error"), true)), 900);
   }
@@ -54,7 +60,11 @@
     return [...byId.values()];
   }
   async function syncLocalToCloud() {
-    if (!cloudClient || !cloudUser || syncingCloud) return;
+    if (!cloudClient || !cloudUser) return;
+    if (syncingCloud) {
+      cloudSyncPending = true;
+      return;
+    }
     syncingCloud = true;
     try {
       // Upsert parents first, then tasks so project references are valid.
@@ -67,7 +77,14 @@
         if (error) throw error;
       }
       setCloudStatus("Cloud sync connected · saved to this device and Supabase");
-    } finally { syncingCloud = false; }
+    } finally {
+      syncingCloud = false;
+      // Flush changes that were requested during the in-flight write.
+      if (cloudSyncPending && cloudReady) {
+        cloudSyncPending = false;
+        scheduleCloudSync();
+      }
+    }
   }
   async function applyPrivateRelayResults() {
     if (!cloudClient || !cloudUser || !state.tasks.length) return false;
@@ -124,6 +141,10 @@
       await syncLocalToCloud();
       syncingCloud = true;
       cloudReady = true;
+      if (cloudSyncPending) {
+        cloudSyncPending = false;
+        scheduleCloudSync();
+      }
       selectedProjectId = state.projects[0]?.id || null;
       selectedTaskId = state.tasks.find(t=>t.projectId===selectedProjectId)?.id || null;
       render();
