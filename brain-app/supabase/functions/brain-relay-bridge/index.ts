@@ -2,8 +2,6 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createRemoteJWKSet, jwtVerify } from "https://esm.sh/jose@5.9.6";
 
-// This source mirrors the currently deployed bridge. It is not yet wired into
-// dispatch-brain-relay or the relay workflow; do not treat private transport as live.
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -17,7 +15,7 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return reply({ error: "POST required" }, 405);
 
-  const bearer = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+  const bearer = (req.headers.get("Authorization") || "").replace(/^Bearer\\s+/i, "");
   if (!bearer) return reply({ error: "GitHub Actions identity token required." }, 401);
 
   let claims: Record<string, unknown>;
@@ -49,14 +47,13 @@ Deno.serve(async (req: Request) => {
   const operation = String(input.operation || "");
 
   if (operation === "claim") {
+    // Atomic compare-and-set: only one runner may claim a queued job.
     const { data: row, error } = await db.from("brain_worker_runs")
-      .select("id,request_payload,status").eq("id", runId).maybeSingle();
-    if (error) return reply({ error: "Could not read private relay job." }, 500);
-    if (!row) return reply({ error: "Private relay job not found." }, 404);
-    if (!["queued", "running"].includes(row.status)) return reply({ error: "Private relay job is no longer available." }, 409);
-    const { error: updateError } = await db.from("brain_worker_runs")
-      .update({ status: "running", started_at: new Date().toISOString() }).eq("id", runId);
-    if (updateError) return reply({ error: "Could not mark private relay job running." }, 500);
+      .update({ status: "running", started_at: new Date().toISOString() })
+      .eq("id", runId).eq("status", "queued")
+      .select("id,request_payload").maybeSingle();
+    if (error) return reply({ error: "Could not claim private relay job." }, 500);
+    if (!row) return reply({ error: "Private relay job is missing or already claimed." }, 409);
     return reply({ ok: true, payload: row.request_payload }, 200);
   }
 
@@ -65,19 +62,19 @@ Deno.serve(async (req: Request) => {
     if (!result || typeof result !== "object" || !Array.isArray((result as Record<string, unknown>).turns)) {
       return reply({ error: "Relay result packet is malformed." }, 400);
     }
+    const serialized = JSON.stringify(result);
+    if (serialized.length > 200000) return reply({ error: "Relay result packet is too large." }, 413);
     const packet = result as Record<string, unknown>;
     const outcome = String(packet.overall_outcome || "error");
+    if (!["success", "partial", "error"].includes(outcome)) return reply({ error: "Unknown relay outcome." }, 400);
     const status = outcome === "success" || outcome === "partial" ? "succeeded" : "failed";
     const errorCategory = outcome === "partial" ? "partial_provider_result" : outcome === "error" ? "all_providers_failed" : null;
-    const { data: row, error: readError } = await db.from("brain_worker_runs")
-      .select("id,status").eq("id", runId).maybeSingle();
-    if (readError) return reply({ error: "Could not verify private relay job." }, 500);
-    if (!row) return reply({ error: "Private relay job not found." }, 404);
-    if (row.status === "succeeded" || row.status === "failed") return reply({ error: "Private relay result was already recorded." }, 409);
-    const { error: updateError } = await db.from("brain_worker_runs").update({
+    // Only the active runner may finish a running job. A completed job cannot be overwritten.
+    const { data: row, error } = await db.from("brain_worker_runs").update({
       status, response_payload: packet, error_category: errorCategory, finished_at: new Date().toISOString(),
-    }).eq("id", runId);
-    if (updateError) return reply({ error: "Could not store private relay result." }, 500);
+    }).eq("id", runId).eq("status", "running").select("id").maybeSingle();
+    if (error) return reply({ error: "Could not store private relay result." }, 500);
+    if (!row) return reply({ error: "Private relay job is missing or already finished." }, 409);
     return reply({ ok: true, status }, 200);
   }
 
