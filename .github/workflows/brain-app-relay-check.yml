@@ -121,6 +121,22 @@ jobs:
                   raise SystemExit("Public relay status contains unexpected provider fields.")
           print("Relay status schema and privacy checks passed.")
           PY
+      - name: Check single active execution invariant
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          migration = Path("brain-app/supabase/migrations/0003_one_active_run_per_task.sql").read_text(encoding="utf-8")
+          dispatcher = Path("brain-app/supabase/functions/dispatch-brain-relay/index.ts").read_text(encoding="utf-8")
+          if "create unique index if not exists brain_worker_runs_one_active_per_task_idx" not in migration:
+              raise SystemExit("Missing database-level single-active-run invariant.")
+          if "where status in ('queued', 'running')" not in migration:
+              raise SystemExit("Single-active-run invariant must cover queued and running statuses.")
+          if dispatcher.index('"stale_queued_run_reconciled"') > dispatcher.index('in("status", ["queued", "running"])'):
+              raise SystemExit("Dispatcher must reconcile abandoned work before rejecting a new attempt.")
+          if 'runError?.code === "23505"' not in dispatcher or "}, 409)" not in dispatcher:
+              raise SystemExit("Dispatcher must safely reject a concurrent insert race.")
+          print("Single-active-run invariant and race handling checks passed.")
+          PY
       - name: Check private relay stale-run recovery
         run: |
           python - <<'PY'
