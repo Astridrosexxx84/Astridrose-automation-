@@ -109,7 +109,7 @@ button:active, .button:active { transform: translateY(1px); }
   .task-heading { align-items: center; }
   .task-heading > div { min-width: 0; }
   .task-heading h2 { font-size: 1rem; }
-  .task-filters { position: sticky; top: 0; z-index: 3; background: var(--panel); padding: 8px 0; margin-top: -4px; }
+  .task-filters { position: sticky; top: 64px; z-index: 3; background: var(--panel); padding: 8px 0; margin-top: -4px; }
   .task-card { min-height: 76px; }
   .packet-panel { scroll-margin-top: 12px; }
   .packet-actions { position: static; }
