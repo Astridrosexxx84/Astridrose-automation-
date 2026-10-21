@@ -412,22 +412,24 @@
       stateEl.textContent = "Not run yet. Tap “Run a safe test” above.";
       stateEl.className = "simple-result-state";
       outputEl.textContent = "Your result will appear here automatically.";
-      hintEl.textContent = "For this test, the expected answer is BRAIN-APP-OK.";
+      hintEl.textContent = "Expected answer: BRAIN-APP-OK. Tap “Run a safe test” to begin.";
       return;
     }
     const output = String(task.output || "").trim();
     const expectedFound = output.includes("BRAIN-APP-OK");
+    const lastChanged = task.updatedAt || task.createdAt;
+    const when = lastChanged && Number.isFinite(Date.parse(lastChanged)) ? new Date(lastChanged).toLocaleString() : "time unavailable";
     if (task.status === "blocked") {
-      stateEl.textContent = "The test hit a problem.";
+      stateEl.textContent = "Test failed or was blocked. Run it again after checking the problem.";
       stateEl.className = "simple-result-state is-error";
     } else if (expectedFound) {
-      stateEl.textContent = "Test succeeded — the expected answer arrived.";
+      stateEl.textContent = "Saved result says SUCCESS — last updated " + when + ".";
       stateEl.className = "simple-result-state is-success";
     } else if (output) {
       stateEl.textContent = "Result received — the expected answer was not found.";
       stateEl.className = "simple-result-state is-error";
     } else if (task.status === "handed_off" || task.status === "working") {
-      stateEl.textContent = "Test sent. Waiting for the answer…";
+      stateEl.textContent = "Test is running or awaiting review. No fresh answer is available yet.";
       stateEl.className = "simple-result-state is-working";
     } else {
       stateEl.textContent = "Test is ready. Tap “Run a safe test” above.";
@@ -435,7 +437,7 @@
     }
     outputEl.textContent = output || "No answer yet. Keep this page open; the result should appear here automatically.";
     hintEl.textContent = expectedFound
-      ? "The AI returned the exact phrase requested. This confirms the safe test responded; it does not verify all of Vision."
+      ? "This is a saved result, last updated " + when + ". It is historical evidence, not proof that a new test ran just now. Run a new test to check again."
       : "Expected answer: BRAIN-APP-OK. You do not need to open the task queue or technical tools.";
   }
 
@@ -564,8 +566,12 @@
       state.tasks.push(task);
     }
     selectedTaskId = task.id;
+    // Clear the previous answer before dispatch so an old success cannot mask a new attempt.
+    task.output = "";
+    task.status = "working";
+    task.updatedAt = now();
     persist(); render();
-    $("quickTestStatus").textContent = "Starting the safe test… your answer will appear below.";
+    $("quickTestStatus").textContent = "New test started. Waiting for a fresh answer…";
     button.disabled = true;
     button.textContent = "Starting your test…";
     $("runRelayBtn").click();

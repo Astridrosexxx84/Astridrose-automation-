@@ -77,6 +77,12 @@ jobs:
                   raise SystemExit("Verification must require goal, output, and review notes")
           if 'task.status = passed ? "complete" : "handed_off";' not in app:
               raise SystemExit("Only passed owner verification may mark a task complete")
+          if "Saved result says SUCCESS — last updated " not in app:
+              raise SystemExit("Simple result must show saved-success timestamp")
+          if 'task.output = "";' not in app or "New test started. Waiting for a fresh answer…" not in app:
+              raise SystemExit("Starting a safe test must clear stale output and wait for a fresh answer")
+          if "It is historical evidence, not proof that a new test ran just now." not in app:
+              raise SystemExit("Simple result must distinguish historical success from a fresh test")
           if "function proposeNextAction()" not in app or "PROPOSED NEXT ACTION — NOT EXECUTED" not in app or "PROPOSED CORRECTIVE ACTION — NOT EXECUTED" not in app:
               raise SystemExit("Next-action proposal must be grounded in verification and remain non-executing")
           for status in ("queued", "running", "review", "blocked", "completed"):
