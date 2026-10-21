@@ -47,6 +47,10 @@ jobs:
                   raise SystemExit(f"Core table missing from migration: {table}")
           if "enable row level security" not in schema.lower():
               raise SystemExit("Core migration does not enable row-level security")
+          if 'const recoveringMissingOutput = task.status === "complete" && !String(task.output || "").trim();' not in app:
+              raise SystemExit("Private relay recovery must backfill completed tasks whose output is empty")
+          if "if (!recoveringMissingOutput && Date.parse(run.finished_at || 0) < Date.parse(task.updatedAt || 0)) continue;" not in app:
+              raise SystemExit("Empty-output recovery must not be blocked by a newer task sync timestamp")
           for status in ("queued", "running", "review", "blocked", "completed"):
               if status not in schema:
                   raise SystemExit(f"Expected task status missing from database schema: {status}")
