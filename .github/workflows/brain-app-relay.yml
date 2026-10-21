@@ -149,7 +149,7 @@ jobs:
           request.setdefault("project_id", "")
           if not str(request.get("task", "")).strip():
               raise SystemExit("Relay request must include a non-empty task.")
-          if request["provider"] not in ("auto", "openrouter", "gemini", "groq"):
+          if request["provider"] not in ("auto", "openrouter", "gemini", "groq", "cloudflare"):
               raise SystemExit("Provider must be auto, openrouter, gemini, or groq.")
           if request["role"] not in ("create", "continue", "review"):
               raise SystemExit("Role must be create, continue, or review.")
