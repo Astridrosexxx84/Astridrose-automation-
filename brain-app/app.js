@@ -100,7 +100,7 @@
       // A completed task can still be missing its output if an earlier cloud sync
       // persisted the status before the relay result. Recover that result even if
       // the task's sync timestamp is newer than the worker run's finish timestamp.
-      const recoveringMissingOutput = task.status === "complete" && !String(task.output || "").trim();
+      const recoveringMissingOutput = ["handed_off", "working", "complete"].includes(task.status) && !String(task.output || "").trim();
       if (!["handed_off", "working"].includes(task.status) && !recoveringMissingOutput) continue;
       if (!recoveringMissingOutput && Date.parse(run.finished_at || 0) < Date.parse(task.updatedAt || 0)) continue;
       const packet = run.response_payload || {};
