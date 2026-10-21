@@ -163,7 +163,12 @@ jobs:
               'Cache-Control": "no-store"',
               'operation === "claim"',
               'operation === "complete"',
-              'row.status === "succeeded" || row.status === "failed"',
+              '.eq("id", runId).eq("status", "queued")',
+              '.eq("id", runId).eq("status", "running")',
+              'serialized.length > 200000',
+              'Unknown relay outcome.',
+              'Private relay job is missing or already claimed.',
+              'Private relay job is missing or already finished.',
           ]
           missing = [item for item in required if item not in bridge]
           if missing:
