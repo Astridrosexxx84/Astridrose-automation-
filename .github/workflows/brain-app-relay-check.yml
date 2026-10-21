@@ -146,6 +146,39 @@ jobs:
           print("Relay safeguard and public-artifact privacy checks passed.")
           PY
 
+      - name: Check private relay end-to-end wiring
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          workflow = Path(".github/workflows/brain-app-relay.yml").read_text(encoding="utf-8")
+          dispatcher = Path("brain-app/supabase/functions/dispatch-brain-relay/index.ts").read_text(encoding="utf-8")
+          app = Path("brain-app/app.js").read_text(encoding="utf-8")
+          required_workflow = [
+              "id-token: write",
+              "private_run_id:",
+              "Claim private relay request",
+              'urllib.parse.urlencode({"audience": "brain-app-relay"})',
+              '"operation": "claim"',
+              '"operation": "complete"',
+              "Store private relay result",
+              "inputs.private_run_id == ''",
+              "inputs.private_run_id != ''",
+          ]
+          missing = [item for item in required_workflow if item not in workflow]
+          if missing:
+              raise SystemExit("Workflow missing private relay wiring: " + ", ".join(missing))
+          for item in ('from("brain_worker_runs").insert', "request_payload:", "private_run_id: workerRun.id", "owner_id: user.id"):
+              if item not in dispatcher:
+                  raise SystemExit("Dispatcher missing private task persistence: " + item)
+          if "task, provider, role, prior_packet: priorPacket" in dispatcher:
+              raise SystemExit("Dispatcher is still sending task text as GitHub workflow inputs.")
+          if "pollPrivateResult" not in app or "await applyPrivateRelayResults()" not in app:
+              raise SystemExit("Dashboard must poll and recover private results automatically.")
+          if "workflow_dispatch" not in workflow:
+              raise SystemExit("Private relay must remain dispatchable.")
+          print("Private dispatch, OIDC claim, private result storage, and dashboard recovery checks passed.")
+          PY
+
       - name: Check private relay bridge security contract
         run: |
           python - <<'PY'
