@@ -1,0 +1,155 @@
+name: Vision live end-to-end smoke test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/vision-e2e-smoke.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  live-smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Test authenticated dispatch, worker execution, and result retrieval
+        run: |
+          python - <<'PY'
+          import json
+          import re
+          import time
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+          import uuid
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          app = Path("brain-app/app.js").read_text(encoding="utf-8")
+          url_match = re.search(r'const SUPABASE_URL = "([^"]+)"', app)
+          key_match = re.search(r'const SUPABASE_PUBLISHABLE_KEY = "([^"]+)"', app)
+          if not url_match or not key_match:
+              raise SystemExit("Could not read the public Supabase connection settings from the app.")
+          base = url_match.group(1)
+          key = key_match.group(1)
+
+          def request(url, method="GET", headers=None, payload=None, timeout=25):
+              body = None if payload is None else json.dumps(payload).encode()
+              req = urllib.request.Request(url, data=body, method=method, headers=headers or {})
+              try:
+                  with urllib.request.urlopen(req, timeout=timeout) as response:
+                      raw = response.read().decode()
+                      return response.status, dict(response.headers), json.loads(raw) if raw else None
+              except urllib.error.HTTPError as error:
+                  detail = error.read().decode(errors="replace")[:700]
+                  raise RuntimeError(f"{method} {url} returned HTTP {error.code}: {detail}") from error
+
+          common = {
+              "apikey": key,
+              "Content-Type": "application/json",
+              "x-client-info": "vision-e2e-smoke/1",
+              "x-brain-sync-version": "1",
+          }
+
+          # Mirrors the app's free anonymous-session path; no password or private data.
+          _, _, auth = request(
+              base + "/auth/v1/signup",
+              method="POST",
+              headers={"apikey": key, "Content-Type": "application/json", "x-client-info": "vision-e2e-smoke/1"},
+              payload={"data": {"purpose": "one-off synthetic connectivity test"}},
+          )
+          token = (auth or {}).get("access_token")
+          user = (auth or {}).get("user") or {}
+          owner_id = user.get("id")
+          if not token or not owner_id:
+              raise SystemExit("Anonymous session did not return an access token and user ID.")
+          headers = {**common, "Authorization": "Bearer " + token}
+
+          task_id = str(uuid.uuid4())
+          task = {
+              "id": task_id,
+              "owner_id": owner_id,
+              "project_id": None,
+              "title": "Vision live connection smoke test",
+              "goal": "Reply with exactly BRAIN-APP-OK. Do not use tools or external services.",
+              "context": "Synthetic connectivity test only. No personal or confidential data.",
+              "status": "queued",
+              "priority": 3,
+              "current_output": "",
+              "next_action": "",
+              "next_worker": "free-provider AI council",
+          }
+          task_url = base + "/rest/v1/brain_tasks"
+          request(task_url, method="POST", headers={**headers, "Prefer": "return=representation"}, payload=task)
+          print("PASS: anonymous session and owner-protected task save")
+
+          run_id = None
+          try:
+              body = {
+                  "task": "Brain App task: " + task["title"] + "\n\nGoal: " + task["goal"],
+                  "task_id": task_id,
+                  "project_id": "",
+                  "provider": "auto",
+                  "role": "create",
+                  "prior_packet": "",
+                  "next_worker": "review the complete relay packet",
+              }
+              _, _, dispatched = request(
+                  base + "/functions/v1/dispatch-brain-relay",
+                  method="POST",
+                  headers=headers,
+                  payload=body,
+              )
+              run_id = (dispatched or {}).get("run_id")
+              if not run_id:
+                  raise SystemExit("Dispatcher returned no private run ID.")
+              print("PASS: authenticated in-app dispatch accepted")
+
+              run_url = base + "/rest/v1/brain_worker_runs?" + urllib.parse.urlencode({
+                  "id": "eq." + run_id,
+                  "select": "status,response_payload,error_category,finished_at",
+              })
+              deadline = time.time() + 540
+              final = None
+              while time.time() < deadline:
+                  _, _, rows = request(run_url, headers=headers, timeout=25)
+                  if rows:
+                      final = rows[0]
+                      if final.get("status") in ("succeeded", "failed"):
+                          break
+                  time.sleep(8)
+              if not final or final.get("status") not in ("succeeded", "failed"):
+                  raise SystemExit("Timed out waiting for the private AI workers to finish.")
+              if final["status"] != "succeeded":
+                  raise SystemExit("Worker execution failed safely: " + str(final.get("error_category") or "unknown error"))
+
+              packet = final.get("response_payload") or {}
+              turns = packet.get("turns") if isinstance(packet.get("turns"), list) else []
+              outputs = [
+                  "**" + str(turn.get("provider") or "AI worker") + "**\n" + str(turn.get("worker_output"))
+                  for turn in turns
+                  if turn.get("outcome") == "success" and turn.get("worker_output")
+              ]
+              rendered_result = "\n\n".join(outputs)
+              if "BRAIN-APP-OK" not in rendered_result:
+                  raise SystemExit("Workers finished, but the app's exact result-extraction path did not find BRAIN-APP-OK.")
+              print("PASS: private worker run completed and the app's result-extraction logic recovered BRAIN-APP-OK")
+              print("PASS: full live path verified — anonymous auth, cloud task save, dispatch, worker execution, owner-protected result read, and result display data")
+          finally:
+              # Keep the test task out of the user's workspace; preserve run history for diagnosis.
+              try:
+                  request(
+                      task_url + "?id=eq." + urllib.parse.quote(task_id, safe=""),
+                      method="PATCH",
+                      headers={**headers, "Prefer": "return=minimal"},
+                      payload={"deleted_at": datetime.now(timezone.utc).isoformat(), "status": "cancelled"},
+                  )
+                  print("Cleanup: synthetic task hidden from normal workspace views.")
+              except Exception as cleanup_error:
+                  print("Cleanup warning: synthetic task could not be soft-deleted: " + str(cleanup_error))
+          PY
