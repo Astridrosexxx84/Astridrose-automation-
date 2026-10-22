@@ -34,6 +34,7 @@ jobs:
           app = Path("brain-app/app.js").read_text(encoding="utf-8")
           html = Path("brain-app/index.html").read_text(encoding="utf-8")
           schema = Path("brain-app/supabase/migrations/0001_brain_app_core.sql").read_text(encoding="utf-8")
+          deletion_migration = Path("brain-app/supabase/migrations/0006_task_deletion_tombstones.sql").read_text(encoding="utf-8").lower()
           packet_migration = Path("brain-app/supabase/migrations/0003_add_packet_fields.sql").read_text(encoding="utf-8").lower()
           hardening_migration = Path("brain-app/supabase/migrations/0004_harden_updated_at_search_path.sql").read_text(encoding="utf-8").lower()
           service_worker = Path("brain-app/service-worker.js").read_text(encoding="utf-8")
@@ -58,6 +59,14 @@ jobs:
                   raise SystemExit(f"Packet-field migration is missing idempotent column {column}")
           if "set search_path = ''" not in hardening_migration or "pg_catalog.now()" not in hardening_migration:
               raise SystemExit("updated_at trigger migration must harden search_path and qualify now()")
+          if "add column if not exists deleted_at timestamptz" not in deletion_migration:
+              raise SystemExit("Task deletion must use a durable deleted_at tombstone")
+          if "if (prior?.deletedat && !item.deletedat) continue;" not in app.lower():
+              raise SystemExit("A stale local task must not overwrite a remote deletion tombstone")
+          if 'update({deleted_at: now()})' not in app:
+              raise SystemExit("Task deletion must preserve a cloud tombstone rather than hard-delete the row")
+          if "state.tasks = state.tasks.filter(t => !t.deletedat);" not in app.lower():
+              raise SystemExit("Deleted tasks must be excluded from the merged local workspace")
           active_run_migration = Path("brain-app/supabase/migrations/0005_one_active_run_per_task.sql").read_text(encoding="utf-8")
           if "create unique index if not exists brain_worker_runs_one_active_per_task_idx" not in active_run_migration:
               raise SystemExit("Database contract must prevent concurrent active runs for one task")

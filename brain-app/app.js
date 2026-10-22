@@ -42,19 +42,26 @@
     return {id:p.id, owner_id:cloudUser.id, name:p.name || "Untitled project", description:p.description || "", status:"active", created_at:p.createdAt || now(), updated_at:p.updatedAt || now()};
   }
   function toRemoteTask(t) {
-    return {id:t.id, owner_id:cloudUser.id, project_id:t.projectId || null, title:t.name || "Untitled task", goal:t.goal || "", context:t.context || "", status:({waiting:"queued",working:"running",handed_off:"review",blocked:"blocked",complete:"completed"})[t.status] || "queued", priority:3, assigned_worker:t.worker || null, current_worker:t.worker || "", next_worker:t.nextWorker || "", result_summary:t.output || "", current_output:t.output || "", next_action:t.next || "", created_at:t.createdAt || now(), updated_at:t.updatedAt || now()};
+    return {id:t.id, owner_id:cloudUser.id, project_id:t.projectId || null, title:t.name || "Untitled task", goal:t.goal || "", context:t.context || "", status:({waiting:"queued",working:"running",handed_off:"review",blocked:"blocked",complete:"completed"})[t.status] || "queued", priority:3, assigned_worker:t.worker || null, current_worker:t.worker || "", next_worker:t.nextWorker || "", result_summary:t.output || "", current_output:t.output || "", next_action:t.next || "", created_at:t.createdAt || now(), updated_at:t.updatedAt || now(), deleted_at:t.deletedAt || null};
   }
   function fromRemoteProject(p) {
     return {id:p.id,name:p.name,description:p.description || "",createdAt:p.created_at || now(),updatedAt:p.updated_at || now()};
   }
   function fromRemoteTask(t) {
     const status = ({queued:"waiting",running:"working",review:"handed_off",blocked:"blocked",completed:"complete",failed:"blocked",cancelled:"blocked"})[t.status] || "waiting";
-    return {id:t.id,projectId:t.project_id,name:t.title,goal:t.goal || "",context:t.context || "",status,worker:t.current_worker || t.assigned_worker || "",nextWorker:t.next_worker || "",output:t.current_output || t.result_summary || "",next:t.next_action || "",createdAt:t.created_at || now(),updatedAt:t.updated_at || now()};
+    return {id:t.id,projectId:t.project_id,name:t.title,goal:t.goal || "",context:t.context || "",status,worker:t.current_worker || t.assigned_worker || "",nextWorker:t.next_worker || "",output:t.current_output || t.result_summary || "",next:t.next_action || "",createdAt:t.created_at || now(),updatedAt:t.updated_at || now(),deletedAt:t.deleted_at || null};
   }
   function mergeByFreshness(localItems, remoteItems) {
     const byId = new Map();
     for (const item of [...remoteItems, ...localItems]) {
       const prior = byId.get(item.id);
+      // A remote deletion tombstone must beat stale copies from other devices,
+      // regardless of their local clock or updatedAt value.
+      if (prior?.deletedAt && !item.deletedAt) continue;
+      if (item.deletedAt && !prior?.deletedAt) {
+        byId.set(item.id, item);
+        continue;
+      }
       if (!prior || Date.parse(item.updatedAt || 0) >= Date.parse(prior.updatedAt || 0)) byId.set(item.id, item);
     }
     return [...byId.values()];
@@ -279,6 +286,8 @@
       const remoteTasks = (tr.data || []).map(fromRemoteTask);
       state.projects = mergeByFreshness(state.projects, remoteProjects);
       state.tasks = mergeByFreshness(state.tasks, remoteTasks);
+      // Keep deletion tombstones in the database, but never re-upload/render them.
+      state.tasks = state.tasks.filter(t => !t.deletedAt);
       const validProjects = new Set(state.projects.map(p=>p.id));
       state.tasks = state.tasks.filter(t=>validProjects.has(t.projectId));
       // Recover completed private relay outputs even if the app was closed while workers ran.
@@ -845,10 +854,10 @@
     const button = $("deleteTaskBtn");
     button.disabled = true;
     try {
-      // Remove the cloud row first when signed in. If this fails, keep the
-      // local task so a later sync cannot silently resurrect a "deleted" task.
+      // Keep a private tombstone so stale copies on other devices cannot
+      // resurrect this task during the next workspace merge.
       if (cloudClient && cloudUser) {
-        const {error} = await cloudClient.from("brain_tasks").delete().eq("id", t.id).eq("owner_id", cloudUser.id);
+        const {error} = await cloudClient.from("brain_tasks").update({deleted_at: now()}).eq("id", t.id).eq("owner_id", cloudUser.id);
         if (error) throw error;
       }
       state.tasks = state.tasks.filter(x=>x.id!==t.id);
