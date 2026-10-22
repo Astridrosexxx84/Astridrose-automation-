@@ -8,6 +8,7 @@
   let state = loadState();
   let selectedProjectId = state.projects[0]?.id || null;
   let selectedTaskId = state.tasks.find(t => t.projectId === selectedProjectId)?.id || null;
+  let missionMode = "mission";
   let toastTimer;
   let relayDispatchedAt = null;
 
@@ -630,8 +631,19 @@
   });
   // Turn a plain-language request into a durable task and invoke the same
   // authenticated private relay used by the task editor.
+  $("buildMissionBtn")?.addEventListener("click", () => {
+    if (!String($("missionGoal")?.value || "").trim()) {
+      toast("Describe the code change you want first.");
+      $("missionGoal")?.focus();
+      return;
+    }
+    missionMode = "build";
+    $("missionForm")?.requestSubmit();
+  });
   $("missionForm")?.addEventListener("submit", event => {
     event.preventDefault();
+    const mode = missionMode;
+    missionMode = "mission";
     const goal = String($("missionGoal")?.value || "").trim();
     if (!goal) { toast("Describe the mission first."); return; }
     if (goal.length > 3000) { toast("Keep the mission under 3,000 characters."); return; }
@@ -644,16 +656,17 @@
     const firstLine = goal.split(/\n|[.!?]/, 1)[0].trim();
     const taskName = (firstLine || "New mission").slice(0, 100);
     const task = {
-      id:uid(),projectId:project.id,name:taskName,goal,
-      status:"waiting",worker:"",nextWorker:"free-provider chain",
-      context:"Created from the Brain mission launcher. Deliver a concrete artifact or actionable answer. State assumptions and limitations; do not claim external actions that were not performed. Free-provider route only; no paid fallback.",
-      output:"",next:"Run the configured AI worker chain and review the returned artifact against the mission goal.",
+      id:uid(),projectId:project.id,name:(mode === "build" ? "Build: " : "") + taskName,goal,
+      status:"waiting",worker:"",nextWorker:"free-provider AI council",
+      mode,
+      context:mode === "build" ? "Execution mode: build. Use the guarded code-building worker. Changes must be proposed in a pull request; do not merge or deploy automatically. Free-provider route only; no paid fallback." : "Created from the Brain mission launcher. Deliver a concrete artifact or actionable answer. State assumptions and limitations; do not claim external actions that were not performed. Free-provider route only; no paid fallback.",
+      output:"",next:mode === "build" ? "Generate a focused app patch, run preflight checks, and open a pull request for review." : "Run the configured AI worker council and review the returned artifact against the mission goal.",
       createdAt:now(),updatedAt:now()
     };
     state.tasks.push(task);
     selectedTaskId = task.id;
     $("missionGoal").value = "";
-    $("missionStatus").textContent = "Mission saved to the task queue. Confirm the private relay prompt to send it to the configured AI workers.";
+    $("missionStatus").textContent = mode === "build" ? "Build task saved. Confirm to let Vision propose a guarded code patch and open a PR; nothing is merged or deployed automatically." : "Mission saved to the task queue. Confirm the private relay prompt to send it to the configured AI workers.";
     persist();
     render();
     document.querySelector(".packet-panel")?.scrollIntoView({behavior:"smooth",block:"start"});
@@ -817,7 +830,7 @@
       task_id: t.id,
       project_id: t.projectId,
       provider: $("relayProviderSelect")?.value || "auto",
-      role: t.output ? "continue" : "create",
+      role: (t.mode === "build" || /Execution mode: build/i.test(t.context || "")) ? "build" : (t.output ? "continue" : "create"),
       prior_packet: packetText(t),
       next_worker: t.nextWorker || "review the previous worker and choose the next concrete step"
     }, null, 2);
@@ -850,7 +863,7 @@
         return;
       }
     }
-    if (!confirm("Run the AI worker chain for this task? The in-app private route sends only an opaque run ID to GitHub Actions; task text/results are stored in your private Supabase workspace and task content is sent to the configured AI providers. The repository is public, and older manual/file-triggered routes may expose content. Do not include passwords, API keys, personal details, or confidential material.")) return;
+    if (!confirm((t.mode === "build" || /Execution mode: build/i.test(t.context || "")) ? "Build mode will send the task to configured AI providers and propose code changes only in the existing app files. A guarded patch is checked and opened as a PR in this public repository; the diff will be public. Nothing is merged or deployed automatically. Never include secrets or private data." : "Run the AI worker council for this task? The in-app private route stores task/results in your private Supabase workspace and sends task content to configured AI providers. Do not include passwords, API keys, personal details, or confidential material.")) return;
     const button = $("runRelayBtn");
     button.disabled = true;
     button.textContent = "Starting workers…";
@@ -862,7 +875,7 @@
           task_id: t.id,
           project_id: t.projectId,
           provider: $("relayProviderSelect")?.value || "auto",
-          role: t.output ? "continue" : "create",
+          role: (t.mode === "build" || /Execution mode: build/i.test(t.context || "")) ? "build" : (t.output ? "continue" : "create"),
           prior_packet: packetText(t),
           next_worker: t.nextWorker || "review the previous worker and choose the next concrete step"
         }

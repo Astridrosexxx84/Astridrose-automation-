@@ -23,11 +23,11 @@
     <section class="panel mission-launcher" aria-labelledby="missionLauncherTitle">
       <p class="eyebrow">DO REAL WORK · SIMPLE MODE</p>
       <h2 id="missionLauncherTitle">Start a mission</h2>
-      <p>Describe what you want done. Brain will save it as a task and send it to the configured AI worker chain.</p>
+      <p>Describe what you want done. Mission mode collaborates across AI providers; Build mode proposes a guarded app-code change as a pull request.</p>
       <form id="missionForm" class="mission-form">
         <label for="missionGoal">What do you want Brain to work on?</label>
         <textarea id="missionGoal" rows="3" maxlength="3000" required placeholder="e.g. Review my app's onboarding flow and produce a short, prioritized improvement plan."></textarea>
-        <div class="mission-actions"><button id="startMissionBtn" class="primary" type="submit">Create task & run AI</button><span class="footnote">Use non-sensitive text only. A confirmation appears before sending.</span></div>
+        <div class="mission-actions"><button id="startMissionBtn" class="primary" type="submit">Start a mission</button><button id="buildMissionBtn" class="secondary" type="button">Build a code change</button><span class="footnote">Build mode opens a reviewed PR; it never merges or deploys by itself. Do not include secrets or private data.</span></div>
       </form>
       <p id="missionStatus" class="mission-status" aria-live="polite">Your request becomes a saved task, so the result has somewhere to live.</p>
     </section>
@@ -150,6 +150,6 @@
   </dialog>
   <div id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js?v=ai-review-1"></script>
+  <script src="app.js?v=guarded-build-1"></script>
 </body>
 </html>

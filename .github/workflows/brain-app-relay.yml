@@ -60,6 +60,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
   id-token: write
 
 concurrency:
@@ -160,7 +161,20 @@ jobs:
                   env.write(f"AI_RELAY_{key.upper()}<<{delimiter}\n{value}\n{delimiter}\n")
           print("Relay request validated; task content is not printed.")
           PY
+      - name: Build guarded app code change
+        if: inputs.private_run_id != '' && inputs.role == 'build'
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          ALLOW_GEMINI_FREE_TIER_CALLS: "true"
+          ALLOW_GROQ_FREE_TIER_CALLS: "true"
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        run: python brain_coding_agent.py
       - name: Run sequential provider chain
+        if: inputs.role != 'build'
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
