@@ -189,6 +189,7 @@ def main():
     task=os.environ.get("AI_RELAY_TASK","").strip()
     prior=os.environ.get("AI_RELAY_PRIOR_PACKET","").strip()
     next_worker=os.environ.get("AI_RELAY_NEXT_WORKER","").strip()
+    stage=os.environ.get("AI_RELAY_STAGE","primary").strip().lower()
     if provider not in ("openrouter","groq","gemini"): raise SystemExit("Provider must be openrouter, groq, or gemini.")
     if role not in ("create","continue","review"): raise SystemExit("Role must be create, continue, or review.")
     if not task: raise SystemExit("Task goal is required.")
@@ -202,7 +203,13 @@ def main():
       "continue":"Continue and improve the existing artifact in the packet. Preserve valid prior work; do not restart from scratch.",
       "review":"Review the actual artifact for correctness, missing pieces, risks and testability. Make a corrected version where possible and list specific findings."
     }[role]
-    prompt="GOAL / DEFINITION OF DONE:\n"+task+"\n\nWORKER ROLE: "+role.upper()+"\n"+role_text+"\n\nPRIOR HANDOFF PACKET / ACTUAL WORK SO FAR:\n"+(prior or "(No prior packet: this is the first turn.)")+"\n\nOUTPUT REQUIREMENTS:\n1. Return the actual artifact or concrete continuation, not only advice.\n2. State what you did and any tests/evidence honestly.\n3. End with NEXT ACTION: and one specific action for the next worker.\n4. Respect the $0 constraint; do not suggest a paid route as fallback.\n5. Do not claim that you edited GitHub or ran tests unless the workflow actually did so."
+    stage_text={
+      "primary":"PRIMARY BUILDER: produce the strongest concrete first artifact for the goal. Make assumptions explicit and identify acceptance criteria.",
+      "critic":"INDEPENDENT CRITIC: do not merely continue or praise the prior work. Test its logic against the goal, identify specific omissions, contradictions, unsupported claims and failure cases. Then provide a corrected artifact or precise, prioritized corrections. Preserve good work.",
+      "integrator":"FINAL INTEGRATOR: reconcile the prior builder output and independent critique into one coherent, usable final artifact. Resolve disagreements explicitly, remove unsupported claims, and include a short acceptance checklist plus any remaining blockers.",
+      "recovery":"RECOVERY BUILDER: prior providers did not produce a usable result. Make the strongest standalone artifact you can from the original goal; do not assume earlier work exists."
+    }.get(stage,"Continue from the actual artifact without restarting.")
+    prompt="GOAL / DEFINITION OF DONE:\\n"+task+"\\n\\nCOUNCIL STAGE: "+stage.upper()+"\\n"+stage_text+"\\n\\nWORKER ROLE: "+role.upper()+"\\n"+role_text+"\\n\\nPRIOR HANDOFF PACKET / ACTUAL WORK SO FAR:\\n"+(prior or "(No prior packet: this is the first turn.)")+"\\n\\nOUTPUT REQUIREMENTS:\\n1. Return the actual artifact or concrete continuation, not only advice.\\n2. For critic/integrator stages, refer to specific evidence from prior work and address it directly.\\n3. State what you did and any tests/evidence honestly.\\n4. End with NEXT ACTION: and one specific action for the next worker.\\n5. Respect the $0 constraint; do not suggest a paid route as fallback.\\n6. Do not claim that you edited GitHub or ran tests unless the workflow actually did so."
     started=now()
     try:
         if provider=="openrouter": model,answer=call_openrouter(keys[provider],prompt)
@@ -212,7 +219,7 @@ def main():
     except Exception as exc:
         model="unavailable"; answer=""; outcome="error"
         error_category=str(exc)[:160]
-    record={"schema_version":1,"task":task,"role":role,"provider":provider,"model":model,"started_at":started,"finished_at":now(),"outcome":outcome,"error_category":error_category,"prior_packet":prior,"worker_output":answer,"next_worker":next_worker or "Choose the next suitable verified free worker","next_action":""}
+    record={"schema_version":1,"task":task,"role":role,"stage":stage,"provider":provider,"model":model,"started_at":started,"finished_at":now(),"outcome":outcome,"error_category":error_category,"prior_packet":prior,"worker_output":answer,"next_worker":next_worker or "Choose the next suitable verified free worker","next_action":""}
     if answer:
         for line in reversed(answer.splitlines()):
             if line.strip().lower().startswith("next action:"):
