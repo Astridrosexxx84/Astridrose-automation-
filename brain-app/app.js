@@ -875,7 +875,7 @@
           task_id: t.id,
           project_id: t.projectId,
           provider: $("relayProviderSelect")?.value || "auto",
-          role: t.output ? "continue" : "create",
+          role: (t.mode === "build" || /Execution mode: build/i.test(t.context || "")) ? "build" : (t.output ? "continue" : "create"),
           prior_packet: packetText(t),
           next_worker: t.nextWorker || "review the previous worker and choose the next concrete step"
         }
