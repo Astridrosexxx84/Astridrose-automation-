@@ -131,7 +131,7 @@ jobs:
           if 'id="reviewResultBtn"' not in html:
               raise SystemExit("A result must be reviewable against its original goal")
           review = app.split('$("reviewResultBtn")?.addEventListener("click"', 1)[1].split('$("followupTaskBtn")?.addEventListener', 1)[0]
-          for required in ("source.goal", "source.output", "VERDICT (PASS, FAIL, or INCOMPLETE)", "state.tasks.push(review)", "Do not mark the original task complete.", '$("runRelayBtn")?.click()'):
+          for required in ("source.goal", "source.output", "VERDICT (PASS, FAIL, or INCOMPLETE)", "state.tasks.push(review)", "do not mark the original task complete.", '$("runRelayBtn")?.click()'):
               if required not in review:
                   raise SystemExit("AI review must assess real output without self-approving: " + required)
           if 'id="downloadArtifactBtn"' not in html or 'id="followupTaskBtn"' not in html:
