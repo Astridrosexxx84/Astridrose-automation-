@@ -52,7 +52,6 @@
     return {id:t.id,projectId:t.project_id,name:t.title,goal:t.goal || "",context:t.context || "",status,worker:t.current_worker || t.assigned_worker || "",nextWorker:t.next_worker || "",output:t.current_output || t.result_summary || "",next:t.next_action || "",createdAt:t.created_at || now(),updatedAt:t.updated_at || now(),deletedAt:t.deleted_at || null,syncVersion:t.sync_version || 1};
   }
   function mergeByFreshness(localItems, remoteItems) {
-    const remoteVersions = new Map(remoteItems.map(item => [item.id, item.syncVersion || 1]));
     const byId = new Map();
     for (const item of [...remoteItems, ...localItems]) {
       const prior = byId.get(item.id);
@@ -76,9 +75,11 @@
       if (priorHasOutput && !itemHasOutput && reviewStates.includes(prior.status) && reviewStates.includes(item.status)) continue;
       if (!prior || Date.parse(item.updatedAt || 0) >= Date.parse(prior.updatedAt || 0)) byId.set(item.id, item);
     }
+    // Keep the revision from the copy that won the merge. Do not upgrade a
+    // stale local edit to the newest remote revision: compare-and-set must reject it.
     return [...byId.values()].map(item => ({
       ...item,
-      syncVersion: remoteVersions.get(item.id) || item.syncVersion || 1
+      syncVersion: item.syncVersion || 1
     }));
   }
   function applySavedVersions(items, savedRows) {
