@@ -42,8 +42,8 @@ jobs:
           cached_script = re.search(r'"(\./app\.js\?[^"]+)"', service_worker)
           if not html_script or not cached_script or "./" + html_script.group(1) != cached_script.group(1):
               raise SystemExit("index.html app.js URL must match the service-worker precache URL")
-          if "brain-app-shell-v13" not in service_worker or "app.js?v=core-recovery-1" not in html:
-              raise SystemExit("Core recovery release must bump the service-worker cache and app script URL")
+          if "brain-app-shell-v14" not in service_worker or "app.js?v=sync-version-1" not in html:
+              raise SystemExit("Sync-version release must bump the service-worker cache and app script URL")
           html_ids = set(re.findall(r"""\bid=["']([^"']+)["']""", html))
           app_ids = set(re.findall(r"""\$\(["']([^"']+)["']\)""", app))
           missing = sorted(app_ids - html_ids)
@@ -79,6 +79,25 @@ jobs:
               raise SystemExit("Recovered-output protection must document the fresh-retry exception")
           if "if (remoteTasksResult.error) throw remoteTasksResult.error;" not in sync_body:
               raise SystemExit("Cloud sync must stop safely when the remote preflight read fails")
+          prepare_version = Path("brain-app/supabase/migrations/0007_prepare_sync_version.sql").read_text(encoding="utf-8").lower()
+          enforce_version = Path("brain-app/supabase/migrations/0008_enforce_sync_version.sql").read_text(encoding="utf-8").lower()
+          for table in ("brain_projects", "brain_tasks"):
+              if f"alter table public.{table}" not in prepare_version or "add column if not exists sync_version bigint" not in prepare_version:
+                  raise SystemExit(f"Sync version migration missing for {table}")
+          if "new.sync_version := old.sync_version + 1" not in prepare_version:
+              raise SystemExit("Prepared sync trigger must increment row versions")
+          if "x-brain-sync-version" not in app or "x-brain-sync-version" not in enforce_version:
+              raise SystemExit("App and database must agree on the versioned sync protocol")
+          if "errcode = '40001'" not in enforce_version or "new.sync_version is distinct from old.sync_version" not in enforce_version:
+              raise SystemExit("Database must reject stale authenticated writes")
+          if "sync_version:t.syncversion || 1" not in app.lower() or "sync_version:p.syncversion || 1" not in app.lower():
+              raise SystemExit("Cloud payloads must include the observed row revision")
+          if '.select("id,sync_version,updated_at")' not in app:
+              raise SystemExit("Cloud sync must read back persisted revisions")
+          if "const tasksToSync = state.tasks.filter(task => differsFromRemoteTask(task, remoteTasksById.get(task.id)))" not in app:
+              raise SystemExit("Cloud sync must write only changed tasks, not the whole workspace")
+          if "sync_version: t.syncversion || 1" not in app.lower():
+              raise SystemExit("Task deletion must also use compare-and-set versioning")
           active_run_migration = Path("brain-app/supabase/migrations/0005_one_active_run_per_task.sql").read_text(encoding="utf-8")
           if "create unique index if not exists brain_worker_runs_one_active_per_task_idx" not in active_run_migration:
               raise SystemExit("Database contract must prevent concurrent active runs for one task")
