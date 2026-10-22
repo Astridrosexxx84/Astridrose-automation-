@@ -28,7 +28,13 @@
         <textarea id="missionGoal" rows="3" maxlength="3000" required placeholder="Tell Vision what you need done…"></textarea>
         <div class="mission-actions"><button id="startMissionBtn" class="primary" type="submit">Start with Vision</button><button id="buildMissionBtn" class="secondary advanced-build" type="button">Build a code change</button></div>
       </form>
-      <p id="missionStatus" class="mission-status" aria-live="polite">Your request is saved as a task. The result will appear in your workspace.</p><button id="showToolsBtn" class="secondary small tools-toggle" type="button" aria-expanded="false">More tools</button>
+      <p id="missionStatus" class="mission-status" aria-live="polite">Your request is saved as a task. Vision will show the result here.</p>
+      <section id="missionResultPanel" class="mission-result" aria-live="polite" hidden>
+        <h3 id="missionResultTitle">Your result</h3>
+        <p id="missionResultState" class="mission-result-state">Waiting for Vision…</p>
+        <pre id="missionResultOutput" class="mission-result-output">Your result will appear here automatically.</pre>
+      </section>
+      <button id="showToolsBtn" class="secondary small tools-toggle" type="button" aria-expanded="false">More tools</button>
     </section>
     <section class="panel quick-start" aria-labelledby="quickStartTitle">
       <p class="eyebrow">OPTIONAL TEST</p>
@@ -148,6 +154,6 @@
   </dialog>
   <div id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js?v=vision-simple-home-1"></script>
+  <script src="app.js?v=vision-result-display-1"></script>
 </body>
 </html>
