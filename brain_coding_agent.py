@@ -36,6 +36,11 @@ def ask_provider(prompt):
         ("gemini", os.getenv("GEMINI_API_KEY", "").strip(), call_gemini),
         ("openrouter", os.getenv("OPENROUTER_API_KEY", "").strip(), call_openrouter),
     ]
+    selected = os.getenv("AI_RELAY_PROVIDER", "auto").strip().lower()
+    if selected == "cloudflare":
+        raise RuntimeError("Build mode needs a code-capable free route. Choose Auto, Groq, Gemini, or OpenRouter; Cloudflare's configured small model is not used for code changes.")
+    if selected in ("groq", "gemini", "openrouter"):
+        candidates.sort(key=lambda item: 0 if item[0] == selected else 1)
     errors = []
     for name, key, call in candidates:
         if not key:
