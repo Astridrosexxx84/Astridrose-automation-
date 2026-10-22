@@ -42,8 +42,8 @@ jobs:
           cached_script = re.search(r'"(\./app\.js\?[^"]+)"', service_worker)
           if not html_script or not cached_script or "./" + html_script.group(1) != cached_script.group(1):
               raise SystemExit("index.html app.js URL must match the service-worker precache URL")
-          if "brain-app-shell-v16" not in service_worker or "app.js?v=mission-launcher-1" not in html:
-              raise SystemExit("Mission launcher release must bump the service-worker cache and app script URL")
+          if "brain-app-shell-v17" not in service_worker or "app.js?v=artifact-followup-1" not in html:
+              raise SystemExit("Artifact/follow-up release must bump the service-worker cache and app script URL")
           html_ids = set(re.findall(r"""\bid=["']([^"']+)["']""", html))
           app_ids = set(re.findall(r"""\$\(["']([^"']+)["']\)""", app))
           missing = sorted(app_ids - html_ids)
@@ -128,6 +128,14 @@ jobs:
               raise SystemExit("Recovered successful private relay results must remain in review until verified")
           if 'Verify the returned output against the goal and acceptance criteria before marking complete.' not in app:
               raise SystemExit("Recovered successful results must request acceptance-criteria verification")
+          if 'id="downloadArtifactBtn"' not in html or 'id="followupTaskBtn"' not in html:
+              raise SystemExit("Task results must be exportable and reusable as follow-up work")
+          if 'const blob = new Blob([content + "\\n"], {type:"text/markdown;charset=utf-8"})' not in app:
+              raise SystemExit("Result export must produce a portable Markdown artifact")
+          followup = app.split('$("followupTaskBtn")?.addEventListener("click"', 1)[1].split("function relayRequestText()", 1)[0]
+          for required in ("source.output", "source.goal", "state.tasks.push(task)", "selectedTaskId=task.id", "Continue the existing work; do not restart from scratch."):
+              if required not in followup:
+                  raise SystemExit("Follow-up task must carry forward real prior work: " + required)
           if 'id="missionForm"' not in html or 'id="missionGoal"' not in html or 'id="startMissionBtn"' not in html:
               raise SystemExit("Mission launcher must be available in the app")
           mission = app.split('$("missionForm")?.addEventListener("submit"', 1)[1].split('$("quickTestBtn").addEventListener', 1)[0]
