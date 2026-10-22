@@ -87,8 +87,9 @@
     for (const item of items) {
       const saved = byId.get(item.id);
       if (!saved) throw new Error("Cloud save was not confirmed; refresh before retrying.");
+      // Do not replace the local edit timestamp with the server's write time.
+      // A newer local edit may have arrived while the request was in flight.
       item.syncVersion = saved.sync_version;
-      item.updatedAt = saved.updated_at || item.updatedAt;
     }
   }
   function differsFromRemoteProject(project, remote) {
@@ -130,12 +131,12 @@
       const tasksToSync = state.tasks.filter(task => differsFromRemoteTask(task, remoteTasksById.get(task.id)));
       try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (_) {}
       if (projectsToSync.length) {
-        const {data, error} = await cloudClient.from("brain_projects").upsert(projectsToSync.map(toRemoteProject), {onConflict:"id"}).select("id,sync_version,updated_at");
+        const {data, error} = await cloudClient.from("brain_projects").upsert(projectsToSync.map(toRemoteProject), {onConflict:"id"}).select("id,sync_version");
         if (error) throw error;
         applySavedVersions(projectsToSync, data);
       }
       if (tasksToSync.length) {
-        const {data, error} = await cloudClient.from("brain_tasks").upsert(tasksToSync.map(toRemoteTask), {onConflict:"id"}).select("id,sync_version,updated_at");
+        const {data, error} = await cloudClient.from("brain_tasks").upsert(tasksToSync.map(toRemoteTask), {onConflict:"id"}).select("id,sync_version");
         if (error) throw error;
         applySavedVersions(tasksToSync, data);
       }
@@ -260,10 +261,10 @@
       // foreign key to the task. This also covers a brand-new local-only task.
       const project = state.projects.find(item => item.id === task.projectId);
       if (!project) throw new Error("Task project is missing; save or restore the project first.");
-      const { data: savedProject, error: projectError } = await cloudClient.from("brain_projects").upsert(toRemoteProject(project), {onConflict:"id"}).select("id,sync_version,updated_at").single();
+      const { data: savedProject, error: projectError } = await cloudClient.from("brain_projects").upsert(toRemoteProject(project), {onConflict:"id"}).select("id,sync_version").single();
       if (projectError) throw projectError;
       applySavedVersions([project], [savedProject]);
-      const { data: savedTask, error: taskError } = await cloudClient.from("brain_tasks").upsert(toRemoteTask(task), {onConflict:"id"}).select("id,sync_version,updated_at").single();
+      const { data: savedTask, error: taskError } = await cloudClient.from("brain_tasks").upsert(toRemoteTask(task), {onConflict:"id"}).select("id,sync_version").single();
       if (taskError) throw taskError;
       applySavedVersions([task], [savedTask]);
       const { error } = await cloudClient.from("brain_task_events").insert({
