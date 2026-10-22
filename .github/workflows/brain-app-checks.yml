@@ -63,8 +63,8 @@ jobs:
               raise SystemExit("Task deletion must use a durable deleted_at tombstone")
           if "if (prior?.deletedat && !item.deletedat) continue;" not in app.lower():
               raise SystemExit("A stale local task must not overwrite a remote deletion tombstone")
-          if 'update({deleted_at: now()})' not in app:
-              raise SystemExit("Task deletion must preserve a cloud tombstone rather than hard-delete the row")
+          if 'update({deleted_at: now(), sync_version: t.syncVersion || 1})' not in app:
+              raise SystemExit("Task deletion must preserve a versioned cloud tombstone rather than hard-delete the row")
           if "state.tasks = state.tasks.filter(t => !t.deletedat);" not in app.lower():
               raise SystemExit("Deleted tasks must be excluded from the merged local workspace")
           sync_body = app.split("async function syncLocalToCloud()", 1)[1].split("async function applyPrivateRelayResults()", 1)[0]
