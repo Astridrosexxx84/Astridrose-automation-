@@ -25,6 +25,7 @@ jobs:
         run: |
           node --check brain-app/app.js
           python -m py_compile brain_relay_worker.py brain_relay_chain.py brain_cloudflare_worker.py
+          python -m unittest discover -s tests -p 'test_*.py'
       - name: Check app wiring and database contract
         run: |
           python - <<'PY'

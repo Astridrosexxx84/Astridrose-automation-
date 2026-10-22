@@ -22,6 +22,17 @@ def read_json(path):
         return {}
 
 
+def stage_for_turn(index, total, has_packet, requested_role):
+    """Return the stage and provider role for this council turn."""
+    if not has_packet:
+        return ("primary" if index == 0 else "recovery", requested_role)
+    if index == total - 1 and index > 0:
+        return "integrator", "continue"
+    if index > 0:
+        return "critic", "review"
+    return "primary", requested_role
+
+
 def main():
     task = os.environ.get("AI_RELAY_TASK", "").strip()
     selected = os.environ.get("AI_RELAY_PROVIDER", "auto").strip().lower()
@@ -45,12 +56,16 @@ def main():
     successful_packet = prior
     for index, provider in enumerate(order):
         env = os.environ.copy()
+        # Distinct builder / critic / integrator roles make the providers
+        # collaborate rather than repeat the same generic continuation.
+        stage, stage_role = stage_for_turn(index, len(order), bool(successful_packet), role)
         env.update({
             "AI_RELAY_TASK": task,
             "AI_RELAY_PROVIDER": provider,
-            "AI_RELAY_ROLE": role if index == 0 else "continue",
+            "AI_RELAY_ROLE": stage_role,
+            "AI_RELAY_STAGE": stage,
             "AI_RELAY_PRIOR_PACKET": successful_packet,
-            "AI_RELAY_NEXT_WORKER": order[index + 1] if index + 1 < len(order) else "Review the complete relay packet",
+            "AI_RELAY_NEXT_WORKER": order[index + 1] if index + 1 < len(order) else "Final quality check and acceptance-criteria verification",
         })
         # Remove the previous turn's packet so an early worker exit (for example,
         # missing credentials) cannot be mistaken for this provider's result.
