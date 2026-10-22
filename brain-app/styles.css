@@ -193,3 +193,13 @@ body.simple-mode .simple-result { margin-top:12px; }
 .simple-result-state.is-error { color:var(--red); }
 .simple-result-state.is-working { color:var(--amber); }
 .simple-result-output { white-space:pre-wrap; overflow-wrap:anywhere; font:inherit; font-size:.92rem; line-height:1.5; color:var(--text); background:rgba(5,10,20,.45); border:1px solid var(--line); border-radius:10px; padding:12px; margin:0; max-height:260px; overflow:auto; }
+
+/* Mission launcher: a useful entry point for real work, not another settings panel. */
+.mission-launcher{border:1px solid var(--accent);background:linear-gradient(135deg,var(--panel),var(--panel2))}
+.mission-launcher h2{margin:.1rem 0 .4rem}
+.mission-form{display:grid;gap:.65rem;margin-top:1rem}
+.mission-form>label{font-weight:650}
+.mission-form textarea{width:100%;min-height:92px;resize:vertical}
+.mission-actions{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
+.mission-actions .footnote{margin:0;max-width:28rem}
+.mission-status{margin:.8rem 0 0;color:var(--muted);font-size:.92rem}
