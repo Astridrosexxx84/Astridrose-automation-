@@ -22,6 +22,17 @@ def read_json(path):
         return {}
 
 
+def stage_for_turn(index, total, has_packet, requested_role):
+    """Return the stage and provider role for this council turn."""
+    if not has_packet:
+        return ("primary" if index == 0 else "recovery", requested_role)
+    if index == total - 1 and index > 0:
+        return "integrator", "continue"
+    if index > 0:
+        return "critic", "review"
+    return "primary", requested_role
+
+
 def main():
     task = os.environ.get("AI_RELAY_TASK", "").strip()
     selected = os.environ.get("AI_RELAY_PROVIDER", "auto").strip().lower()
@@ -45,21 +56,9 @@ def main():
     successful_packet = prior
     for index, provider in enumerate(order):
         env = os.environ.copy()
-        # Make the providers collaborate in distinct roles instead of asking all
-        # of them to repeat the same generic continuation. If an earlier provider
-        # failed, the next available provider becomes a recovery builder.
-        if not successful_packet:
-            stage = "primary" if index == 0 else "recovery"
-            stage_role = role
-        elif index == len(order) - 1 and index > 0:
-            stage = "integrator"
-            stage_role = "continue"
-        elif index > 0:
-            stage = "critic"
-            stage_role = "review"
-        else:
-            stage = "primary"
-            stage_role = role
+        # Distinct builder / critic / integrator roles make the providers
+        # collaborate rather than repeat the same generic continuation.
+        stage, stage_role = stage_for_turn(index, len(order), bool(successful_packet), role)
         env.update({
             "AI_RELAY_TASK": task,
             "AI_RELAY_PROVIDER": provider,
