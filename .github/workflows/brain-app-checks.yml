@@ -70,7 +70,7 @@ jobs:
           sync_body = app.split("async function syncLocalToCloud()", 1)[1].split("async function applyPrivateRelayResults()", 1)[0]
           if 'cloudClient.from("brain_tasks").select("*").order("updated_at", {ascending:false})' not in sync_body:
               raise SystemExit("Cloud sync must fetch current remote tasks before upserting local state")
-          if "state.tasks = mergeByFreshness(state.tasks, (remoteTasksResult.data || []).map(fromRemoteTask))" not in sync_body:
+          if "state.tasks = mergeByFreshness(state.tasks, remoteTasks.map(fromRemoteTask))" not in sync_body:
               raise SystemExit("Cloud sync must merge remote freshness before writes")
           merge_body = app.split("function mergeByFreshness", 1)[1].split("async function syncLocalToCloud", 1)[0]
           if "const reviewStates = [\"handed_off\", \"complete\"];" not in merge_body:
