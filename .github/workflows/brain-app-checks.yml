@@ -72,6 +72,11 @@ jobs:
               raise SystemExit("Cloud sync must fetch current remote tasks before upserting local state")
           if "state.tasks = mergeByFreshness(state.tasks, (remoteTasksResult.data || []).map(fromRemoteTask))" not in sync_body:
               raise SystemExit("Cloud sync must merge remote freshness before writes")
+          merge_body = app.split("function mergeByFreshness", 1)[1].split("async function syncLocalToCloud", 1)[0]
+          if "const reviewStates = [\"handed_off\", \"complete\"];" not in merge_body:
+              raise SystemExit("Freshness merge must preserve recovered output for review/completed tasks")
+          if "let a newer \"working\" retry clear it." not in merge_body:
+              raise SystemExit("Recovered-output protection must document the fresh-retry exception")
           if "if (remoteTasksResult.error) throw remoteTasksResult.error;" not in sync_body:
               raise SystemExit("Cloud sync must stop safely when the remote preflight read fails")
           active_run_migration = Path("brain-app/supabase/migrations/0005_one_active_run_per_task.sql").read_text(encoding="utf-8")
