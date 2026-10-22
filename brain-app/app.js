@@ -479,6 +479,36 @@
   }
   function projectTasks(projectId) { return state.tasks.filter(t => t.projectId === projectId); }
   function currentTask() { return state.tasks.find(t => t.id === selectedTaskId && t.projectId === selectedProjectId); }
+  function renderMissionResult() {
+    const task = currentTask();
+    const panel = $("missionResultPanel");
+    const title = $("missionResultTitle");
+    const stateEl = $("missionResultState");
+    const outputEl = $("missionResultOutput");
+    if (!panel || !title || !stateEl || !outputEl) return;
+    const isMission = !!task && (
+      String(task.context || "").includes("Created from the Brain mission launcher.") ||
+      /Execution mode: build/i.test(String(task.context || ""))
+    );
+    panel.hidden = !isMission;
+    if (!isMission) return;
+    title.textContent = task.name || "Your result";
+    const output = String(task.output || "").trim();
+    outputEl.textContent = output || (
+      task.status === "blocked" ? "Vision couldn't complete this task. Open More tools for the technical details." :
+      ["working", "handed_off"].includes(task.status) ? "Vision is working. Keep this page open; your result will appear here." :
+      "Your request is saved. Waiting for Vision to start."
+    );
+    stateEl.className = "mission-result-state " + (
+      task.status === "blocked" ? "is-error" :
+      output ? "is-success" :
+      ["working", "handed_off"].includes(task.status) ? "is-working" : ""
+    );
+    stateEl.textContent = task.status === "blocked" ? "Needs attention" :
+      output ? "Result received — review it below" :
+      ["working", "handed_off"].includes(task.status) ? "Working on your request…" : "Request saved";
+  }
+
   function renderSimpleResult() {
     const task = state.tasks
       .filter(item => item.name === "Brain connection check" && String(item.goal || "").includes("BRAIN-APP-OK"))
@@ -554,6 +584,7 @@
     renderPacket();
     renderVerification();
     renderSimpleResult();
+    renderMissionResult();
   }
   function renderPacket() {
     const t = currentTask();
@@ -836,8 +867,9 @@
     }, null, 2);
   }
   $("runRelayBtn").addEventListener("click", async () => {
-    const t = currentTask();
+    let t = currentTask();
     if (!t) { toast("Select a task first."); return; }
+    const taskId = t.id;
     if (!cloudClient) {
       toast("Cloud relay is unavailable because the secure connection did not load.");
       return;
@@ -853,6 +885,13 @@
         if (!cloudUser) throw new Error("No anonymous session was returned.");
         setAuthUI();
         await mergeCloudWorkspace();
+        // Workspace merging rebuilds task objects and normally selects the first task.
+        // Restore the exact task that launched this relay before continuing.
+        t = state.tasks.find(item => item.id === taskId);
+        if (!t) throw new Error("The task could not be restored after cloud sign-in.");
+        selectedProjectId = t.projectId;
+        selectedTaskId = t.id;
+        render();
       } catch (err) {
         const detail = String(err?.message || "");
         if (/anonymous|disabled|not enabled|signups not allowed/i.test(detail)) {
@@ -869,6 +908,12 @@
     button.textContent = "Starting workers…";
     try {
       await syncLocalToCloud();
+      // Cloud sync merges rows into new objects, so never keep mutating a stale task reference.
+      t = state.tasks.find(item => item.id === taskId);
+      if (!t) throw new Error("The task is no longer available in this workspace.");
+      selectedProjectId = t.projectId;
+      selectedTaskId = t.id;
+      render();
       const { data, error } = await cloudClient.functions.invoke("dispatch-brain-relay", {
         body: {
           task: "Brain App task: " + (t.name || "Untitled task") + "\n\nGoal: " + (t.goal || "(not set)"),
@@ -904,17 +949,21 @@
             .eq("id", privateRunId).maybeSingle();
           if (runError) throw runError;
           if (run?.status === "succeeded" || run?.status === "failed") {
+            const resultTask = state.tasks.find(item => item.id === taskId);
+            if (!resultTask) return;
             const packet = run.response_payload || {};
             const turns = Array.isArray(packet.turns) ? packet.turns : [];
             const outputs = turns.filter(turn => turn?.outcome === "success" && turn?.worker_output)
               .map(turn => "**" + String(turn.provider || "AI worker") + "**\\n" + String(turn.worker_output));
-            t.output = outputs.join("\\n\\n") || (run.error_category ? "Relay failed: " + run.error_category : "Relay finished without a usable output.");
+            resultTask.output = outputs.join("\\n\\n") || (run.error_category ? "Relay failed: " + run.error_category : "Relay finished without a usable output.");
             // A successful worker run proves the relay completed, not that the deliverable meets the goal.
             // Keep successful output in review until a person or independent verifier checks it.
-            t.status = run.status === "succeeded" ? "handed_off" : "blocked";
-            t.next = String(packet.next_action || (run.status === "succeeded" ? "Review the returned output against the goal and acceptance criteria. Mark complete only after verification." : "Check the relay error and retry when ready."));
-            t.worker = "Private AI relay";
-            t.updatedAt = now();
+            resultTask.status = run.status === "succeeded" ? "handed_off" : "blocked";
+            resultTask.next = String(packet.next_action || (run.status === "succeeded" ? "Review the returned output against the goal and acceptance criteria. Mark complete only after verification." : "Check the relay error and retry when ready."));
+            resultTask.worker = "Private AI relay";
+            resultTask.updatedAt = now();
+            selectedProjectId = resultTask.projectId;
+            selectedTaskId = resultTask.id;
             persist(); render();
             await syncLocalToCloud().catch(() => {});
             toast(run.status === "succeeded" ? "Private relay result received and saved." : "Private relay finished with an error. Check the task result.");
