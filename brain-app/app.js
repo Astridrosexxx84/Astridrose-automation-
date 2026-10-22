@@ -759,6 +759,30 @@
     a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
     toast("Result artifact downloaded as Markdown.");
   });
+  $("reviewResultBtn")?.addEventListener("click", () => {
+    if (!savePacket(false)) return;
+    const source = currentTask();
+    if (!source) return;
+    if (!String(source.goal || "").trim()) { toast("Add the original goal / definition of done first."); $("taskGoal").focus(); return; }
+    if (!String(source.output || "").trim()) { toast("There is no result to review yet."); $("taskOutput").focus(); return; }
+    const project = state.projects.find(p => p.id === source.projectId);
+    if (!project) { toast("The original project is missing."); return; }
+    const review = {
+      id:uid(), projectId:source.projectId,
+      name:("Review: " + (source.name || "task result")).slice(0,120),
+      goal:"Review the attached work against the original goal and acceptance criteria. Return a clear VERDICT (PASS, FAIL, or INCOMPLETE), then assess each criterion with specific evidence from the artifact. List unsupported claims, missing requirements, risks, and the smallest useful correction. Do not rewrite the artifact unless a correction is needed. This is an advisory review, not owner approval.",
+      status:"waiting", worker:"", nextWorker:"free-provider chain",
+      context:"AI review of task " + source.id + " (" + source.name + ").\n\nORIGINAL GOAL / ACCEPTANCE CRITERIA:\n" + source.goal + "\n\nARTIFACT TO REVIEW:\n" + source.output + "\n\nORIGINAL NEXT ACTION / NOTES:\n" + (source.next || "(none)") + "\n\nReview rules: assess only what the supplied artifact proves; distinguish evidence from assumptions; do not claim tests were run unless the artifact includes evidence; do not mark the original task complete. Free-provider route only; no paid fallback.",
+      output:"", next:"Inspect the review verdict and evidence. The owner must still decide whether the original task meets its acceptance criteria.",
+      createdAt:now(), updatedAt:now()
+    };
+    state.tasks.push(review);
+    selectedProjectId=project.id; selectedTaskId=review.id;
+    persist(); render();
+    $("missionStatus") && ($("missionStatus").textContent = "Review task saved. Confirm the private relay prompt to have the AI assess the result.");
+    document.querySelector(".packet-panel")?.scrollIntoView({behavior:"smooth",block:"start"});
+    $("runRelayBtn")?.click();
+  });
   $("followupTaskBtn")?.addEventListener("click", () => {
     if (!savePacket(false)) return;
     const source = currentTask();
