@@ -46,7 +46,7 @@ jobs:
               "https://cjqgdqcbtcwsgbbqrqcf.supabase.co/functions/v1/dispatch-brain-relay",
               "https://cjqgdqcbtcwsgbbqrqcf.supabase.co/functions/v1/brain-relay-bridge",
           )
-          requested = "authorization, apikey, content-type, x-client-info, x-supabase-api-version"
+          requested = "authorization, apikey, content-type, x-brain-sync-version, x-client-info, x-supabase-api-version"
           for endpoint in endpoints:
               request = urllib.request.Request(
                   endpoint,
