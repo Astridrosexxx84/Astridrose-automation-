@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#111827">
   <meta name="description" content="A project control room for sequential AI workers and persistent task handoffs.">
-  <title>Brain App — AI Relay Control Room</title>
+  <title>Vision — Your AI workspace</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="simple-mode">
   <header class="topbar">
-    <div><p class="eyebrow">PROJECT CONTROL ROOM</p><h1>Brain App</h1><p class="subhead">One coordinator. Replaceable brains. Real handoffs.</p></div>
+    <div><h1>Vision</h1><p class="subhead">Tell me what you need. I’ll handle the work.</p></div>
     <span class="status-pill"><span class="dot"></span> Local MVP</span>
   </header>
   <main>
@@ -21,24 +21,22 @@
       <div class="actions"><button class="primary" id="runRelayTopBtn" type="button">Run AI relay</button><button id="newProjectBtn" class="primary">＋ New project</button><button id="exportBtn" class="secondary">Export backup</button><label class="button secondary" for="importFile">Import backup</label><input id="importFile" type="file" accept="application/json" hidden></div>
     </section>
     <section class="panel mission-launcher" aria-labelledby="missionLauncherTitle">
-      <p class="eyebrow">DO REAL WORK · SIMPLE MODE</p>
-      <h2 id="missionLauncherTitle">Start a mission</h2>
-      <p>Describe what you want done. Mission mode collaborates across AI providers; Build mode proposes a guarded app-code change as a pull request.</p>
+      <h2 id="missionLauncherTitle">What do you want Vision to do?</h2>
+      <p>Describe the outcome you want. Vision will coordinate its available AI workers and bring the result back here.</p>
       <form id="missionForm" class="mission-form">
-        <label for="missionGoal">What do you want Brain to work on?</label>
-        <textarea id="missionGoal" rows="3" maxlength="3000" required placeholder="e.g. Review my app's onboarding flow and produce a short, prioritized improvement plan."></textarea>
-        <div class="mission-actions"><button id="startMissionBtn" class="primary" type="submit">Start a mission</button><button id="buildMissionBtn" class="secondary" type="button">Build a code change</button><span class="footnote">Build mode opens a reviewed PR; it never merges or deploys by itself. Do not include secrets or private data.</span></div>
+        <label for="missionGoal">Your request</label>
+        <textarea id="missionGoal" rows="3" maxlength="3000" required placeholder="Tell Vision what you need done…"></textarea>
+        <div class="mission-actions"><button id="startMissionBtn" class="primary" type="submit">Start with Vision</button><button id="buildMissionBtn" class="secondary advanced-build" type="button">Build a code change</button></div>
       </form>
-      <p id="missionStatus" class="mission-status" aria-live="polite">Your request becomes a saved task, so the result has somewhere to live.</p>
+      <p id="missionStatus" class="mission-status" aria-live="polite">Your request is saved as a task. The result will appear in your workspace.</p><button id="showToolsBtn" class="secondary small tools-toggle" type="button" aria-expanded="false">More tools</button>
     </section>
     <section class="panel quick-start" aria-labelledby="quickStartTitle">
-      <p class="eyebrow">RECOMMENDED · SIMPLE MODE</p>
-      <h2 id="quickStartTitle">Want to test the Brain?</h2>
+      <p class="eyebrow">OPTIONAL TEST</p>
+      <h2 id="quickStartTitle">Check the connection</h2>
       <p>Skip the technical setup. We’ll create a safe sample task and start the private AI workers for you.</p>
       <button class="primary quick-start-button" id="quickTestBtn" type="button">▶ Run a safe test</button>
       <p class="footnote">Uses a made-up prompt only. Never enter passwords, API keys or private information.</p>
       <p id="quickTestStatus" class="quick-test-status" aria-live="polite">Start with one safe test. You can open the other tools only when you need them.</p>
-      <button id="showToolsBtn" class="secondary small" type="button" aria-expanded="false">Show all tools</button>
     </section>
     <section class="panel simple-result" aria-labelledby="simpleResultTitle">
       <h2 id="simpleResultTitle">Your test result</h2>
@@ -132,7 +130,7 @@
       </div>
       <p class="footnote">No invented battery percentages. No paid routes without approval. No provider keys in this page.</p>
         </details>
-    <footer>Brain App MVP · This device keeps a local copy; sign in to sync across devices. Export backups regularly.</footer>
+    <footer>Vision · Your workspace stays on this device unless you sign in to sync. Export backups regularly.</footer>
   </main>
   <dialog id="projectDialog">
     <form id="projectForm" method="dialog">
@@ -150,6 +148,6 @@
   </dialog>
   <div id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js?v=guarded-build-1"></script>
+  <script src="app.js?v=vision-simple-home-1"></script>
 </body>
 </html>
