@@ -236,3 +236,14 @@ body:not(.simple-mode) .tools-toggle { display:none; }
   body.simple-mode .mission-launcher { padding:17px; }
   body.simple-mode .mission-form textarea { min-height:135px; }
 }
+
+
+/* Show mission outcomes on the simple home screen, not inside hidden advanced tools. */
+.mission-result { margin-top:16px; padding:14px; border:1px solid var(--line); border-radius:13px; background:rgba(5,10,20,.28); }
+.mission-result[hidden] { display:none !important; }
+.mission-result h3 { margin:0 0 8px; font-size:1.05rem; overflow-wrap:anywhere; }
+.mission-result-state { margin:0 0 10px; font-weight:750; }
+.mission-result-state.is-success { color:var(--green); }
+.mission-result-state.is-error { color:var(--red); }
+.mission-result-state.is-working { color:var(--amber); }
+.mission-result-output { white-space:pre-wrap; overflow-wrap:anywhere; font:inherit; font-size:.94rem; line-height:1.5; color:var(--text); background:rgba(5,10,20,.35); border:1px solid var(--line); border-radius:10px; padding:12px; margin:0; max-height:42vh; overflow:auto; }
