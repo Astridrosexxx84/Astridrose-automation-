@@ -67,6 +67,13 @@ jobs:
               raise SystemExit("Task deletion must preserve a cloud tombstone rather than hard-delete the row")
           if "state.tasks = state.tasks.filter(t => !t.deletedat);" not in app.lower():
               raise SystemExit("Deleted tasks must be excluded from the merged local workspace")
+          sync_body = app.split("async function syncLocalToCloud()", 1)[1].split("async function applyPrivateRelayResults()", 1)[0]
+          if 'cloudClient.from("brain_tasks").select("*").order("updated_at", {ascending:false})' not in sync_body:
+              raise SystemExit("Cloud sync must fetch current remote tasks before upserting local state")
+          if "state.tasks = mergeByFreshness(state.tasks, (remoteTasksResult.data || []).map(fromRemoteTask))" not in sync_body:
+              raise SystemExit("Cloud sync must merge remote freshness before writes")
+          if "if (remoteTasksResult.error) throw remoteTasksResult.error;" not in sync_body:
+              raise SystemExit("Cloud sync must stop safely when the remote preflight read fails")
           active_run_migration = Path("brain-app/supabase/migrations/0005_one_active_run_per_task.sql").read_text(encoding="utf-8")
           if "create unique index if not exists brain_worker_runs_one_active_per_task_idx" not in active_run_migration:
               raise SystemExit("Database contract must prevent concurrent active runs for one task")

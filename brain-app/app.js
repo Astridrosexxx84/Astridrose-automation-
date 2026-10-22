@@ -74,6 +74,22 @@
     }
     syncingCloud = true;
     try {
+      // Pull the newest cloud state before writing. Otherwise an older device
+      // can upsert its entire stale local workspace and overwrite newer edits
+      // made elsewhere simply because it changed one unrelated task.
+      const [remoteProjectsResult, remoteTasksResult] = await Promise.all([
+        cloudClient.from("brain_projects").select("*").order("updated_at", {ascending:false}),
+        cloudClient.from("brain_tasks").select("*").order("updated_at", {ascending:false})
+      ]);
+      if (remoteProjectsResult.error) throw remoteProjectsResult.error;
+      if (remoteTasksResult.error) throw remoteTasksResult.error;
+      state.projects = mergeByFreshness(state.projects, (remoteProjectsResult.data || []).map(fromRemoteProject));
+      state.tasks = mergeByFreshness(state.tasks, (remoteTasksResult.data || []).map(fromRemoteTask))
+        .filter(task => !task.deletedAt);
+      const validProjectIds = new Set(state.projects.map(project => project.id));
+      state.tasks = state.tasks.filter(task => validProjectIds.has(task.projectId));
+      // Persist the merged state locally without scheduling a recursive sync.
+      try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (_) {}
       // Upsert parents first, then tasks so project references are valid.
       if (state.projects.length) {
         const {error} = await cloudClient.from("brain_projects").upsert(state.projects.map(toRemoteProject), {onConflict:"id"});
