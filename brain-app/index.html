@@ -105,7 +105,7 @@
           <pre id="nextActionProposal" class="verification-evidence" aria-live="polite">Record a verification outcome first.</pre>
           <div class="actions"><button id="proposeNextActionBtn" class="secondary" type="button">Propose next action</button></div>
         </section>
-        <div class="actions packet-actions"><button class="primary" type="submit">Save packet</button><button id="handoffBtn" class="secondary" type="button">Hand off to next worker</button><button id="copyPacketBtn" class="secondary" type="button">Copy packet</button><button id="runRelayBtn" class="primary" type="button">Run AI workers now</button><button id="copyRelayRequestBtn" class="secondary" type="button">Copy AI relay request</button><button id="downloadRelayRequestBtn" class="secondary" type="button">Download relay request</button><label class="button secondary" for="relayResultFile">Import relay result</label><input id="relayResultFile" type="file" accept="application/json" hidden><button id="deleteTaskBtn" class="danger" type="button">Delete task</button></div>
+        <div class="actions packet-actions"><button class="primary" type="submit">Save packet</button><button id="handoffBtn" class="secondary" type="button">Hand off to next worker</button><button id="copyPacketBtn" class="secondary" type="button">Copy packet</button><button id="downloadArtifactBtn" class="secondary" type="button">Download result (.md)</button><button id="followupTaskBtn" class="secondary" type="button">Create follow-up task</button><button id="runRelayBtn" class="primary" type="button">Run AI workers now</button><button id="copyRelayRequestBtn" class="secondary" type="button">Copy AI relay request</button><button id="downloadRelayRequestBtn" class="secondary" type="button">Download relay request</button><label class="button secondary" for="relayResultFile">Import relay result</label><input id="relayResultFile" type="file" accept="application/json" hidden><button id="deleteTaskBtn" class="danger" type="button">Delete task</button></div>
       </form>
     </section>
     <section class="panel relay-status-panel" aria-live="polite">
@@ -150,6 +150,6 @@
   </dialog>
   <div id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js?v=mission-launcher-1"></script>
+  <script src="app.js?v=artifact-followup-1"></script>
 </body>
 </html>

@@ -736,6 +736,54 @@
     if (navigator.clipboard?.writeText) navigator.clipboard.writeText(copy).then(()=>toast("Portable packet copied."),()=>fallbackCopy(copy));
     else fallbackCopy(copy);
   });
+  $("downloadArtifactBtn")?.addEventListener("click", () => {
+    const t = currentTask();
+    if (!t) return;
+    if (!String(t.output || "").trim()) { toast("This task has no result to export yet."); return; }
+    const projectName = state.projects.find(p => p.id === t.projectId)?.name || "Unknown project";
+    const content = [
+      "# " + (t.name || "Brain task result"), "",
+      "**Project:** " + projectName,
+      "**Status:** " + (statuses[t.status] || t.status),
+      "**Last updated:** " + (t.updatedAt || t.createdAt || "unknown"), "",
+      "## Goal / definition of done", "", t.goal || "(not set)", "",
+      "## Result / artifact", "", t.output, "",
+      "## Context and constraints", "", t.context || "(none)", "",
+      "## Next action", "", t.next || "(none)", "",
+      "---", "Exported from Brain App. This file contains the task content and result; store and share it appropriately."
+    ].join("\n");
+    const blob = new Blob([content + "\n"], {type:"text/markdown;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = (t.name || "brain-result").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,70) + ".md";
+    a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast("Result artifact downloaded as Markdown.");
+  });
+  $("followupTaskBtn")?.addEventListener("click", () => {
+    if (!savePacket(false)) return;
+    const source = currentTask();
+    if (!source) return;
+    if (!String(source.output || "").trim()) { toast("Get a result first, then create a follow-up."); return; }
+    const project = state.projects.find(p => p.id === source.projectId);
+    if (!project) { toast("The original project is missing."); return; }
+    const nextAction = String(source.next || "").trim();
+    const task = {
+      id:uid(), projectId:source.projectId,
+      name:("Follow-up: " + (source.name || "Continue work")).slice(0,120),
+      goal:nextAction && !/review the returned output|mark complete only after verification/i.test(nextAction)
+        ? nextAction
+        : "Continue from the actual artifact in the context. Improve or extend it to the next useful deliverable. Preserve what already works and state what changed.",
+      status:"waiting",worker:"",nextWorker:source.nextWorker || "free-provider chain",
+      context:"Follow-up to task " + source.id + " (" + source.name + ").\n\nOriginal goal:\n" + source.goal + "\n\nExisting artifact to continue from:\n" + source.output + "\n\nContinue the existing work; do not restart from scratch. Keep costs at $0 and do not claim unperformed actions.",
+      output:"",next:"Run the free-provider chain when ready. Compare the new result against the follow-up goal.",
+      createdAt:now(),updatedAt:now()
+    };
+    state.tasks.push(task);
+    selectedProjectId=project.id; selectedTaskId=task.id;
+    persist(); render();
+    document.querySelector(".packet-panel")?.scrollIntoView({behavior:"smooth",block:"start"});
+    toast("Follow-up task created with the previous result attached.");
+  });
   function relayRequestText() {
     const t = currentTask();
     if (!t) return null;
