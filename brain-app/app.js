@@ -628,6 +628,37 @@
     button.textContent = simple ? "Show all tools" : "Hide extra tools";
     button.setAttribute("aria-expanded", String(!simple));
   });
+  // Turn a plain-language request into a durable task and invoke the same
+  // authenticated private relay used by the task editor.
+  $("missionForm")?.addEventListener("submit", event => {
+    event.preventDefault();
+    const goal = String($("missionGoal")?.value || "").trim();
+    if (!goal) { toast("Describe the mission first."); return; }
+    if (goal.length > 3000) { toast("Keep the mission under 3,000 characters."); return; }
+    let project = state.projects.find(item => item.id === selectedProjectId);
+    if (!project) {
+      project = {id:uid(),name:"My missions",description:"Work launched from the Brain mission launcher.",createdAt:now(),updatedAt:now()};
+      state.projects.push(project);
+      selectedProjectId = project.id;
+    }
+    const firstLine = goal.split(/\n|[.!?]/, 1)[0].trim();
+    const taskName = (firstLine || "New mission").slice(0, 100);
+    const task = {
+      id:uid(),projectId:project.id,name:taskName,goal,
+      status:"waiting",worker:"",nextWorker:"free-provider chain",
+      context:"Created from the Brain mission launcher. Deliver a concrete artifact or actionable answer. State assumptions and limitations; do not claim external actions that were not performed. Free-provider route only; no paid fallback.",
+      output:"",next:"Run the configured AI worker chain and review the returned artifact against the mission goal.",
+      createdAt:now(),updatedAt:now()
+    };
+    state.tasks.push(task);
+    selectedTaskId = task.id;
+    $("missionGoal").value = "";
+    $("missionStatus").textContent = "Mission saved to the task queue. Confirm the private relay prompt to send it to the configured AI workers.";
+    persist();
+    render();
+    document.querySelector(".packet-panel")?.scrollIntoView({behavior:"smooth",block:"start"});
+    $("runRelayBtn")?.click();
+  });
   $("quickTestBtn").addEventListener("click", () => {
     const button = $("quickTestBtn");
     if (button.disabled) return;
