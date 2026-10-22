@@ -37,6 +37,35 @@ jobs:
         run: python -m py_compile brain_relay_worker.py brain_relay_chain.py
       - name: Run offline relay handoff tests
         run: python -m unittest discover -s tests -p 'test_brain_relay*.py' -v
+      - name: Smoke-test deployed private relay CORS preflight
+        run: |
+          python - <<'PY'
+          import urllib.request
+
+          endpoints = (
+              "https://cjqgdqcbtcwsgbbqrqcf.supabase.co/functions/v1/dispatch-brain-relay",
+              "https://cjqgdqcbtcwsgbbqrqcf.supabase.co/functions/v1/brain-relay-bridge",
+          )
+          requested = "authorization, apikey, content-type, x-client-info, x-supabase-api-version"
+          for endpoint in endpoints:
+              request = urllib.request.Request(
+                  endpoint,
+                  method="OPTIONS",
+                  headers={
+                      "Origin": "https://astridrosexxx84.github.io",
+                      "Access-Control-Request-Method": "POST",
+                      "Access-Control-Request-Headers": requested,
+                  },
+              )
+              with urllib.request.urlopen(request, timeout=20) as response:
+                  allowed = response.headers.get("Access-Control-Allow-Headers", "").lower()
+                  if response.status != 200:
+                      raise SystemExit(f"Preflight failed for {endpoint}: HTTP {response.status}")
+                  missing = [header.strip() for header in requested.split(",") if header.strip() not in allowed]
+                  if missing:
+                      raise SystemExit(f"Preflight for {endpoint} did not allow headers: {', '.join(missing)}")
+              print(f"CORS preflight passed: {endpoint.rsplit('/', 1)[-1]}")
+          PY
       - name: Validate app manifest
         run: python -m json.tool brain-app/manifest.webmanifest >/dev/null
       - name: Check service worker cache version
