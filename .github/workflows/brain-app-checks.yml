@@ -43,8 +43,8 @@ jobs:
           cached_script = re.search(r'"(\./app\.js\?[^"]+)"', service_worker)
           if not html_script or not cached_script or "./" + html_script.group(1) != cached_script.group(1):
               raise SystemExit("index.html app.js URL must match the service-worker precache URL")
-          if "brain-app-shell-v19" not in service_worker or "app.js?v=guarded-build-1" not in html:
-              raise SystemExit("Guarded code builder release must bump the service-worker cache and app script URL")
+          if "brain-app-shell-v20" not in service_worker or "app.js?v=vision-simple-home-1" not in html:
+              raise SystemExit("Vision simple-home release must bump the service-worker cache and app script URL")
           html_ids = set(re.findall(r"""\bid=["']([^"']+)["']""", html))
           app_ids = set(re.findall(r"""\$\(["']([^"']+)["']\)""", app))
           missing = sorted(app_ids - html_ids)
