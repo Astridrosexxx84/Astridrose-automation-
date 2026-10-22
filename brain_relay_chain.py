@@ -45,12 +45,28 @@ def main():
     successful_packet = prior
     for index, provider in enumerate(order):
         env = os.environ.copy()
+        # Make the providers collaborate in distinct roles instead of asking all
+        # of them to repeat the same generic continuation. If an earlier provider
+        # failed, the next available provider becomes a recovery builder.
+        if not successful_packet:
+            stage = "primary" if index == 0 else "recovery"
+            stage_role = role
+        elif index == len(order) - 1 and index > 0:
+            stage = "integrator"
+            stage_role = "continue"
+        elif index > 0:
+            stage = "critic"
+            stage_role = "review"
+        else:
+            stage = "primary"
+            stage_role = role
         env.update({
             "AI_RELAY_TASK": task,
             "AI_RELAY_PROVIDER": provider,
-            "AI_RELAY_ROLE": role if index == 0 else "continue",
+            "AI_RELAY_ROLE": stage_role,
+            "AI_RELAY_STAGE": stage,
             "AI_RELAY_PRIOR_PACKET": successful_packet,
-            "AI_RELAY_NEXT_WORKER": order[index + 1] if index + 1 < len(order) else "Review the complete relay packet",
+            "AI_RELAY_NEXT_WORKER": order[index + 1] if index + 1 < len(order) else "Final quality check and acceptance-criteria verification",
         })
         # Remove the previous turn's packet so an early worker exit (for example,
         # missing credentials) cannot be mistaken for this provider's result.
