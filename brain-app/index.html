@@ -20,6 +20,17 @@
       <div><h2>The app coordinates. The AIs take turns.</h2><p>Each worker picks up the same saved packet, does one piece of work, and hands it on. Projects stay separate.</p></div>
       <div class="actions"><button class="primary" id="runRelayTopBtn" type="button">Run AI relay</button><button id="newProjectBtn" class="primary">＋ New project</button><button id="exportBtn" class="secondary">Export backup</button><label class="button secondary" for="importFile">Import backup</label><input id="importFile" type="file" accept="application/json" hidden></div>
     </section>
+    <section class="panel mission-launcher" aria-labelledby="missionLauncherTitle">
+      <p class="eyebrow">DO REAL WORK · SIMPLE MODE</p>
+      <h2 id="missionLauncherTitle">Start a mission</h2>
+      <p>Describe what you want done. Brain will save it as a task and send it to the configured AI worker chain.</p>
+      <form id="missionForm" class="mission-form">
+        <label for="missionGoal">What do you want Brain to work on?</label>
+        <textarea id="missionGoal" rows="3" maxlength="3000" required placeholder="e.g. Review my app's onboarding flow and produce a short, prioritized improvement plan."></textarea>
+        <div class="mission-actions"><button id="startMissionBtn" class="primary" type="submit">Create task & run AI</button><span class="footnote">Use non-sensitive text only. A confirmation appears before sending.</span></div>
+      </form>
+      <p id="missionStatus" class="mission-status" aria-live="polite">Your request becomes a saved task, so the result has somewhere to live.</p>
+    </section>
     <section class="panel quick-start" aria-labelledby="quickStartTitle">
       <p class="eyebrow">RECOMMENDED · SIMPLE MODE</p>
       <h2 id="quickStartTitle">Want to test the Brain?</h2>
@@ -139,6 +150,6 @@
   </dialog>
   <div id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js?v=sync-version-2"></script>
+  <script src="app.js?v=mission-launcher-1"></script>
 </body>
 </html>
