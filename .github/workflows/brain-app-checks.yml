@@ -34,6 +34,8 @@ jobs:
           app = Path("brain-app/app.js").read_text(encoding="utf-8")
           html = Path("brain-app/index.html").read_text(encoding="utf-8")
           schema = Path("brain-app/supabase/migrations/0001_brain_app_core.sql").read_text(encoding="utf-8")
+          packet_migration = Path("brain-app/supabase/migrations/0003_add_packet_fields.sql").read_text(encoding="utf-8").lower()
+          hardening_migration = Path("brain-app/supabase/migrations/0004_harden_updated_at_search_path.sql").read_text(encoding="utf-8").lower()
           service_worker = Path("brain-app/service-worker.js").read_text(encoding="utf-8")
           html_script = re.search(r'<script src="(app\.js\?[^"]+)"', html)
           cached_script = re.search(r'"(\./app\.js\?[^"]+)"', service_worker)
@@ -51,6 +53,11 @@ jobs:
                   raise SystemExit(f"Core table missing from migration: {table}")
           if "enable row level security" not in schema.lower():
               raise SystemExit("Core migration does not enable row-level security")
+          for column in ("current_worker", "next_worker", "current_output", "next_action"):
+              if f"add column if not exists {column}" not in packet_migration:
+                  raise SystemExit(f"Packet-field migration is missing idempotent column {column}")
+          if "set search_path = ''" not in hardening_migration or "pg_catalog.now()" not in hardening_migration:
+              raise SystemExit("updated_at trigger migration must harden search_path and qualify now()")
           active_run_migration = Path("brain-app/supabase/migrations/0005_one_active_run_per_task.sql").read_text(encoding="utf-8")
           if "create unique index if not exists brain_worker_runs_one_active_per_task_idx" not in active_run_migration:
               raise SystemExit("Database contract must prevent concurrent active runs for one task")
