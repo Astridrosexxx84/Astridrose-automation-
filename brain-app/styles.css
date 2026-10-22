@@ -203,3 +203,36 @@ body.simple-mode .simple-result { margin-top:12px; }
 .mission-actions{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
 .mission-actions .footnote{margin:0;max-width:28rem}
 .mission-status{margin:.8rem 0 0;color:var(--muted);font-size:.92rem}
+
+
+/* Vision home: one clear request box, one primary action. Advanced controls stay tucked away. */
+body.simple-mode .intro,
+body.simple-mode .quick-start,
+body.simple-mode .simple-result,
+body.simple-mode .stats,
+body.simple-mode .workspace,
+body.simple-mode .packet-panel,
+body.simple-mode .relay-status-panel,
+body.simple-mode .providers-panel,
+body.simple-mode .compact-details { display:none !important; }
+body.simple-mode .topbar { max-width:760px; padding:26px 18px 8px; }
+body.simple-mode .topbar h1 { font-size:clamp(2.2rem,9vw,3.2rem); letter-spacing:-.05em; }
+body.simple-mode .topbar .subhead { margin:8px 0 0; color:var(--muted); font-size:1rem; }
+body.simple-mode main { max-width:760px; padding:12px 18px 28px; }
+body.simple-mode .mission-launcher { margin-top:4px; padding:clamp(18px,5vw,28px); border-color:#607bb4; box-shadow:0 12px 34px rgba(0,0,0,.22); }
+body.simple-mode .mission-launcher h2 { font-size:clamp(1.35rem,5vw,1.7rem); line-height:1.2; }
+body.simple-mode .mission-launcher > p:not(.eyebrow) { color:var(--muted); max-width:54ch; }
+body.simple-mode .mission-form { gap:12px; }
+body.simple-mode .mission-form textarea { min-height:150px; font-size:1rem; padding:15px; border-radius:13px; }
+body.simple-mode .mission-actions { display:grid; grid-template-columns:minmax(0,1fr); gap:10px; }
+body.simple-mode #startMissionBtn { width:100%; min-height:54px; font-size:1rem; border-radius:13px; }
+body.simple-mode .advanced-build { display:none; }
+body.simple-mode .tools-toggle { width:100%; margin-top:12px; background:transparent; color:var(--muted); }
+body.simple-mode .mission-status { margin-top:12px; }
+body:not(.simple-mode) .tools-toggle { display:none; }
+@media(max-width:480px) {
+  body.simple-mode .topbar { padding:20px 14px 8px; }
+  body.simple-mode main { padding:10px 12px 22px; }
+  body.simple-mode .mission-launcher { padding:17px; }
+  body.simple-mode .mission-form textarea { min-height:135px; }
+}
