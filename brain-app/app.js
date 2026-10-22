@@ -62,6 +62,17 @@
         byId.set(item.id, item);
         continue;
       }
+      // A result recovered from a worker run can have an older finished_at
+      // than the task row's last sync. Preserve that usable result over an
+      // empty review/completed copy, but let a newer "working" retry clear it.
+      const priorHasOutput = !!String(prior?.output || "").trim();
+      const itemHasOutput = !!String(item.output || "").trim();
+      const reviewStates = ["handed_off", "complete"];
+      if (itemHasOutput && !priorHasOutput && reviewStates.includes(item.status) && reviewStates.includes(prior?.status)) {
+        byId.set(item.id, item);
+        continue;
+      }
+      if (priorHasOutput && !itemHasOutput && reviewStates.includes(prior.status) && reviewStates.includes(item.status)) continue;
       if (!prior || Date.parse(item.updatedAt || 0) >= Date.parse(prior.updatedAt || 0)) byId.set(item.id, item);
     }
     return [...byId.values()];
