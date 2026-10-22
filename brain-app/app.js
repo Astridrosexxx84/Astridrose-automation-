@@ -15,7 +15,7 @@
   // row-level security limits database access to the signed-in owner.
   const SUPABASE_URL = "https://cjqgdqcbtcwsgbbqrqcf.supabase.co";
   const SUPABASE_PUBLISHABLE_KEY = "sb_publishable__pFBwxTsfTJwEDIGVjhppQ_qKomVqf-";
-  const cloudClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  const cloudClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {global:{headers:{"x-brain-sync-version":"1"}}});
   let cloudUser = null;
   let cloudReady = false;
   let syncingCloud = false;
@@ -39,17 +39,17 @@
     cloudSyncTimer = setTimeout(() => syncLocalToCloud().catch(e => setCloudStatus("Cloud sync paused: " + (e.message || "network error"), true)), 900);
   }
   function toRemoteProject(p) {
-    return {id:p.id, owner_id:cloudUser.id, name:p.name || "Untitled project", description:p.description || "", status:"active", created_at:p.createdAt || now(), updated_at:p.updatedAt || now()};
+    return {id:p.id, owner_id:cloudUser.id, name:p.name || "Untitled project", description:p.description || "", status:"active", created_at:p.createdAt || now(), updated_at:p.updatedAt || now(), sync_version:p.syncVersion || 1};
   }
   function toRemoteTask(t) {
-    return {id:t.id, owner_id:cloudUser.id, project_id:t.projectId || null, title:t.name || "Untitled task", goal:t.goal || "", context:t.context || "", status:({waiting:"queued",working:"running",handed_off:"review",blocked:"blocked",complete:"completed"})[t.status] || "queued", priority:3, assigned_worker:t.worker || null, current_worker:t.worker || "", next_worker:t.nextWorker || "", result_summary:t.output || "", current_output:t.output || "", next_action:t.next || "", created_at:t.createdAt || now(), updated_at:t.updatedAt || now(), deleted_at:t.deletedAt || null};
+    return {id:t.id, owner_id:cloudUser.id, project_id:t.projectId || null, title:t.name || "Untitled task", goal:t.goal || "", context:t.context || "", status:({waiting:"queued",working:"running",handed_off:"review",blocked:"blocked",complete:"completed"})[t.status] || "queued", priority:3, assigned_worker:t.worker || null, current_worker:t.worker || "", next_worker:t.nextWorker || "", result_summary:t.output || "", current_output:t.output || "", next_action:t.next || "", created_at:t.createdAt || now(), updated_at:t.updatedAt || now(), deleted_at:t.deletedAt || null, sync_version:t.syncVersion || 1};
   }
   function fromRemoteProject(p) {
-    return {id:p.id,name:p.name,description:p.description || "",createdAt:p.created_at || now(),updatedAt:p.updated_at || now()};
+    return {id:p.id,name:p.name,description:p.description || "",createdAt:p.created_at || now(),updatedAt:p.updated_at || now(),syncVersion:p.sync_version || 1};
   }
   function fromRemoteTask(t) {
     const status = ({queued:"waiting",running:"working",review:"handed_off",blocked:"blocked",completed:"complete",failed:"blocked",cancelled:"blocked"})[t.status] || "waiting";
-    return {id:t.id,projectId:t.project_id,name:t.title,goal:t.goal || "",context:t.context || "",status,worker:t.current_worker || t.assigned_worker || "",nextWorker:t.next_worker || "",output:t.current_output || t.result_summary || "",next:t.next_action || "",createdAt:t.created_at || now(),updatedAt:t.updated_at || now(),deletedAt:t.deleted_at || null};
+    return {id:t.id,projectId:t.project_id,name:t.title,goal:t.goal || "",context:t.context || "",status,worker:t.current_worker || t.assigned_worker || "",nextWorker:t.next_worker || "",output:t.current_output || t.result_summary || "",next:t.next_action || "",createdAt:t.created_at || now(),updatedAt:t.updated_at || now(),deletedAt:t.deleted_at || null,syncVersion:t.sync_version || 1};
   }
   function mergeByFreshness(localItems, remoteItems) {
     const byId = new Map();
@@ -75,7 +75,31 @@
       if (priorHasOutput && !itemHasOutput && reviewStates.includes(prior.status) && reviewStates.includes(item.status)) continue;
       if (!prior || Date.parse(item.updatedAt || 0) >= Date.parse(prior.updatedAt || 0)) byId.set(item.id, item);
     }
-    return [...byId.values()];
+    // Keep the revision from the copy that won the merge. Do not upgrade a
+    // stale local edit to the newest remote revision: compare-and-set must reject it.
+    return [...byId.values()].map(item => ({
+      ...item,
+      syncVersion: item.syncVersion || 1
+    }));
+  }
+  function applySavedVersions(items, savedRows) {
+    const byId = new Map((savedRows || []).map(row => [row.id, row]));
+    for (const item of items) {
+      const saved = byId.get(item.id);
+      if (!saved) throw new Error("Cloud save was not confirmed; refresh before retrying.");
+      item.syncVersion = saved.sync_version;
+      item.updatedAt = saved.updated_at || item.updatedAt;
+    }
+  }
+  function differsFromRemoteProject(project, remote) {
+    if (!remote) return true;
+    const next = toRemoteProject(project);
+    return ["name", "description", "status"].some(key => next[key] !== remote[key]);
+  }
+  function differsFromRemoteTask(task, remote) {
+    if (!remote) return true;
+    const next = toRemoteTask(task);
+    return ["project_id", "title", "goal", "context", "status", "priority", "assigned_worker", "current_worker", "next_worker", "result_summary", "current_output", "next_action", "deleted_at"].some(key => (next[key] ?? null) !== (remote[key] ?? null));
   }
   async function syncLocalToCloud() {
     if (!cloudClient || !cloudUser) return;
@@ -94,22 +118,28 @@
       ]);
       if (remoteProjectsResult.error) throw remoteProjectsResult.error;
       if (remoteTasksResult.error) throw remoteTasksResult.error;
-      state.projects = mergeByFreshness(state.projects, (remoteProjectsResult.data || []).map(fromRemoteProject));
-      state.tasks = mergeByFreshness(state.tasks, (remoteTasksResult.data || []).map(fromRemoteTask))
-        .filter(task => !task.deletedAt);
+      const remoteProjects = remoteProjectsResult.data || [];
+      const remoteTasks = remoteTasksResult.data || [];
+      state.projects = mergeByFreshness(state.projects, remoteProjects.map(fromRemoteProject));
+      state.tasks = mergeByFreshness(state.tasks, remoteTasks.map(fromRemoteTask)).filter(task => !task.deletedAt);
       const validProjectIds = new Set(state.projects.map(project => project.id));
       state.tasks = state.tasks.filter(task => validProjectIds.has(task.projectId));
-      // Persist the merged state locally without scheduling a recursive sync.
+      const remoteProjectsById = new Map(remoteProjects.map(row => [row.id, row]));
+      const remoteTasksById = new Map(remoteTasks.map(row => [row.id, row]));
+      const projectsToSync = state.projects.filter(project => differsFromRemoteProject(project, remoteProjectsById.get(project.id)));
+      const tasksToSync = state.tasks.filter(task => differsFromRemoteTask(task, remoteTasksById.get(task.id)));
       try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (_) {}
-      // Upsert parents first, then tasks so project references are valid.
-      if (state.projects.length) {
-        const {error} = await cloudClient.from("brain_projects").upsert(state.projects.map(toRemoteProject), {onConflict:"id"});
+      if (projectsToSync.length) {
+        const {data, error} = await cloudClient.from("brain_projects").upsert(projectsToSync.map(toRemoteProject), {onConflict:"id"}).select("id,sync_version,updated_at");
         if (error) throw error;
+        applySavedVersions(projectsToSync, data);
       }
-      if (state.tasks.length) {
-        const {error} = await cloudClient.from("brain_tasks").upsert(state.tasks.map(toRemoteTask), {onConflict:"id"});
+      if (tasksToSync.length) {
+        const {data, error} = await cloudClient.from("brain_tasks").upsert(tasksToSync.map(toRemoteTask), {onConflict:"id"}).select("id,sync_version,updated_at");
         if (error) throw error;
+        applySavedVersions(tasksToSync, data);
       }
+      try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (_) {}
       setCloudStatus("Cloud sync connected · saved to this device and Supabase");
     } finally {
       syncingCloud = false;
@@ -230,10 +260,12 @@
       // foreign key to the task. This also covers a brand-new local-only task.
       const project = state.projects.find(item => item.id === task.projectId);
       if (!project) throw new Error("Task project is missing; save or restore the project first.");
-      const { error: projectError } = await cloudClient.from("brain_projects").upsert(toRemoteProject(project), {onConflict:"id"});
+      const { data: savedProject, error: projectError } = await cloudClient.from("brain_projects").upsert(toRemoteProject(project), {onConflict:"id"}).select("id,sync_version,updated_at").single();
       if (projectError) throw projectError;
-      const { error: taskError } = await cloudClient.from("brain_tasks").upsert(toRemoteTask(task), {onConflict:"id"});
+      applySavedVersions([project], [savedProject]);
+      const { data: savedTask, error: taskError } = await cloudClient.from("brain_tasks").upsert(toRemoteTask(task), {onConflict:"id"}).select("id,sync_version,updated_at").single();
       if (taskError) throw taskError;
+      applySavedVersions([task], [savedTask]);
       const { error } = await cloudClient.from("brain_task_events").insert({
         owner_id: cloudUser.id,
         task_id: task.id,
@@ -884,7 +916,7 @@
       // Keep a private tombstone so stale copies on other devices cannot
       // resurrect this task during the next workspace merge.
       if (cloudClient && cloudUser) {
-        const {error} = await cloudClient.from("brain_tasks").update({deleted_at: now()}).eq("id", t.id).eq("owner_id", cloudUser.id);
+        const {error} = await cloudClient.from("brain_tasks").update({deleted_at: now(), sync_version: t.syncVersion || 1}).eq("id", t.id).eq("owner_id", cloudUser.id);
         if (error) throw error;
       }
       state.tasks = state.tasks.filter(x=>x.id!==t.id);
