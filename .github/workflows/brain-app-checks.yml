@@ -96,6 +96,11 @@ jobs:
               raise SystemExit("Cloud sync must read back persisted revisions")
           if "const tasksToSync = state.tasks.filter(task => differsFromRemoteTask(task, remoteTasksById.get(task.id)))" not in app:
               raise SystemExit("Cloud sync must write only changed tasks, not the whole workspace")
+          merge_body = app.split("function mergeByFreshness", 1)[1].split("function applySavedVersions", 1)[0]
+          if "syncVersion: item.syncVersion || 1" not in merge_body or "do not upgrade a" not in merge_body:
+              raise SystemExit("A stale local edit must retain its last-seen revision so compare-and-set can reject it")
+          if "remoteVersions.get(item.id)" in merge_body:
+              raise SystemExit("Merge must not silently promote a stale local edit to the newest remote revision")
           if "sync_version: t.syncversion || 1" not in app.lower():
               raise SystemExit("Task deletion must also use compare-and-set versioning")
           active_run_migration = Path("brain-app/supabase/migrations/0005_one_active_run_per_task.sql").read_text(encoding="utf-8")
