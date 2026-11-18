@@ -41,7 +41,7 @@ jobs:
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
           SEARCH_QUERIES: ${{ inputs.search_query || 'high heels runway catwalk shoes, sneaker releases reviews streetwear, shoe cleaning restoration repair, funny shoe fails high heels comedy, designer luxury shoes fashion, shoe history craftsmanship shoemaking' }}
           MAX_RESULTS: ${{ inputs.max_results || '10' }}
-          LOOKBACK_DAYS: ${{ inputs.lookback_days || '30' }}
+          LOOKBACK_DAYS: ${{ inputs.lookback_days || '365' }}
         run: python youtube_keyword_search.py
 
       - name: Save search results for review
