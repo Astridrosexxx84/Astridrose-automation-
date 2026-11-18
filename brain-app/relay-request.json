@@ -1,9 +1,0 @@
-{
-  "task": "Harmless Brain App relay smoke test: return a short confirmation that the sequential AI worker relay ran, and list only the provider names that actually completed. Do not access, change, or claim to have changed repository files. No secrets or personal data.",
-  "provider": "auto",
-  "role": "create",
-  "prior_packet": "",
-  "next_worker": "No further work; this is a smoke test only.",
-  "task_id": "",
-  "project_id": ""
-}
