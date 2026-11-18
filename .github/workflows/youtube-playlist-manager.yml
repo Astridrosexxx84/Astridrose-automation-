@@ -14,7 +14,14 @@ on:
         description: "Playlist to add approved videos to"
         required: true
         default: "High Heels & Catwalks"
-        type: string
+        type: choice
+        options:
+          - "High Heels & Catwalks"
+          - "Sneakers & Streetwear"
+          - "Shoe Cleaning & Restoration"
+          - "Shoe Fails & Comedy"
+          - "Designer & Luxury Shoes"
+          - "Shoe History & Craftsmanship"
       playlist_description:
         description: "Description used only if creating a new playlist"
         required: false
