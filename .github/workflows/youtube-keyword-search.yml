@@ -1,4 +1,4 @@
-name: General YouTube topic discovery
+name: Shoe Channel — topic discovery
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
       search_query:
         description: "Comma-separated topics to compare in one run"
         required: true
-        default: "popular music 2026, gaming highlights 2026, viral food videos 2026, entertainment trending 2026, sports highlights 2026, technology videos 2026"
+        default: "high heels runway catwalk shoes, sneaker releases reviews streetwear, shoe cleaning restoration repair, funny shoe fails high heels comedy, designer luxury shoes fashion, shoe history craftsmanship shoemaking"
         type: string
       max_results:
         description: "Number of results (1–25)"
@@ -16,7 +16,7 @@ on:
       lookback_days:
         description: "Prefer videos published within the last N days (1–365)"
         required: true
-        default: "30"
+        default: "365"
         type: string
 
 permissions:
@@ -39,7 +39,7 @@ jobs:
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
-          SEARCH_QUERIES: ${{ inputs.search_query || 'popular music 2026, gaming highlights 2026, viral food videos 2026, entertainment trending 2026, sports highlights 2026, technology videos 2026' }}
+          SEARCH_QUERIES: ${{ inputs.search_query || 'high heels runway catwalk shoes, sneaker releases reviews streetwear, shoe cleaning restoration repair, funny shoe fails high heels comedy, designer luxury shoes fashion, shoe history craftsmanship shoemaking' }}
           MAX_RESULTS: ${{ inputs.max_results || '10' }}
           LOOKBACK_DAYS: ${{ inputs.lookback_days || '30' }}
         run: python youtube_keyword_search.py
