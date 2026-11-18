@@ -1,4 +1,4 @@
-name: Dragon Ball Z Nostalgia — playlist curator
+name: Shoe Playlist Curator
 
 on:
   push:
@@ -13,7 +13,7 @@ on:
       playlist_title:
         description: "Playlist to add approved videos to"
         required: true
-        default: "Dragon Ball Z Nostalgia"
+        default: "High Heels & Catwalks"
         type: string
       playlist_description:
         description: "Description used only if creating a new playlist"
@@ -42,7 +42,7 @@ jobs:
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
           VIDEO_URLS: ${{ inputs.video_urls }}
-          PLAYLIST_TITLE: ${{ inputs.playlist_title || 'Dragon Ball Z Nostalgia' }}
+          PLAYLIST_TITLE: ${{ inputs.playlist_title || 'High Heels & Catwalks' }}
           PLAYLIST_DESCRIPTION: ${{ inputs.playlist_description || 'A fan-curated collection of publicly available YouTube videos. This playlist links to original YouTube uploads and does not claim ownership of the videos.' }}
         run: |
           if [ -n "$VIDEO_URLS" ]; then
