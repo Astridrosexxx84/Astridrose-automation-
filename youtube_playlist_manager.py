@@ -15,7 +15,7 @@ import time
 
 API = "https://www.googleapis.com/youtube/v3"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
-PLAYLIST_TITLE = os.environ.get("PLAYLIST_TITLE", "Dragon Ball Z Nostalgia").strip() or "Dragon Ball Z Nostalgia"
+PLAYLIST_TITLE = os.environ.get("PLAYLIST_TITLE", "High Heels & Catwalks").strip() or "High Heels & Catwalks"
 PLAYLIST_DESCRIPTION = os.environ.get(
     "PLAYLIST_DESCRIPTION",
     "A fan-curated collection of publicly available YouTube videos. This playlist links to original YouTube uploads and does not claim ownership of the videos.",
